@@ -1,0 +1,59 @@
+#ifndef BOX_H
+#define BOX_H
+
+#include "simulator.h"
+#include "coord.h"
+#include "grid.h"
+
+class BOX_STATE : public STATE
+{
+public:
+
+    std::vector<COORD> AgentPos;
+    std::vector<COORD> SmallBoxPos;
+    std::vector<std::vector<COORD> > LargeBoxPos;
+};
+
+class BOX : public SIMULATOR
+{
+public:
+
+    BOX(int xsize, int ysize, int numsmallboxes, int numlargeboxes);
+
+    virtual STATE* Copy(const STATE& state) const;
+    virtual void Validate(const STATE& state) const;
+    virtual STATE* CreateStartState() const;
+    virtual void FreeState(STATE* state) const;
+    virtual bool Step(STATE& state, int action, 
+        int& observation, double& reward) const;
+        
+    void GeneratePreferred(const STATE& state, const HISTORY& history,
+        std::vector<int>& legal, const STATUS& status) const;
+    virtual bool LocalMove(STATE& state, const HISTORY& history,
+        int stepObs, const STATUS& status) const;
+
+    virtual void DisplayBeliefs(const BELIEF_STATE& beliefState, 
+        std::ostream& ostr) const;
+    virtual void DisplayState(const STATE& state, std::ostream& ostr) const;
+    virtual void DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const;
+    virtual void DisplayAction(int action, std::ostream& ostr) const;
+
+protected:
+
+    int GetObservation(const BOX_STATE& boxstate, int action) const;
+    
+    COORD GetCoord(int index) const;
+    int GetIndex(const COORD& coord) const;
+
+    int NumSmallBoxes;
+    int NumLargeBoxes;
+    int XSize;
+    int YSize;
+    int NumCells;
+    
+private:
+
+    mutable MEMORY_POOL<BOX_STATE> MemoryPool;
+};
+
+#endif

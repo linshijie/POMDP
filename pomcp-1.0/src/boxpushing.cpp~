@@ -1,0 +1,436 @@
+#include "boxpushing.h"
+#include <iomanip>
+
+using namespace std;
+using namespace UTILS;
+
+BOXPUSHING::BOXPUSHING(int xsize, int ysize, int numsmallboxes, int numlargeboxes)
+: XSize(xsize),
+  YSize(ysize),
+  NumSmallBoxes(numsmallboxes),
+  NumLargeBoxes(numlargeboxes)
+{
+    NumActions = 4;
+    NumObservations = 5;
+    RewardRange = NumLargeBoxes*100 + NumSmallBoxes*10;
+    Discount = 0.95;
+}
+
+STATE* BOXPUSHING::Copy(const STATE& state) const
+{
+    const BOXPUSHING_STATE& boxpushingstate = safe_cast<const BOXPUSHING_STATE&>(state);
+    BOXPUSHING_STATE* newstate = MemoryPool.Allocate();
+    *newstate = boxpushingstate;
+    return newstate; 
+}
+
+void BOXPUSHING::Validate(const STATE& state) const
+{
+    const BOXPUSHING_STATE& bpstate = safe_cast<const BOXPUSHING_STATE&>(state);
+    for (int i=0; i<(int)bpstate.Agents.size(); i++)
+	assert(Inside(bpstate.Agents[i].Position));
+}
+
+STATE* BOXPUSHING::CreateStartState() const
+{
+    BOXPUSHING_STATE* bpstate = MemoryPool.Allocate();
+    bpstate->Cells.Resize(XSize, YSize);
+    cout << "done resizing\n";
+    for (int i = 0; i < XSize * YSize; ++i)
+    {
+	BOXPUSHING_STATE::CELL& cell = bpstate->Cells(i);
+	cell.Occupied = false;
+	cell.Content = BOXPUSHING_STATE::NONE;
+    }
+    bpstate->Agents.clear();
+    bpstate->SmallBoxes.clear();
+    bpstate->LargeBoxes.clear();
+    
+    for (int i = 0; i < NumLargeBoxes; i++)
+    {
+	PUSH_ENTITY pe;
+	do
+	{
+	    pe.Direction = Random(2)*2+1;
+	    pe.Position = COORD(Random(XSize), 1);
+	    pe.Length = 2;
+	}
+	while (Collision(*bpstate, pe));
+	
+	MarkPushEntity(*bpstate, pe, LARGE_BOX);
+	bpstate->LargeBoxes.push_back(pe);
+    }
+    
+    for (int i = 0; i < NumSmallBoxes; i++)
+    {
+	PUSH_ENTITY pe;
+	do
+	{
+	    pe.Direction = 0;
+	    pe.Position = COORD(Random(XSize), 1);
+	    pe.Length = 1;
+	}
+	while (Collision(*bpstate, pe));
+	
+	MarkPushEntity(*bpstate, pe, SMALL_BOX);
+	bpstate->SmallBoxes.push_back(pe);
+    }
+    
+    
+    for (int i = 0; i < 2; i++)
+    {
+	PUSH_ENTITY pe;
+	do
+	{
+	    pe.Direction = Random(4);
+	    pe.Position = COORD(Random(XSize), 0);
+	    pe.Length = 1;
+	}
+	while (Collision(*bpstate, pe));
+	
+	MarkPushEntity(*bpstate, pe, AGENT);
+	bpstate->Agents.push_back(pe);
+    }
+    
+    bpstate->NumBoxesRemaining = NumSmallBoxes + NumLargeBoxes;
+    return bpstate;
+}
+
+void BOXPUSHING::FreeState(STATE* state) const
+{
+    BOXPUSHING_STATE* bpstate = safe_cast<BOXPUSHING_STATE*>(state);
+    MemoryPool.Free(bpstate);
+}
+
+bool BOXPUSHING::Step(STATE& state, int action,
+    int& observation, double& reward) const
+{
+    BOXPUSHING_STATE& bpstate = safe_cast<BOXPUSHING_STATE&>(state);
+    
+    int actions[] = {action/4, action%4};
+    
+    COORD next0 = bpstate.Agents[0].Position + COORD::Compass[bpstate.Agents[0].Direction];
+    COORD next1 = bpstate.Agents[1].Position + COORD::Compass[bpstate.Agents[1].Direction];
+    COORD after0 = next0 + COORD::Compass[bpstate.Agents[0].Direction];
+    COORD after1 = next1 + COORD::Compass[bpstate.Agents[1].Direction];
+    
+    if (actions[0] == MOVE && actions[1] == MOVE && 
+	COORD::EuclideanDistance(bpstate.Agents[0].Position,bpstate.Agents[1].Position) < 1.0 &&
+	bpstate.Cells.Inside(next0) && bpstate.Cells.Inside(next1) &&
+	bpstate.Cells(next0).Content == LARGE_BOX && 
+	bpstate.Cells(next1).Content == LARGE_BOX &&
+	bpstate.Cells.Inside(after0) && bpstate.Cells.Inside(after1) &&
+	bpstate.Cells(after0).Content == NONE &&
+	bpstate.Cells(after1).Content == NONE)
+    {
+	//can move large box
+	if (RandomDouble(0.0,1.0) < 0.9)
+	{
+	    bool found = false;
+	    int i = 0;
+	    while (i < NumLargeBoxes && !found)
+	    {
+		if (bpstate.LargeBoxes.at(i).Position == next0 || bpstate.LargeBoxes.at(i).Position == next1)
+		    found = true;
+		else
+		    i++;
+	    }
+	    UnmarkPushEntity(bpstate, bpstate.Agents[0]);
+	    UnmarkPushEntity(bpstate, bpstate.Agents[1]);
+	    UnmarkCell(bpstate, next0);
+	    UnmarkCell(bpstate, next1);
+	    bpstate.Agents[0].Position = next0;
+	    bpstate.Agents[1].Position = next1;
+	    MarkPushEntity(bpstate, bpstate.Agents[0], AGENT);
+	    MarkPushEntity(bpstate, bpstate.Agents[1], AGENT);
+	    MarkCell(bpstate, after0, LARGE_BOX);
+	    MarkCell(bpstate, after1, LARGE_BOX);
+	    bpstate.LargeBoxes[i].Position += COORD::Compass[bpstate.Agents[0].Direction];
+	    if (after0.Y == YSize-1){
+		reward = 99.8;
+		bpstate.NumBoxesRemaining--;
+	    }
+	    else
+		reward = -0.2;
+	}
+	else
+	    reward = -0.2;
+    }
+    else
+    {
+	if (RandomDouble(0.0,1.0) < 0.5)
+	    reward = MoveAgent(bpstate, 0, actions[0]) + MoveAgent(bpstate, 1, actions[1]);
+	else
+	    reward = MoveAgent(bpstate, 1, actions[1]) + MoveAgent(bpstate, 0, actions[0]);
+    }
+    
+    observation = NumObservations*GetAgentObservation(bpstate, 0) + GetAgentObservation(bpstate, 1);
+    
+    return bpstate.NumBoxesRemaining == 0;
+}
+
+double BOXPUSHING::MoveAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agentaction) const
+{
+    switch(agentaction){
+	case(STAY):
+	    return -0.1;
+	case(TURN_CCW):
+	    if (RandomDouble(0.0,1.0) < 0.9)
+		bpstate.Agents[agentindex].Direction = COORD::Anticlockwise(bpstate.Agents[agentindex].Direction);
+	    return -0.1;
+	case(TURN_CW):
+	    if (RandomDouble(0.0,1.0) < 0.9)
+		bpstate.Agents[agentindex].Direction = COORD::Clockwise(bpstate.Agents[agentindex].Direction);
+	    return -0.1;
+	default:
+	    //move
+	    if (RandomDouble(0.0,1.0) < 0.9){
+		COORD next = bpstate.Agents[agentindex].Position + COORD::Compass[bpstate.Agents[agentindex].Direction];
+		if (!bpstate.Cells.Inside(next) || bpstate.Cells(next).Content == AGENT ||
+		    bpstate.Cells(next).Content == LARGE_BOX)
+		    return -5.1;
+		if (bpstate.Cells(next).Content == NONE)
+		{
+		    UnmarkPushEntity(bpstate, bpstate.Agents[agentindex]);
+		    bpstate.Agents[agentindex].Position = next;
+		    MarkPushEntity(bpstate, bpstate.Agents[agentindex], AGENT);
+		    return -0.1;
+		}
+		if (bpstate.Cells(next).Content == SMALL_BOX)
+		{
+		    COORD after = next + COORD::Compass[bpstate.Agents[agentindex].Direction];
+		    if (bpstate.Cells.Inside(after) && 
+			bpstate.Cells(after).Content == NONE)
+		    {
+			bool found = false;
+			int i = 0;
+			while (i < NumSmallBoxes && !found)
+			{
+			    if (bpstate.SmallBoxes.at(i).Position == next)
+				found = true;
+			    else
+				i++;
+			}
+			UnmarkPushEntity(bpstate, bpstate.Agents[agentindex]);
+			UnmarkCell(bpstate, next);
+			bpstate.Agents[agentindex].Position = next;
+			MarkPushEntity(bpstate, bpstate.Agents[agentindex], AGENT);
+			MarkCell(bpstate, after, SMALL_BOX);
+			bpstate.SmallBoxes[i].Position += COORD::Compass[bpstate.Agents[agentindex].Direction];
+			if (after.Y == YSize - 1 && next.Y < YSize - 1){
+			    bpstate.NumBoxesRemaining--;
+			    return 9.9;
+			}
+			return -0.1;
+		    }
+		    return -0.1;
+		}  
+		return -0.1;
+	    }
+	
+    }
+}
+
+int BOXPUSHING::GetAgentObservation(const BOXPUSHING_STATE& bpstate, const int& agentindex) const
+{
+    PUSH_ENTITY agent = bpstate.Agents[agentindex];
+    COORD adjacent = agent.Position + COORD::Compass[agent.Direction];
+    if (!bpstate.Cells.Inside(adjacent))
+	return WALL_OBS;
+    if (bpstate.Cells(adjacent).Content == AGENT)
+	return AGENT_OBS;
+    if (bpstate.Cells(adjacent).Content == SMALL_BOX)
+	return SMALL_BOX_OBS;
+    if (bpstate.Cells(adjacent).Content == LARGE_BOX)
+	return LARGE_BOX_OBS;
+    return EMPTY_OBS;
+}
+
+bool BOXPUSHING::Collision(const BOXPUSHING_STATE& bpstate,
+    const PUSH_ENTITY& pushentity) const
+{
+    COORD pos = pushentity.Position;
+    for (int i = 0; i < pushentity.Length; ++i)
+    {
+	if (!bpstate.Cells.Inside(pos))
+            return true;
+	const BOXPUSHING_STATE::CELL& cell = bpstate.Cells(pos);
+        if (cell.Occupied)
+            return true;
+	pos += COORD::Compass[pushentity.Direction];
+    }
+    
+    return false;
+}
+
+bool BOXPUSHING::LocalMove(STATE& state, const HISTORY& history,
+    int stepObs, const STATUS& status) const
+{
+    BOXPUSHING_STATE& bpstate = safe_cast<BOXPUSHING_STATE&>(state);
+
+    int boxtype = Random(2);
+    int boxindex;
+    PUSH_ENTITY pe;
+    if (boxtype == 0)
+    {
+	boxindex = Random(NumSmallBoxes);
+	pe = bpstate.SmallBoxes.at(boxindex);
+    }
+    else
+    {
+	boxindex = Random(NumLargeBoxes);
+	pe = bpstate.LargeBoxes.at(boxindex);
+    }
+    if (pe.Position.Y == YSize-1)
+	//box has already been pushed to the end
+	return false;
+    
+    UnmarkPushEntity(bpstate, pe);
+    
+    COORD oldposition = pe.Position;
+    
+    do
+    {
+	pe.Position = COORD(Random(XSize), Random(YSize-1));
+    }
+    while(Collision(bpstate, pe));
+    
+    if (boxtype == 0)
+    {
+	bpstate.SmallBoxes[boxindex] = pe;
+	MarkPushEntity(bpstate, pe, SMALL_BOX);
+    }
+    else
+    {
+	bpstate.LargeBoxes[boxindex] = pe;
+	MarkPushEntity(bpstate, pe, LARGE_BOX);
+    }
+    
+    int realObs = history.Back().Observation;
+    int simObs = NumObservations*GetAgentObservation(bpstate, 0) + GetAgentObservation(bpstate, 1);
+    
+    return realObs == simObs;
+    
+    
+}
+
+void BOXPUSHING::GenerateLegal(const STATE& state, const HISTORY& history,
+        std::vector<int>& legal, const STATUS& status) const
+{
+    for (int a = 0; a < NumActions*NumActions; a++)
+        legal.push_back(a);
+}
+
+void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
+        std::vector<int>& actions, const STATUS& status) const
+{
+    
+    /*const BOXPUSHING_STATE& bpstate = safe_cast<const BOXPUSHING_STATE&>(state);
+    
+    if (history.Size() == 0)
+        return;
+    
+    int lastObs = history.Back().Observation;
+    int lastObs0 = lastObs/NumActions;
+    int lastObs1 = lastObs%NumActions;
+    
+    */
+}
+
+
+
+void BOXPUSHING::MarkCell(BOXPUSHING_STATE& bpstate, const COORD& coord, const CellContent& content) const
+{
+    BOXPUSHING_STATE::CELL& cell = bpstate.Cells(coord);
+    assert(!cell.Occupied);
+    cell.Occupied = true;
+    cell.Content = content;
+}
+
+void BOXPUSHING::UnmarkCell(BOXPUSHING_STATE& bpstate, const COORD& coord) const
+{
+    BOXPUSHING_STATE::CELL& cell = bpstate.Cells(coord);
+    assert(cell.Occupied);
+    cell.Occupied = false;
+    cell.Content = NONE;
+}
+
+void BOXPUSHING::MarkPushEntity(BOXPUSHING_STATE& bpstate, 
+    const PUSH_ENTITY& pushentity, const CellContent& content) const
+{
+    COORD pos = pushentity.Position;
+    for (int i = 0; i < pushentity.Length; ++i)
+    {
+        MarkCell(bpstate, pos, content);
+        pos += COORD::Compass[pushentity.Direction];
+    }
+}
+
+void BOXPUSHING::UnmarkPushEntity(BOXPUSHING_STATE& bpstate, 
+    const PUSH_ENTITY& pushentity) const
+{
+    COORD pos = pushentity.Position;
+    for (int i = 0; i < pushentity.Length; ++i)
+    {
+        UnmarkCell(bpstate, pos);
+        pos += COORD::Compass[pushentity.Direction];
+    }
+}
+
+void BOXPUSHING::DisplayBeliefs(const BELIEF_STATE& beliefState, 
+    std::ostream& ostr) const
+{
+}
+
+void BOXPUSHING::DisplayState(const STATE& state, ostream& ostr) const
+{
+    const BOXPUSHING_STATE& bpstate = safe_cast<const BOXPUSHING_STATE&>(state);
+    ostr << endl << "  ";
+    for (int x = 0; x < XSize; x++)
+        ostr << setw(1) << ' ' << ' ';
+    ostr << "  " << endl;
+    for (int y = YSize - 1; y >= 0; y--)
+    {
+        ostr << setw(1) << ' ' << ' ';
+        for (int x = 0; x < XSize; x++)
+        {
+            const BOXPUSHING_STATE::CELL& cell = bpstate.Cells(x, y);
+            char c = '.';
+            if (cell.Content == AGENT)
+	    {
+		if (bpstate.Agents[0].Position.X == x && bpstate.Agents[0].Position.Y == y)
+		    c = '0';
+		else
+		    c = '1';
+	    }
+            else if (cell.Content == SMALL_BOX)
+                c = 'S';
+            else if (cell.Content == LARGE_BOX)
+                c = 'L';
+            ostr << c << ' ';
+        }
+        ostr << setw(1) << ' ' << endl;
+    }
+    ostr << "  ";
+    for (int x = 0; x < XSize; x++)
+        ostr << setw(1) << ' ' << ' ';
+    ostr << "  " << endl;
+    ostr << "NumRemaining = " << bpstate.NumBoxesRemaining << endl;
+}
+
+
+void BOXPUSHING::DisplayObservation(const STATE& state, int observation, ostream& ostr) const
+{
+    int observation0 = observation/NumObservations;
+    int observation1 = observation%NumObservations;
+    
+    cout << observation0 << ", " << observation1 << "\n";
+}
+
+void BOXPUSHING::DisplayAction(int action, std::ostream& ostr) const
+{
+    int action0 = action/NumActions;
+    int action1 = action%NumActions;
+    
+    cout << action0 << ", " << action1 << "\n";
+}

@@ -1,0 +1,26 @@
+#include "box.h"
+
+using namespace std;
+using namespace UTILS;
+
+BOX::BOX(int xsize, int ysize, int numsmallboxes, int numlargeboxes)
+: XSize(xsize),
+  YSize(ysize),
+  NumSmallBoxes(numsmallboxes),
+  NumLargeBoxes(numlargeboxes)
+{
+  NumCells = XSize*YSize;
+  NumActions = 16;
+  NumObservations = 25;
+  RewardRange = NumLargeBoxes*100 + NumSmallBoxes*10;
+  Discount = 0.95;
+}
+
+STATE* BOX::Copy(const STATE& state) const
+{
+    const BOX_STATE& boxstate = safe_cast<const BOX_STATE&>(state);
+    BOX_STATE* newstate = MemoryPool.Allocate();
+    *newstate = boxstate;
+    return newstate; 
+}
+
