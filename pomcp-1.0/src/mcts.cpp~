@@ -22,7 +22,7 @@ MCTS::PARAMS::PARAMS()
     UseRave(false),
     RaveDiscount(1.0),
     RaveConstant(0.01),
-    DisableTree(false)
+    DisableTree(se)
 {
 }
 
@@ -98,7 +98,7 @@ int MCTS::SelectAction()
         RolloutSearch();
     else
         UCTSearch();
-    return GreedyUCB(Root, true);
+    return GreedyUCB(Root, false);
 }
 
 void MCTS::RolloutSearch()

@@ -4,7 +4,7 @@
 using namespace std;
 
 EXPERIMENT::PARAMS::PARAMS()
-:   NumRuns(1000),
+:   NumRuns(50),
     NumSteps(100000),
     SimSteps(1000),
     TimeOut(3600),
@@ -13,7 +13,7 @@ EXPERIMENT::PARAMS::PARAMS()
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
-    UndiscountedHorizon(1000),
+    UndiscountedHorizon(20),
     AutoExploration(true)
 {
 }

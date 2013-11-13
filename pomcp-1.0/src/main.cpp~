@@ -125,8 +125,9 @@ int main(int argc, char* argv[])
     }
     else if (problem == "boxpushing")
     {
-        real = new BOXPUSHING(size, size, number, number);
-        simulator = new BOXPUSHING(size, size, number, number);
+        real = new BOXPUSHING(size, size-1, number, number-1);
+        simulator = new BOXPUSHING(size, size-1, number, number-1);
+	cout << "done init\n";
     }
     else 
     {

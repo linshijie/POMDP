@@ -10,10 +10,12 @@ BOXPUSHING::BOXPUSHING(int xsize, int ysize, int numsmallboxes, int numlargeboxe
   NumSmallBoxes(numsmallboxes),
   NumLargeBoxes(numlargeboxes)
 {
-    NumActions = 4;
-    NumObservations = 5;
-    RewardRange = NumLargeBoxes*100 + NumSmallBoxes*10;
-    Discount = 0.95;
+    NumAgentActions = 4;
+    NumAgentObservations = 5;
+    NumActions = NumAgentActions*NumAgentActions;
+    NumObservations = NumAgentObservations*NumAgentObservations;
+    RewardRange = 99.8;
+    Discount = 1.0;
 }
 
 STATE* BOXPUSHING::Copy(const STATE& state) const
@@ -35,12 +37,11 @@ STATE* BOXPUSHING::CreateStartState() const
 {
     BOXPUSHING_STATE* bpstate = MemoryPool.Allocate();
     bpstate->Cells.Resize(XSize, YSize);
-    cout << "done resizing\n";
     for (int i = 0; i < XSize * YSize; ++i)
     {
 	BOXPUSHING_STATE::CELL& cell = bpstate->Cells(i);
 	cell.Occupied = false;
-	cell.Content = BOXPUSHING_STATE::NONE;
+	cell.Content = NONE;
     }
     bpstate->Agents.clear();
     bpstate->SmallBoxes.clear();
@@ -51,8 +52,8 @@ STATE* BOXPUSHING::CreateStartState() const
 	PUSH_ENTITY pe;
 	do
 	{
-	    pe.Direction = Random(2)*2+1;
-	    pe.Position = COORD(Random(XSize), 1);
+	    pe.Direction = 1;
+	    pe.Position = COORD(1, 1);
 	    pe.Length = 2;
 	}
 	while (Collision(*bpstate, pe));
@@ -66,7 +67,7 @@ STATE* BOXPUSHING::CreateStartState() const
 	PUSH_ENTITY pe;
 	do
 	{
-	    pe.Direction = 0;
+	    pe.Direction = 1;
 	    pe.Position = COORD(Random(XSize), 1);
 	    pe.Length = 1;
 	}
@@ -82,8 +83,8 @@ STATE* BOXPUSHING::CreateStartState() const
 	PUSH_ENTITY pe;
 	do
 	{
-	    pe.Direction = Random(4);
-	    pe.Position = COORD(Random(XSize), 0);
+	    pe.Direction = i==0?1:3;
+	    pe.Position = COORD(i==0?0:3, 0);
 	    pe.Length = 1;
 	}
 	while (Collision(*bpstate, pe));
@@ -107,7 +108,7 @@ bool BOXPUSHING::Step(STATE& state, int action,
 {
     BOXPUSHING_STATE& bpstate = safe_cast<BOXPUSHING_STATE&>(state);
     
-    int actions[] = {action/4, action%4};
+    int actions[] = {action/NumAgentActions, action%NumAgentActions};
     
     COORD next0 = bpstate.Agents[0].Position + COORD::Compass[bpstate.Agents[0].Direction];
     COORD next1 = bpstate.Agents[1].Position + COORD::Compass[bpstate.Agents[1].Direction];
@@ -115,7 +116,7 @@ bool BOXPUSHING::Step(STATE& state, int action,
     COORD after1 = next1 + COORD::Compass[bpstate.Agents[1].Direction];
     
     if (actions[0] == MOVE && actions[1] == MOVE && 
-	COORD::EuclideanDistance(bpstate.Agents[0].Position,bpstate.Agents[1].Position) < 1.0 &&
+	COORD::EuclideanDistance(bpstate.Agents[0].Position,bpstate.Agents[1].Position) <= 1.0 &&
 	bpstate.Cells.Inside(next0) && bpstate.Cells.Inside(next1) &&
 	bpstate.Cells(next0).Content == LARGE_BOX && 
 	bpstate.Cells(next1).Content == LARGE_BOX &&
@@ -164,7 +165,7 @@ bool BOXPUSHING::Step(STATE& state, int action,
 	    reward = MoveAgent(bpstate, 1, actions[1]) + MoveAgent(bpstate, 0, actions[0]);
     }
     
-    observation = NumObservations*GetAgentObservation(bpstate, 0) + GetAgentObservation(bpstate, 1);
+    observation = NumAgentObservations*GetAgentObservation(bpstate, 0) + GetAgentObservation(bpstate, 1);
     
     return bpstate.NumBoxesRemaining == 0;
 }
@@ -227,6 +228,7 @@ double BOXPUSHING::MoveAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agen
 		}  
 		return -0.1;
 	    }
+	    return -0.1;
 	
     }
 }
@@ -307,7 +309,7 @@ bool BOXPUSHING::LocalMove(STATE& state, const HISTORY& history,
     }
     
     int realObs = history.Back().Observation;
-    int simObs = NumObservations*GetAgentObservation(bpstate, 0) + GetAgentObservation(bpstate, 1);
+    int simObs = NumAgentObservations*GetAgentObservation(bpstate, 0) + GetAgentObservation(bpstate, 1);
     
     return realObs == simObs;
     
@@ -317,7 +319,7 @@ bool BOXPUSHING::LocalMove(STATE& state, const HISTORY& history,
 void BOXPUSHING::GenerateLegal(const STATE& state, const HISTORY& history,
         std::vector<int>& legal, const STATUS& status) const
 {
-    for (int a = 0; a < NumActions*NumActions; a++)
+    for (int a = 0; a < NumActions; a++)
         legal.push_back(a);
 }
 
@@ -331,8 +333,8 @@ void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
         return;
     
     int lastObs = history.Back().Observation;
-    int lastObs0 = lastObs/NumActions;
-    int lastObs1 = lastObs%NumActions;
+    int lastObs0 = lastObs/NumAgentActions;
+    int lastObs1 = lastObs%NumAgentActions;
     
     */
 }
@@ -398,10 +400,26 @@ void BOXPUSHING::DisplayState(const STATE& state, ostream& ostr) const
             char c = '.';
             if (cell.Content == AGENT)
 	    {
+		int direction;
 		if (bpstate.Agents[0].Position.X == x && bpstate.Agents[0].Position.Y == y)
-		    c = '0';
+		    direction = bpstate.Agents[0].Direction;
 		else
-		    c = '1';
+		    direction = bpstate.Agents[1].Direction;
+		switch(direction)
+		{
+		    case(0):
+			c = '^';
+			break;
+		    case(1):
+			c = '>';
+			break;
+		    case(2):
+			c = 'v';
+			break;
+		    default:
+			c = '<';
+			break;
+		}
 	    }
             else if (cell.Content == SMALL_BOX)
                 c = 'S';
@@ -421,16 +439,20 @@ void BOXPUSHING::DisplayState(const STATE& state, ostream& ostr) const
 
 void BOXPUSHING::DisplayObservation(const STATE& state, int observation, ostream& ostr) const
 {
-    int observation0 = observation/NumObservations;
-    int observation1 = observation%NumObservations;
+    string observationNames[5] = {"EMPTY_OBS", "WALL_OBS", "AGENT_OBS", "SMALL_BOX_OBS", "LARGE_BOX_OBS"};
     
-    cout << observation0 << ", " << observation1 << "\n";
+    int observation0 = observation/NumAgentObservations;
+    int observation1 = observation%NumAgentObservations;
+    
+    cout << observationNames[observation0] << ", " << observationNames[observation1] << "\n";
 }
 
 void BOXPUSHING::DisplayAction(int action, std::ostream& ostr) const
 {
-    int action0 = action/NumActions;
-    int action1 = action%NumActions;
+    string actionNames[4] = {"STAY", "TURN_CW", "TURN_CCW", "MOVE"};
     
-    cout << action0 << ", " << action1 << "\n";
+    int action0 = action/NumAgentActions;
+    int action1 = action%NumAgentActions;
+    
+    cout << actionNames[action0] << ", " << actionNames[action1] << "\n";
 }

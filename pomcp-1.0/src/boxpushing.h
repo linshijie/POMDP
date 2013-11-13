@@ -77,6 +77,8 @@ protected:
     int YSize;
     int NumSmallBoxes;
     int NumLargeBoxes;
+    int NumAgentActions;
+    int NumAgentObservations;
     
 private:
 

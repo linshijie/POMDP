@@ -13,6 +13,8 @@ struct PUSH_ENTITY
     int Direction;
     int Length;
 };
+
+enum CellContent {NONE = -1, AGENT = 0, SMALL_BOX = 1, LARGE_BOX = 2};
    
 enum ActionTypes {STAY = 0, TURN_CW = 1, TURN_CCW = 2, MOVE = 3};
 
@@ -22,8 +24,6 @@ class BOXPUSHING_STATE : public STATE
 {
 public:
 
-    enum CellContent {NONE = -1, AGENT = 0, SMALL_BOX = 1, LARGE_BOX = 2};
-    
     struct CELL
     {
         bool Occupied;
