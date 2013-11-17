@@ -18,7 +18,7 @@ MCTS::PARAMS::PARAMS()
     NumTransforms(0),
     MaxAttempts(0),
     ExpandCount(1),
-    ExplorationConstant(1),
+    ExplorationConstant(10),
     UseRave(false),
     RaveDiscount(1.0),
     RaveConstant(0.01),

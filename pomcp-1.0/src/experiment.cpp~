@@ -13,7 +13,7 @@ EXPERIMENT::PARAMS::PARAMS()
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
-    UndiscountedHorizon(3),
+    UndiscountedHorizon(2),
     AutoExploration(true)
 {
 }

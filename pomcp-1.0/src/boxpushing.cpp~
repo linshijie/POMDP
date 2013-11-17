@@ -167,7 +167,7 @@ bool BOXPUSHING::Step(STATE& state, int action,
     
     observation = NumAgentObservations*GetAgentObservation(bpstate, 0) + GetAgentObservation(bpstate, 1);
     
-    return bpstate.NumBoxesRemaining == 0;
+    return bpstate.NumBoxesRemaining < NumLargeBoxes+NumSmallBoxes;
 }
 
 double BOXPUSHING::MoveAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agentaction) const
@@ -327,16 +327,16 @@ void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
         std::vector<int>& actions, const STATUS& status) const
 {
     
-    /*const BOXPUSHING_STATE& bpstate = safe_cast<const BOXPUSHING_STATE&>(state);
+    const BOXPUSHING_STATE& bpstate = safe_cast<const BOXPUSHING_STATE&>(state);
     
     if (history.Size() == 0)
         return;
     
     int lastObs = history.Back().Observation;
-    int lastObs0 = lastObs/NumAgentActions;
-    int lastObs1 = lastObs%NumAgentActions;
+    int lastObs0 = lastObs/NumAgentObservations;
+    int lastObs1 = lastObs%NumAgentObervattions;
     
-    */
+    
 }
 
 

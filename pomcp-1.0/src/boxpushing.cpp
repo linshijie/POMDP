@@ -327,16 +327,16 @@ void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
         std::vector<int>& actions, const STATUS& status) const
 {
     
-    /*const BOXPUSHING_STATE& bpstate = safe_cast<const BOXPUSHING_STATE&>(state);
+    const BOXPUSHING_STATE& bpstate = safe_cast<const BOXPUSHING_STATE&>(state);
     
     if (history.Size() == 0)
         return;
     
     int lastObs = history.Back().Observation;
-    int lastObs0 = lastObs/NumAgentActions;
-    int lastObs1 = lastObs%NumAgentActions;
+    int lastObs0 = lastObs/NumAgentObservations;
+    int lastObs1 = lastObs%NumAgentObservations;
     
-    */
+    
 }
 
 
