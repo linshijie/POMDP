@@ -9,11 +9,11 @@ EXPERIMENT::PARAMS::PARAMS()
     SimSteps(1000),
     TimeOut(3600),
     MinDoubles(0),
-    MaxDoubles(20),
+    MaxDoubles(15),
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
-    UndiscountedHorizon(3),
+    UndiscountedHorizon(100),
     AutoExploration(true)
 {
 }

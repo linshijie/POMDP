@@ -334,8 +334,56 @@ void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
     
     int lastObs = history.Back().Observation;
     int lastObs0 = lastObs/NumAgentObservations;
-    int lastObs1 = lastObs%NumAgentObervattions;
+    int lastObs1 = lastObs%NumAgentObservations;
     
+    std::vector<int> actions0;
+    std::vector<int> actions1;
+    
+    GeneratePreferredAgent(lastObs0, actions0);
+    GenerateLegalAgent(actions1);
+    //GeneratePreferredAgent(lastObs1, actions1);
+    
+    for (int i = 0; i < (int)actions0.size(); i++)
+	for (int j = 0; j < (int)actions1.size(); j++)
+	    actions.push_back(NumAgentActions*actions0[i] + actions1[j]);
+}
+
+void BOXPUSHING::GenerateLegalAgent(std::vector<int>& actions) const
+{
+    for (int a = 0; a < NumAgentActions; a++)
+        actions.push_back(a);
+}
+
+void BOXPUSHING::GeneratePreferredAgent(const int& lastObs, std::vector<int>& actions) const
+{
+    actions.clear();
+    switch(lastObs)
+    {
+	case(EMPTY_OBS):
+	    actions.push_back(STAY);
+	    actions.push_back(TURN_CW);
+	    actions.push_back(TURN_CCW);
+	    actions.push_back(MOVE);
+	    break;
+	case(WALL_OBS):
+	    actions.push_back(TURN_CW);
+	    actions.push_back(TURN_CCW);
+	    break;
+	case(AGENT_OBS):
+	    actions.push_back(STAY);
+	    actions.push_back(TURN_CW);
+	    actions.push_back(TURN_CCW);
+	    break;
+	case(SMALL_BOX_OBS):
+	    actions.push_back(MOVE);
+	    break;
+	case(LARGE_BOX_OBS):
+	    actions.push_back(STAY);
+	    actions.push_back(MOVE);
+	    break;
+	default:
+	    break;
+    }
     
 }
 
