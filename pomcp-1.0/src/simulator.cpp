@@ -28,6 +28,8 @@ SIMULATOR::SIMULATOR()
 SIMULATOR::SIMULATOR(int numActions, int numObservations, double discount)
 :   NumActions(numActions),
     NumObservations(numObservations),
+    NumAgentActions(numActions),
+    NumAgentObservations(numObservations),
     Discount(discount)
 { 
     assert(discount > 0 && discount <= 1);
@@ -54,20 +56,35 @@ void SIMULATOR::GenerateLegal(const STATE& state, const HISTORY& history,
         actions.push_back(a);
 }
 
+void SIMULATOR::GenerateLegalAgent(const STATE& state, const HISTORY& history, 
+    std::vector<int>& actions, const STATUS& status) const
+{
+    for (int a = 0; a < NumAgentActions; ++a)
+        actions.push_back(a);
+}
+
 void SIMULATOR::GeneratePreferred(const STATE& state, const HISTORY& history, 
     std::vector<int>& actions, const STATUS& status) const
 {
 }
 
+void SIMULATOR::GeneratePreferredAgent(const STATE& state, const HISTORY& history, 
+    std::vector<int>& actions, const STATUS& status) const
+{
+}
+
 int SIMULATOR::SelectRandom(const STATE& state, const HISTORY& history,
-    const STATUS& status) const
+    const STATUS& status, const int& index) const
 {
     static vector<int> actions;
 
     if (Knowledge.RolloutLevel >= KNOWLEDGE::SMART)
     {
         actions.clear();
-        GeneratePreferred(state, history, actions, status);
+	if (index == 0)
+	    GeneratePreferred(state, history, actions, status);
+	else
+	    GeneratePreferredAgent(state, history, actions, status);
         if (!actions.empty())
             return actions[Random(actions.size())];
     }
@@ -75,7 +92,10 @@ int SIMULATOR::SelectRandom(const STATE& state, const HISTORY& history,
     if (Knowledge.RolloutLevel >= KNOWLEDGE::LEGAL)
     {
         actions.clear();
-        GenerateLegal(state, history, actions, status);
+	if (index == 0)
+	    GenerateLegal(state, history, actions, status);
+	else
+	    GenerateLegalAgent(state, history, actions, status);
         if (!actions.empty())
             return actions[Random(actions.size())];
     }
@@ -84,7 +104,7 @@ int SIMULATOR::SelectRandom(const STATE& state, const HISTORY& history,
 }
 
 void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
-    VNODE* vnode, const STATUS& status) const
+    VNODE* vnode, const STATUS& status, const int& index) const
 {
     static vector<int> actions;
     
@@ -101,7 +121,10 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
     if (Knowledge.TreeLevel >= KNOWLEDGE::LEGAL)
     {
         actions.clear();
-        GenerateLegal(*state, history, actions, status);
+        if (index == 0)
+	    GenerateLegal(*state, history, actions, status);
+	else
+	    GenerateLegalAgent(*state, history, actions, status);
 
         for (vector<int>::const_iterator i_action = actions.begin(); i_action != actions.end(); ++i_action)
         {
@@ -115,7 +138,10 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
     if (Knowledge.TreeLevel >= KNOWLEDGE::SMART)
     {
         actions.clear();
-        GeneratePreferred(*state, history, actions, status);
+        if (index == 0)
+	    GeneratePreferred(*state, history, actions, status);
+	else
+	    GeneratePreferredAgent(*state, history, actions, status);
 
         for (vector<int>::const_iterator i_action = actions.begin(); i_action != actions.end(); ++i_action)
         {

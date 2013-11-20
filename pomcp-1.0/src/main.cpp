@@ -11,14 +11,16 @@
 using namespace std;
 using namespace boost::program_options;
 
-void UnitTests()
+void UnitTests(MCTS::PARAMS& searchParams)
 {
     cout << "Testing UTILS" << endl;
     UTILS::UnitTest();
     cout << "Testing COORD" << endl;
     COORD::UnitTest();
     cout << "Testing MCTS" << endl;
-    MCTS::UnitTest();
+    MCTS::UnitTest(0);
+    if (searchParams.MultiAgent)
+	MCTS::UnitTest(2);
 }
 
 void disableBufferedIO(void)
@@ -93,7 +95,7 @@ int main(int argc, char* argv[])
     if (vm.count("test"))
     {
         cout << "Running unit tests" << endl;
-        UnitTests();
+        UnitTests(searchParams);
         return 0;
     }
 

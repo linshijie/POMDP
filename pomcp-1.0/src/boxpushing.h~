@@ -52,8 +52,12 @@ public:
         
     void GeneratePreferred(const STATE& state, const HISTORY& history,
         std::vector<int>& actions, const STATUS& status) const;
+    void GeneratePreferredAgent(const STATE& state, const HISTORY& history,
+        std::vector<int>& actions, const STATUS& status) const;
     void GenerateLegal(const STATE& state, const HISTORY& history,
         std::vector<int>& legal, const STATUS& status) const;
+    void GenerateLegalAgent(const STATE& state, const HISTORY& history, 
+	std::vector<int>& actions, const STATUS& status) const;
     virtual bool LocalMove(STATE& state, const HISTORY& history,
         int stepObs, const STATUS& status) const;
 
@@ -72,15 +76,12 @@ protected:
     void UnmarkCell(BOXPUSHING_STATE& bpstate, const COORD& coord) const;
     void MarkPushEntity(BOXPUSHING_STATE& bpstate, const PUSH_ENTITY& pushentity, const CellContent& content) const;
     void UnmarkPushEntity(BOXPUSHING_STATE& bpstate, const PUSH_ENTITY& pushentity) const;
-    void GenerateLegalAgent(const int& lastObs, std::vector<int>& actions) const;
     void GeneratePreferredAgent(const int& lastObs, std::vector<int>& actions) const;
     
     int XSize;
     int YSize;
     int NumSmallBoxes;
     int NumLargeBoxes;
-    int NumAgentActions;
-    int NumAgentObservations;
     
 private:
 

@@ -95,12 +95,12 @@ public:
     // Use domain knowledge to assign prior value and confidence to actions
     // Should only use fully observable state variables
     void Prior(const STATE* state, const HISTORY& history, VNODE* vnode,
-        const STATUS& status) const;
+        const STATUS& status, const int& index) const;
 
     // Use domain knowledge to select actions stochastically during rollouts
     // Should only use fully observable state variables
     int SelectRandom(const STATE& state, const HISTORY& history,
-        const STATUS& status) const;
+        const STATUS& status, const int& index) const;
 
     // Generate set of legal actions
     virtual void GenerateLegal(const STATE& state, const HISTORY& history, 
@@ -108,6 +108,13 @@ public:
 
     // Generate set of preferred actions
     virtual void GeneratePreferred(const STATE& state, const HISTORY& history, 
+        std::vector<int>& actions, const STATUS& status) const;
+	
+	
+    virtual void GenerateLegalAgent(const STATE& state, const HISTORY& history, 
+        std::vector<int>& actions, const STATUS& status) const;
+	
+    virtual void GeneratePreferredAgent(const STATE& state, const HISTORY& history, 
         std::vector<int>& actions, const STATUS& status) const;
 
     // For explicit POMDP computation only
@@ -127,6 +134,12 @@ public:
     void SetKnowledge(const KNOWLEDGE& knowledge) { Knowledge = knowledge; }
     int GetNumActions() const { return NumActions; }
     int GetNumObservations() const { return NumObservations; }
+    int GetNumAgentActions() const { return NumAgentActions; }
+    int GetNumAgentObservations() const { return NumAgentObservations; }
+    int GetAgentAction(const int& action, const int& index) const { return index > 1 ? action%NumAgentActions : 
+									    action/NumAgentActions;}
+    int GetAgentObservation(const int& observation, const int& index) const { return index > 1 ? 
+						    observation%NumAgentObservations : observation/NumAgentObservations;}
     bool IsEpisodic() const { return false; }
     double GetDiscount() const { return Discount; }
     double GetRewardRange() const { return RewardRange; }
@@ -134,7 +147,7 @@ public:
     
 protected:
 
-    int NumActions, NumObservations;
+    int NumActions, NumObservations, NumAgentActions, NumAgentObservations;
     double Discount, RewardRange;
     KNOWLEDGE Knowledge;
 };

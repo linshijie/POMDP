@@ -10,6 +10,7 @@ BOXPUSHING::BOXPUSHING(int xsize, int ysize, int numsmallboxes, int numlargeboxe
   NumSmallBoxes(numsmallboxes),
   NumLargeBoxes(numlargeboxes)
 {
+    //NumSmallBoxes = 0;
     NumAgentActions = 4;
     NumAgentObservations = 5;
     NumActions = NumAgentActions*NumAgentActions;
@@ -273,16 +274,23 @@ bool BOXPUSHING::LocalMove(STATE& state, const HISTORY& history,
     int boxtype = Random(2);
     int boxindex;
     PUSH_ENTITY pe;
-    if (boxtype == 0)
+    
+    if (NumSmallBoxes == 0 && NumLargeBoxes == 0)
+	return false;
+    
+    if (boxtype == 0  && NumSmallBoxes > 0)
     {
 	boxindex = Random(NumSmallBoxes);
 	pe = bpstate.SmallBoxes.at(boxindex);
     }
-    else
+    else if (boxtype == 1 && NumLargeBoxes > 0)
     {
 	boxindex = Random(NumLargeBoxes);
 	pe = bpstate.LargeBoxes.at(boxindex);
     }
+    else
+	return false;
+    
     if (pe.Position.Y == YSize-1)
 	//box has already been pushed to the end
 	return false;
@@ -297,17 +305,19 @@ bool BOXPUSHING::LocalMove(STATE& state, const HISTORY& history,
     }
     while(Collision(bpstate, pe));
     
+    
+    
     if (boxtype == 0)
     {
 	bpstate.SmallBoxes[boxindex] = pe;
 	MarkPushEntity(bpstate, pe, SMALL_BOX);
     }
-    else
+    else if (boxtype == 1)
     {
 	bpstate.LargeBoxes[boxindex] = pe;
 	MarkPushEntity(bpstate, pe, LARGE_BOX);
     }
-    
+
     int realObs = history.Back().Observation;
     int simObs = NumAgentObservations*GetAgentObservation(bpstate, 0) + GetAgentObservation(bpstate, 1);
     
@@ -326,7 +336,6 @@ void BOXPUSHING::GenerateLegal(const STATE& state, const HISTORY& history,
 void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
         std::vector<int>& actions, const STATUS& status) const
 {
-    
     const BOXPUSHING_STATE& bpstate = safe_cast<const BOXPUSHING_STATE&>(state);
     
     if (history.Size() == 0)
@@ -339,24 +348,24 @@ void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
     std::vector<int> actions0;
     std::vector<int> actions1;
     
-    GeneratePreferredAgent(lastObs0, actions0);
-    GenerateLegalAgent(actions1);
-    //GeneratePreferredAgent(lastObs1, actions1);
+    GeneratePreferredAgentAction(lastObs0, actions0);
+    //GenerateLegalAgent(state,history,actions1,status);
+    GeneratePreferredAgentAction(lastObs1, actions1);
     
     for (int i = 0; i < (int)actions0.size(); i++)
 	for (int j = 0; j < (int)actions1.size(); j++)
 	    actions.push_back(NumAgentActions*actions0[i] + actions1[j]);
 }
 
-void BOXPUSHING::GenerateLegalAgent(std::vector<int>& actions) const
+void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history, 
+    std::vector<int>& actions, const STATUS& status) const
 {
     for (int a = 0; a < NumAgentActions; a++)
         actions.push_back(a);
 }
 
-void BOXPUSHING::GeneratePreferredAgent(const int& lastObs, std::vector<int>& actions) const
+void BOXPUSHING::GeneratePreferredAgentAction(const int& lastObs, std::vector<int>& actions) const
 {
-    actions.clear();
     switch(lastObs)
     {
 	case(EMPTY_OBS):
@@ -376,6 +385,8 @@ void BOXPUSHING::GeneratePreferredAgent(const int& lastObs, std::vector<int>& ac
 	    break;
 	case(SMALL_BOX_OBS):
 	    actions.push_back(MOVE);
+	    actions.push_back(TURN_CW);
+	    actions.push_back(TURN_CCW);
 	    break;
 	case(LARGE_BOX_OBS):
 	    actions.push_back(STAY);
@@ -384,7 +395,15 @@ void BOXPUSHING::GeneratePreferredAgent(const int& lastObs, std::vector<int>& ac
 	default:
 	    break;
     }
-    
+}
+
+void BOXPUSHING::GeneratePreferredAgent(const STATE& state, const HISTORY& history, 
+    std::vector<int>& actions, const STATUS& status) const
+{
+    if (history.Size() == 0)
+        return;
+    int lastObs = history.Back().Observation;
+    GeneratePreferredAgentAction(lastObs,actions);
 }
 
 
