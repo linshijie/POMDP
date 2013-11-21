@@ -100,7 +100,7 @@ int SIMULATOR::SelectRandom(const STATE& state, const HISTORY& history,
             return actions[Random(actions.size())];
     }
 
-    return Random(NumActions);
+    return index == 0 ? Random(NumActions) : Random(NumAgentActions);
 }
 
 void SIMULATOR::Prior(const STATE* state, const HISTORY& history,

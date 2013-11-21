@@ -27,6 +27,7 @@ public:
         double RaveConstant;
         bool DisableTree;
 	bool MultiAgent;
+	bool JointQActions;
 	bool RewardAdaptive;
     };
 

@@ -13,7 +13,7 @@ MCTS::PARAMS::PARAMS()
 :   Verbose(0),
     MaxDepth(100),
     NumSimulations(1000),
-    NumStartStates(1000),
+    NumStartStates(1),
     UseTransforms(true),
     NumTransforms(0),
     MaxAttempts(0),
@@ -24,6 +24,7 @@ MCTS::PARAMS::PARAMS()
     RaveConstant(0.01),
     DisableTree(false),
     MultiAgent(false),
+    JointQActions(true),
     RewardAdaptive(false)
 {
 }
@@ -33,7 +34,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
     Params(params),
     TreeDepth(0)
 {
-    VNODE::NumChildren = Simulator.GetNumActions();
+    VNODE::NumChildren = Params.JointQActions ? Simulator.GetNumActions() : Simulator.GetNumAgentActions();
     QNODE::NumChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
 
     if (!Params.MultiAgent)
@@ -74,7 +75,15 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
     BELIEF_STATE beliefs;
 
     // Find matching vnode from the rest of the tree
-    QNODE& qnode = index > 0 ? Root2->Child(action) : Root->Child(action);
+    if (Params.MultiAgent && !Params.JointQActions)
+    {
+	if (index == 1)
+	    action = Simulator.GetAgentAction(action,1);
+	else
+	    action = Simulator.GetAgentAction(action,2);
+    }
+	
+    QNODE& qnode = index > 1 ? Root2->Child(action) : Root->Child(action);
     VNODE* vnode = qnode.Child(observation);
     if (vnode)
     {
@@ -164,10 +173,19 @@ void MCTS::RolloutSearch(const int& index)
 
 		int observation;
 		double immediateReward, delayedReward, totalReward;
-		bool terminal = Simulator.Step(*state, action, observation, immediateReward);	    
+		bool terminal = Simulator.Step(*state, action, observation, immediateReward);	 
+		
+		int treeaction = action;
+		if (Params.MultiAgent && !Params.JointQActions)
+		{
+		    if (index == 1)
+			treeaction = Simulator.GetAgentAction(action,1);
+		    else
+			treeaction = Simulator.GetAgentAction(action,2);
+		}
 
-		VNODE*& vnode = index > 1 ? Root2->Child(action).Child(Simulator.GetAgentObservation(observation,1)) : 
-					    Root->Child(action).Child(Simulator.GetAgentObservation(observation,2));
+		VNODE*& vnode = index > 1 ? Root2->Child(treeaction).Child(Simulator.GetAgentObservation(observation,1)) : 
+					    Root->Child(treeaction).Child(Simulator.GetAgentObservation(observation,2));
 		if (!vnode && !terminal)
 		{
 			vnode = ExpandNode(state, index);
@@ -183,9 +201,9 @@ void MCTS::RolloutSearch(const int& index)
 		delayedReward = Rollout(*state, index);
 		totalReward = immediateReward + Simulator.GetDiscount() * delayedReward;
 		if (index > 1)
-		    Root2->Child(action).Value.Add(totalReward);
+		    Root2->Child(treeaction).Value.Add(totalReward);
 		else
-		    Root->Child(action).Value.Add(totalReward);
+		    Root->Child(treeaction).Value.Add(totalReward);
 
 		Simulator.FreeState(state);
 		if (index > 1)
@@ -257,6 +275,14 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index)
 {
     int observation;
     double immediateReward, delayedReward = 0;
+    
+    if (Params.MultiAgent && !Params.JointQActions)
+    {
+	if (index == 1)
+	    action = Simulator.GetNumAgentActions()*action + Random(Simulator.GetNumAgentActions());
+	else
+	    action = Simulator.GetNumAgentActions()*Random(Simulator.GetNumAgentActions()) + action;
+    }
 
     if (Simulator.HasAlpha())
         Simulator.UpdateAlpha(qnode, state);
@@ -314,7 +340,7 @@ void MCTS::AddRave(VNODE* vnode, double totalReward, const int& index)
     for (int t = TreeDepth; t < maxIter; ++t)
     {
 	int action;
-	if (index == 0)
+	if (index == 0 || (Params.MultiAgent && !Params.JointQActions))
 	    action = History[t].Action;
 	else
 	{
@@ -373,8 +399,14 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb) const
     int N = vnode->Value.GetCount();
     double logN = log(N + 1);
     bool hasalpha = Simulator.HasAlpha();
+    
+    int maxIter;
+    if (Params.MultiAgent && !Params.JointQActions)
+	maxIter = Simulator.GetNumAgentActions();
+    else
+	maxIter = Simulator.GetNumActions();
 
-    for (int action = 0; action < Simulator.GetNumActions(); action++)
+    for (int action = 0; action < maxIter; action++)
     {
         double q, alphaq;
         int n, alphan;
@@ -430,10 +462,15 @@ double MCTS::Rollout(STATE& state, const int& index)
         double reward;
 
         int action;
-	if (index > 1)
-	    action = Simulator.SelectRandom(state, History2, Status2, index);
-	else
+	if (index == 0)
 	    action = Simulator.SelectRandom(state, History, Status, index);
+	else if (index == 1)
+	    action = Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, History2, Status2, index) +
+			Random(Simulator.GetNumAgentActions());
+	else
+	    action = Simulator.GetNumAgentActions()*Random(Simulator.GetNumAgentActions()) + 
+			Simulator.SelectRandom(state, History, Status, index);
+	
         terminal = Simulator.Step(state, action, observation, reward);
         if (index == 0)
 	    History.Add(action, observation);
