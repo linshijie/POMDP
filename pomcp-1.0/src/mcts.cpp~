@@ -34,7 +34,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
     TreeDepth(0)
 {
     VNODE::NumChildren = Simulator.GetNumActions();
-    QNODE::NumChildren = Simulator.GetNumObservations();
+    QNODE::NumChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
 
     if (!Params.MultiAgent)
 	Root = ExpandNode(Simulator.CreateStartState(), 0);
@@ -66,10 +66,10 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
 	History.Add(action, observation);
     else
     {
-	if (index == 0)
-	    History.Add(Simulator.GetAgentAction(action,0), Simulator.GetAgentObservation(observation,0));
+	if (index == 1)
+	    History.Add(Simulator.GetAgentAction(action,1), observation);
 	else
-	    History2.Add(Simulator.GetAgentAction(action,2), Simulator.GetAgentObservation(observation,2));
+	    History2.Add(Simulator.GetAgentAction(action,2), observation);
     }
     BELIEF_STATE beliefs;
 
@@ -132,32 +132,15 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
 
 int MCTS::SelectAction(const int& index)
 {
-    if (!Params.MultiAgent)
-    {
-	if (Params.DisableTree)
-	    RolloutSearch(index);
-	else
-	    UCTSearch(index);
-	if (index > 1)
-	    return GreedyUCB(Root, false);
-	else
-	    return GreedyUCB(Root2, false);
-    }
+    if (Params.DisableTree)
+	RolloutSearch(index);
     else
-    {
-	if (Params.DisableTree)
-	{
-	    RolloutSearch(1);
-	    RolloutSearch(2);
-	}
-	else
-	{
-	    UCTSearch(1);
-	    UCTSearch(2);
-	}
-	return Simulator.GetNumAgentActions()*Simulator.GetAgentAction(GreedyUCB(Root, true),1) + 
-		Simulator.GetAgentAction(GreedyUCB(Root2, true),2);
-    }
+	UCTSearch(index);
+    if (index > 1)
+	return GreedyUCB(Root2, false);
+    else
+	return GreedyUCB(Root, false);
+
 }
 
 void MCTS::RolloutSearch(const int& index)
@@ -181,10 +164,10 @@ void MCTS::RolloutSearch(const int& index)
 
 		int observation;
 		double immediateReward, delayedReward, totalReward;
-		bool terminal = Simulator.Step(*state, action, observation, immediateReward);
+		bool terminal = Simulator.Step(*state, action, observation, immediateReward);	    
 
-		VNODE*& vnode = index > 1 ? Root2->Child(action).Child(observation) : 
-					    vnode = Root->Child(action).Child(observation);
+		VNODE*& vnode = index > 1 ? Root2->Child(action).Child(Simulator.GetAgentObservation(observation,1)) : 
+					    Root->Child(action).Child(Simulator.GetAgentObservation(observation,2));
 		if (!vnode && !terminal)
 		{
 			vnode = ExpandNode(state, index);
@@ -278,10 +261,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index)
     if (Simulator.HasAlpha())
         Simulator.UpdateAlpha(qnode, state);
     bool terminal = Simulator.Step(state, action, observation, immediateReward);
-    if (!Params.MultiAgent)
-	assert(observation >= 0 && observation < Simulator.GetNumObservations());
-    else
-	assert(observation >= 0 && observation < Simulator.GetNumAgentObservations());
+    assert(observation >= 0 && observation < Simulator.GetNumObservations());
     if (index == 0)
 	History.Add(action, observation);
     else if (index == 1)
@@ -297,8 +277,10 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index)
         Simulator.DisplayState(state, cout);
     }
 
-    VNODE*& vnode = qnode.Child(observation);
-    if (index == 1)
+    VNODE*& vnode = qnode.Child(0);
+    if (index == 0)
+	qnode.Child(observation);
+    else if (index == 1)
 	vnode = qnode.Child(Simulator.GetAgentObservation(observation, 1));
     else if (index > 1)
 	vnode = qnode.Child(Simulator.GetAgentObservation(observation, 2));

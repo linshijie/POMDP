@@ -10,7 +10,7 @@ BOXPUSHING::BOXPUSHING(int xsize, int ysize, int numsmallboxes, int numlargeboxe
   NumSmallBoxes(numsmallboxes),
   NumLargeBoxes(numlargeboxes)
 {
-    //NumSmallBoxes = 0;
+    NumSmallBoxes = 0;
     NumAgentActions = 4;
     NumAgentObservations = 5;
     NumActions = NumAgentActions*NumAgentActions;

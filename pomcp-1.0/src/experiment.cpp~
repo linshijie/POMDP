@@ -9,7 +9,7 @@ EXPERIMENT::PARAMS::PARAMS()
     SimSteps(1000),
     TimeOut(3600),
     MinDoubles(0),
-    MaxDoubles(10),
+    MaxDoubles(15),
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
@@ -47,7 +47,7 @@ void EXPERIMENT::Run()
     double discountedReturn = 0.0;
     double discount = 1.0;
     bool terminal = false;
-    bool outOfParticles = false, outOfParticles2 = true;
+    bool outOfParticles = false, outOfParticles2 = false;
     int t;
 
     STATE* state = Real.CreateStartState();
@@ -59,10 +59,16 @@ void EXPERIMENT::Run()
         int observation;
         double reward;
         int action;
+	int jointaction0 = 0, jointaction1 = 0;
 	if (!SearchParams.MultiAgent)
 	    action = mcts.SelectAction(0);
 	else
-	    action = Simulator.GetNumAgentActions()*Simulator.GetAgentAction(mcts.SelectAction(1),1);
+	{
+	    jointaction0 = mcts.SelectAction(1);
+	    jointaction1 = mcts.SelectAction(2);
+	    action = Simulator.GetNumAgentActions()*Simulator.GetAgentAction(jointaction0,1) + 
+			Simulator.GetAgentAction(jointaction1,1);
+	}
         terminal = Real.Step(*state, action, observation, reward);
 
         Results.Reward.Add(reward);
@@ -84,10 +90,15 @@ void EXPERIMENT::Run()
             break;
         }
 	
-	outOfParticles = !mcts.Update(action, observation, reward, 1);
-	if (SearchParams.MultiAgent)
-	    outOfParticles2 = !mcts.Update(action, observation, reward, 2);
-        if (outOfParticles && outOfParticles2)
+	if (!SearchParams.MultiAgent)
+	    outOfParticles = !mcts.Update(action, observation, reward, 0);
+	else
+	{
+	    outOfParticles = !mcts.Update(jointaction0, Simulator.GetAgentObservation(observation,1), reward, 1);
+	    outOfParticles2 = !mcts.Update(jointaction1, Simulator.GetAgentObservation(observation,2), reward, 2);
+	}
+	    
+        if (outOfParticles || outOfParticles2)
             break;
 
         if (timer.elapsed() > ExpParams.TimeOut)
@@ -98,7 +109,7 @@ void EXPERIMENT::Run()
         }
     }
 
-    if (outOfParticles && outOfParticles2)
+    if (outOfParticles || outOfParticles2)
     {
         cout << "Out of particles, finishing episode with SelectRandom" << endl;
         HISTORY history = mcts.GetHistory(0);
@@ -115,11 +126,23 @@ void EXPERIMENT::Run()
             // SelectRandom must only use fully observable state
             // to avoid "cheating"
             int action;
+	    int jointaction0 = 0, jointaction1 = 0;
 	    if (!SearchParams.MultiAgent)
 		action = Simulator.SelectRandom(*state, history, mcts.GetStatus(0), 0);
 	    else
-		action = Simulator.GetNumAgentActions()*Simulator.SelectRandom(*state, history, mcts.GetStatus(1), 1)
-		+ Simulator.SelectRandom(*state, history2, mcts.GetStatus(2), 2);
+	    {
+		if (outOfParticles)
+		    jointaction0 = Simulator.SelectRandom(*state, history, mcts.GetStatus(1), 1);
+		else
+		    jointaction0 = mcts.SelectAction(1);
+		if (outOfParticles2)
+		    jointaction1 = Simulator.SelectRandom(*state, history, mcts.GetStatus(2), 2);
+		else
+		    jointaction1 = mcts.SelectAction(2);
+		
+		action = Simulator.GetNumAgentActions()*Simulator.GetAgentAction(jointaction0,1) + 
+			    Simulator.GetAgentAction(jointaction1,1);
+	    }
             terminal = Real.Step(*state, action, observation, reward);
 
             Results.Reward.Add(reward);
@@ -145,8 +168,14 @@ void EXPERIMENT::Run()
 		history.Add(action, observation);
 	    else
 	    {
-		history.Add(Simulator.GetAgentAction(action,1), Simulator.GetAgentObservation(observation,1));
-		history2.Add(Simulator.GetAgentAction(action,2), Simulator.GetAgentObservation(observation,2));
+		if (outOfParticles)
+		    history.Add(Simulator.GetAgentAction(action,1), Simulator.GetAgentObservation(observation,1));
+		else
+		    outOfParticles = !mcts.Update(jointaction0, Simulator.GetAgentObservation(observation,1), reward, 1);
+		if (outOfParticles2)
+		    history2.Add(Simulator.GetAgentAction(action,2), Simulator.GetAgentObservation(observation,2));
+		else
+		    outOfParticles2 = !mcts.Update(jointaction1, Simulator.GetAgentObservation(observation,2), reward, 2);
 	    }
         }
     }
