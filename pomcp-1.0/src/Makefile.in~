@@ -50,7 +50,7 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_pomcp_OBJECTS = pomcp-battleship.$(OBJEXT) \
 	pomcp-beliefstate.$(OBJEXT) pomcp-boxpushing.$(OBJEXT) pomcp-coord.$(OBJEXT) \
-	pomcp-experiment.$(OBJEXT) pomcp-main.$(OBJEXT) \
+	pomcp-experiment.$(OBJEXT) pomcp-kitchen.$(OBJEXT) pomcp-main.$(OBJEXT) \
 	pomcp-mcts.$(OBJEXT) pomcp-network.$(OBJEXT) \
 	pomcp-node.$(OBJEXT) pomcp-pocman.$(OBJEXT) \
 	pomcp-rocksample.$(OBJEXT) pomcp-simulator.$(OBJEXT) \
@@ -171,6 +171,7 @@ beliefstate.cpp \
 boxpushing.cpp \
 coord.cpp \
 experiment.cpp \
+kitchen.cpp \
 main.cpp \
 mcts.cpp \
 network.cpp \
@@ -190,6 +191,7 @@ coord.h \
 experiment.h \
 grid.h \
 history.h \
+kitchen.h \
 mcts.h \
 memorypool.h \
 network.h \
@@ -281,6 +283,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pomcp-boxpushing.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pomcp-coord.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pomcp-experiment.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pomcp-kitchen.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pomcp-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pomcp-mcts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pomcp-network.Po@am__quote@
@@ -333,6 +336,22 @@ pomcp-beliefstate.obj: beliefstate.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='beliefstate.cpp' object='pomcp-beliefstate.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o pomcp-beliefstate.obj `if test -f 'beliefstate.cpp'; then $(CYGPATH_W) 'beliefstate.cpp'; else $(CYGPATH_W) '$(srcdir)/beliefstate.cpp'; fi`
+
+
+pomcp-boxpushing.o: boxpushing.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT pomcp-boxpushing.o -MD -MP -MF $(DEPDIR)/pomcp-boxpushing.Tpo -c -o pomcp-boxpushing.o `test -f 'boxpushing.cpp' || echo '$(srcdir)/'`boxpushing.cpp
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/pomcp-boxpushing.Tpo $(DEPDIR)/pomcp-boxpushing.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='boxpushing.cpp' object='pomcp-boxpushing.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o pomcp-boxpushing.o `test -f 'boxpushing.cpp' || echo '$(srcdir)/'`boxpushing.cpp
+
+pomcp-boxpushing.obj: boxpushing.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT pomcp-boxpushing.obj -MD -MP -MF $(DEPDIR)/pomcp-boxpushing.Tpo -c -o pomcp-boxpushing.obj `if test -f 'boxpushing.cpp'; then $(CYGPATH_W) 'boxpushing.cpp'; else $(CYGPATH_W) '$(srcdir)/boxpushing.cpp'; fi`
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/pomcp-boxpushing.Tpo $(DEPDIR)/pomcp-boxpushing.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='boxpushing.cpp' object='pomcp-boxpushing.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o pomcp-boxpushing.obj `if test -f 'boxpushing.cpp'; then $(CYGPATH_W) 'boxpushing.cpp'; else $(CYGPATH_W) '$(srcdir)/boxpushing.cpp'; fi`
+
 
 pomcp-coord.o: coord.cpp
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT pomcp-coord.o -MD -MP -MF $(DEPDIR)/pomcp-coord.Tpo -c -o pomcp-coord.o `test -f 'coord.cpp' || echo '$(srcdir)/'`coord.cpp

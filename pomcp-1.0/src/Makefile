@@ -50,7 +50,7 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_pomcp_OBJECTS = pomcp-battleship.$(OBJEXT) \
 	pomcp-beliefstate.$(OBJEXT) pomcp-boxpushing.$(OBJEXT) pomcp-coord.$(OBJEXT) \
-	pomcp-experiment.$(OBJEXT) pomcp-main.$(OBJEXT) \
+	pomcp-experiment.$(OBJEXT) pomcp-kitchen.$(OBJEXT) pomcp-main.$(OBJEXT) \
 	pomcp-mcts.$(OBJEXT) pomcp-network.$(OBJEXT) \
 	pomcp-node.$(OBJEXT) pomcp-pocman.$(OBJEXT) \
 	pomcp-rocksample.$(OBJEXT) pomcp-simulator.$(OBJEXT) \
@@ -171,6 +171,7 @@ beliefstate.cpp \
 boxpushing.cpp \
 coord.cpp \
 experiment.cpp \
+kitchen.cpp \
 main.cpp \
 mcts.cpp \
 network.cpp \
@@ -190,6 +191,7 @@ coord.h \
 experiment.h \
 grid.h \
 history.h \
+kitchen.h \
 mcts.h \
 memorypool.h \
 network.h \
@@ -281,6 +283,7 @@ include ./$(DEPDIR)/pomcp-beliefstate.Po
 include ./$(DEPDIR)/pomcp-boxpushing.Po
 include ./$(DEPDIR)/pomcp-coord.Po
 include ./$(DEPDIR)/pomcp-experiment.Po
+include ./$(DEPDIR)/pomcp-kitchen.Po
 include ./$(DEPDIR)/pomcp-main.Po
 include ./$(DEPDIR)/pomcp-mcts.Po
 include ./$(DEPDIR)/pomcp-network.Po
@@ -377,6 +380,21 @@ pomcp-experiment.obj: experiment.cpp
 #	source='experiment.cpp' object='pomcp-experiment.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
 #	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o pomcp-experiment.obj `if test -f 'experiment.cpp'; then $(CYGPATH_W) 'experiment.cpp'; else $(CYGPATH_W) '$(srcdir)/experiment.cpp'; fi`
+
+pomcp-kitchen.o: kitchen.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT pomcp-kitchen.o -MD -MP -MF $(DEPDIR)/pomcp-kitchen.Tpo -c -o pomcp-kitchen.o `test -f 'kitchen.cpp' || echo '$(srcdir)/'`kitchen.cpp
+	mv -f $(DEPDIR)/pomcp-kitchen.Tpo $(DEPDIR)/pomcp-kitchen.Po
+#	source='kitchen.cpp' object='pomcp-kitchen.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o pomcp-kitchen.o `test -f 'kitchen.cpp' || echo '$(srcdir)/'`kitchen.cpp
+
+pomcp-kitchen.obj: kitchen.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT pomcp-kitchen.obj -MD -MP -MF $(DEPDIR)/pomcp-kitchen.Tpo -c -o pomcp-kitchen.obj `if test -f 'kitchen.cpp'; then $(CYGPATH_W) 'kitchen.cpp'; else $(CYGPATH_W) '$(srcdir)/kitchen.cpp'; fi`
+	mv -f $(DEPDIR)/pomcp-kitchen.Tpo $(DEPDIR)/pomcp-kitchen.Po
+#	source='kitchen.cpp' object='pomcp-kitchen.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o pomcp-kitchen.obj `if test -f 'kitchen.cpp'; then $(CYGPATH_W) 'kitchen.cpp'; else $(CYGPATH_W) '$(srcdir)/kitchen.cpp'; fi`
+
 
 pomcp-main.o: main.cpp
 	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT pomcp-main.o -MD -MP -MF $(DEPDIR)/pomcp-main.Tpo -c -o pomcp-main.o `test -f 'main.cpp' || echo '$(srcdir)/'`main.cpp

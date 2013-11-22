@@ -6,6 +6,7 @@ beliefstate.cpp \
 boxpushing.cpp \
 coord.cpp \
 experiment.cpp \
+kitchen.cpp \
 main.cpp \
 mcts.cpp \
 network.cpp \
@@ -25,6 +26,7 @@ coord.h \
 experiment.h \
 grid.h \
 history.h \
+kitchen.h \
 mcts.h \
 memorypool.h \
 network.h \
