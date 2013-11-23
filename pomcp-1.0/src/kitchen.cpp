@@ -66,6 +66,8 @@ KITCHEN::KITCHEN(int nplates, int ncups):
 	ObjectTypes.push_back(CUP);
     RewardRange = 99.8;
     Discount = 1.0;
+    
+    
 }
 
 STATE* KITCHEN::Copy(const STATE& state) const
@@ -93,7 +95,7 @@ void KITCHEN::FreeState(STATE* state) const
 STATE* KITCHEN::CreateStartState() const
 {
     KITCHEN_STATE* kitchenstate = MemoryPool.Allocate();
-    
+
     kitchenstate->RobotLocation = SIDEBOARD;
     for (int i = 0; i < NumObjects; i++)
     {
@@ -135,6 +137,8 @@ STATE* KITCHEN::CreateStartState() const
 bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward) const
 {
     KITCHEN_STATE& kitchenstate = safe_cast<KITCHEN_STATE&>(state);
+    
+    KitchenAction ka = IntToAction(action);
     
     return false;
 }
@@ -179,7 +183,9 @@ int KITCHEN::ActionToInt(const KitchenAction& ka) const
     int location2 = ka.location2 - CUPBOARD;
     int gripper = ka.gripper - LEFT;
     int gripper2 = ka.gripper2 - LEFT;
-    int object = ObjectIndexMap[ka.object];
+    std::tr1::unordered_map< int, int >::const_iterator got = ObjectIndexMap.find(ka.object);
+    assert(got != ObjectIndexMap.end());
+    int object = got->first;
     
     switch(ka.type)
     {
@@ -242,7 +248,7 @@ int KITCHEN::ActionToInt(const KitchenAction& ka) const
     return action;
 }
 
-KitchenAction KITCHEN::IntToAction(int action)
+KitchenAction KITCHEN::IntToAction(int action) const
 {
     assert(action >= 0 && action < NumObjects*74 + 8*NumLocations + NumLocations*NumLocations);
     KitchenAction ka;
@@ -350,7 +356,7 @@ KitchenAction KITCHEN::IntToAction(int action)
     return ka;
 }
 
-GripperType KITCHEN::IntToGripper(int i)
+GripperType KITCHEN::IntToGripper(const int& i) const
 {
     assert(i == 0 || i == 1);
     switch(i)
@@ -362,7 +368,7 @@ GripperType KITCHEN::IntToGripper(int i)
     }
 }
 
-LocationType KITCHEN::IntToLocation(int i)
+LocationType KITCHEN::IntToLocation(const int& i) const
 {
     assert(i >= 0 && i <= 4);
     switch(i)

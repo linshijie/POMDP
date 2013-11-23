@@ -33,7 +33,7 @@ public:
     //std::vector<bool> IsFlat;
     std::vector<bool> GripperEmpty;
     //std::vector<bool> IsHand;
-    std::vector<int> WhichGripper;
+    std::vector<GripperType> WhichGripper;
     //std::vector<bool> IsObject;
     std::vector<LocationType> ObjectLocations;
     std::vector<bool> LocationOpen;
@@ -73,9 +73,9 @@ protected:
     std::tr1::unordered_map< int, int > ObjectIndexMap;
     
     int ActionToInt(const KitchenAction& ka) const;
-    KitchenAction IntToAction(int action);
-    LocationType IntToLocation(int i);
-    GripperType IntToGripper(int i);
+    KitchenAction IntToAction(int action) const;
+    LocationType IntToLocation(const int& i) const;
+    GripperType IntToGripper(const int& i) const;
     
 private:
     mutable MEMORY_POOL<KITCHEN_STATE> MemoryPool;
