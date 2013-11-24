@@ -18,7 +18,8 @@ enum ActionType {CLOSE = 16, GRASP, GRASP_FROM_EDGE, MOVE, NUDGE, OPEN, OPEN_PAR
 struct KitchenAction
 {
     ActionType type;
-    ObjectClass object;
+    ObjectClass objectclass;
+    int objectindex;
     LocationType location;
     LocationType location2;
     GripperType gripper;
@@ -33,7 +34,7 @@ public:
     //std::vector<bool> IsFlat;
     std::vector<bool> GripperEmpty;
     //std::vector<bool> IsHand;
-    std::vector<GripperType> WhichGripper;
+    std::vector<GripperType> InWhichGripper;
     //std::vector<bool> IsObject;
     std::vector<LocationType> ObjectLocations;
     std::vector<bool> LocationOpen;
@@ -70,7 +71,8 @@ protected:
     bool IsHand(const int& h) const {return h == LEFT || h == RIGHT;}
     bool HaveAppleJuice, HaveCalgonit, HaveGranini, HaveMeasuringCup, HaveRiceBox, HaveCereal;
     int NumObjects;
-    std::tr1::unordered_map< int, int > ObjectIndexMap;
+    int LOCATION_OFFSET, GRIPPER_OFFSET, ACTION_OFFSET;
+    //std::tr1::unordered_map< int, int > ObjectIndexMap;
     
     int ActionToInt(const KitchenAction& ka) const;
     KitchenAction IntToAction(int action) const;
@@ -79,6 +81,7 @@ protected:
     
 private:
     mutable MEMORY_POOL<KITCHEN_STATE> MemoryPool;
+    
 };
 
 #endif
