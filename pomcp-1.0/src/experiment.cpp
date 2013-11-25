@@ -5,8 +5,8 @@ using namespace std;
 
 EXPERIMENT::PARAMS::PARAMS()
 :   NumRuns(50),
-    NumSteps(1000),
-    SimSteps(1000),
+    NumSteps(100),
+    SimSteps(100),
     TimeOut(3600),
     MinDoubles(0),
     MaxDoubles(15),
@@ -42,14 +42,14 @@ void EXPERIMENT::Run()
     boost::timer timer;
 
     MCTS mcts(Simulator, SearchParams);
-
+    
     double undiscountedReturn = 0.0;
     double discountedReturn = 0.0;
     double discount = 1.0;
     bool terminal = false;
     bool outOfParticles = false, outOfParticles2 = false;
     int t;
-
+    
     STATE* state = Real.CreateStartState();
     if (SearchParams.Verbose >= 1)
         Real.DisplayState(*state, cout);

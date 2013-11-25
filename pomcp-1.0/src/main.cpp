@@ -6,6 +6,7 @@
 #include "rocksample.h"
 #include "tag.h"
 #include "experiment.h"
+#include "kitchen.h"
 #include <boost/program_options.hpp>
 
 using namespace std;
@@ -131,6 +132,11 @@ int main(int argc, char* argv[])
     {
         real = new BOXPUSHING(size, size-1, number, number-1);
         simulator = new BOXPUSHING(size, size-1, number, number-1);
+    }
+    else if (problem == "kitchen")
+    {
+	real = new KITCHEN(size, number);
+	simulator = new KITCHEN(size, number);
     }
     else 
     {

@@ -114,7 +114,13 @@ pomcp-main.o: main.cpp battleship.h simulator.h history.h \
  /usr/include/i386-linux-gnu/bits/stdio2.h \
  /usr/include/c++/4.6/i686-linux-gnu/./bits/basic_file.h \
  /usr/include/c++/4.6/i686-linux-gnu/./bits/c++io.h \
- /usr/include/c++/4.6/bits/fstream.tcc \
+ /usr/include/c++/4.6/bits/fstream.tcc kitchen.h \
+ /usr/include/c++/4.6/tr1/unordered_map \
+ /usr/include/c++/4.6/tr1/type_traits \
+ /usr/include/c++/4.6/tr1/functional_hash.h \
+ /usr/include/c++/4.6/tr1/hashtable.h \
+ /usr/include/c++/4.6/tr1/hashtable_policy.h \
+ /usr/include/c++/4.6/tr1/unordered_map.h \
  /usr/include/boost/program_options.hpp \
  /usr/include/boost/program_options/options_description.hpp \
  /usr/include/boost/program_options/config.hpp \
@@ -691,6 +697,20 @@ experiment.h:
 /usr/include/c++/4.6/i686-linux-gnu/./bits/c++io.h:
 
 /usr/include/c++/4.6/bits/fstream.tcc:
+
+kitchen.h:
+
+/usr/include/c++/4.6/tr1/unordered_map:
+
+/usr/include/c++/4.6/tr1/type_traits:
+
+/usr/include/c++/4.6/tr1/functional_hash.h:
+
+/usr/include/c++/4.6/tr1/hashtable.h:
+
+/usr/include/c++/4.6/tr1/hashtable_policy.h:
+
+/usr/include/c++/4.6/tr1/unordered_map.h:
 
 /usr/include/boost/program_options.hpp:
 

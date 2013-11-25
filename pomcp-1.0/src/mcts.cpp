@@ -14,7 +14,7 @@ MCTS::PARAMS::PARAMS()
     MaxDepth(100),
     NumSimulations(1000),
     NumStartStates(1),
-    UseTransforms(true),
+    UseTransforms(false),
     NumTransforms(0),
     MaxAttempts(0),
     ExpandCount(1),
@@ -34,7 +34,8 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
     Params(params),
     TreeDepth(0)
 {
-    VNODE::NumChildren = Params.JointQActions ? Simulator.GetNumActions() : Simulator.GetNumAgentActions();
+    VNODE::NumChildren = Params.MultiAgent && !Params.JointQActions ? Simulator.GetNumAgentActions() : 
+			Simulator.GetNumActions();
     QNODE::NumChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
 
     if (!Params.MultiAgent)

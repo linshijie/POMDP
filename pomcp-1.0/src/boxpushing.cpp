@@ -511,7 +511,7 @@ void BOXPUSHING::DisplayObservation(const STATE& state, int observation, ostream
     int observation0 = observation/NumAgentObservations;
     int observation1 = observation%NumAgentObservations;
     
-    cout << observationNames[observation0] << ", " << observationNames[observation1] << "\n";
+    ostr << observationNames[observation0] << ", " << observationNames[observation1] << "\n";
 }
 
 void BOXPUSHING::DisplayAction(int action, std::ostream& ostr) const
@@ -521,5 +521,5 @@ void BOXPUSHING::DisplayAction(int action, std::ostream& ostr) const
     int action0 = action/NumAgentActions;
     int action1 = action%NumAgentActions;
     
-    cout << actionNames[action0] << ", " << actionNames[action1] << "\n";
+    ostr << actionNames[action0] << ", " << actionNames[action1] << "\n";
 }
