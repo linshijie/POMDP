@@ -135,7 +135,8 @@ int main(int argc, char* argv[])
     }
     else if (problem == "kitchen")
     {
-	real = new KIT
+	real = new KITCHEN(size, number);
+	simulator = new KITCHEN(size, number);
     }
     else 
     {
@@ -146,7 +147,7 @@ int main(int argc, char* argv[])
 
     simulator->SetKnowledge(knowledge);
     EXPERIMENT experiment(*real, *simulator, outputfile, expParams, searchParams);
-    experiment.DiscountedReturn();
+    experiment.AverageReward();
 
     delete real;
     delete simulator;

@@ -4,16 +4,16 @@
 using namespace std;
 
 EXPERIMENT::PARAMS::PARAMS()
-:   NumRuns(50),
+:   NumRuns(100),
     NumSteps(100),
     SimSteps(100),
     TimeOut(3600),
     MinDoubles(0),
-    MaxDoubles(15),
+    MaxDoubles(3),
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
-    UndiscountedHorizon(40),
+    UndiscountedHorizon(20),
     AutoExploration(true)
 {
 }

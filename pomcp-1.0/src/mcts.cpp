@@ -155,63 +155,63 @@ int MCTS::SelectAction(const int& index)
 
 void MCTS::RolloutSearch(const int& index)
 {
-	std::vector<double> totals(Simulator.GetNumActions(), 0.0);
-	int historyDepth = index > 1 ? History2.Size() : History.Size();
-	std::vector<int> legal;
-	assert(BeliefState().GetNumSamples() > 0);
-	Simulator.GenerateLegal(*BeliefState().GetSample(0), GetHistory(index), legal, GetStatus(index));
-	random_shuffle(legal.begin(), legal.end());
+    std::vector<double> totals(Simulator.GetNumActions(), 0.0);
+    int historyDepth = index > 1 ? History2.Size() : History.Size();
+    std::vector<int> legal;
+    assert(BeliefState().GetNumSamples() > 0);
+    Simulator.GenerateLegal(*BeliefState().GetSample(0), GetHistory(index), legal, GetStatus(index));
+    random_shuffle(legal.begin(), legal.end());
 
-	for (int i = 0; i < Params.NumSimulations; i++)
-	{
-		int action = legal[i % legal.size()];
-		STATE* state;
-		if (index > 1)
-		    state = Root2->Beliefs().CreateSample(Simulator);
+    for (int i = 0; i < Params.NumSimulations; i++)
+    {
+	    int action = legal[i % legal.size()];
+	    STATE* state;
+	    if (index > 1)
+		state = Root2->Beliefs().CreateSample(Simulator);
+	    else
+		state = Root->Beliefs().CreateSample(Simulator);
+	    Simulator.Validate(*state);
+
+	    int observation;
+	    double immediateReward, delayedReward, totalReward;
+	    bool terminal = Simulator.Step(*state, action, observation, immediateReward);	 
+	    
+	    int treeaction = action;
+	    if (Params.MultiAgent && !Params.JointQActions)
+	    {
+		if (index == 1)
+		    treeaction = Simulator.GetAgentAction(action,1);
 		else
-		    state = Root->Beliefs().CreateSample(Simulator);
-		Simulator.Validate(*state);
+		    treeaction = Simulator.GetAgentAction(action,2);
+	    }
 
-		int observation;
-		double immediateReward, delayedReward, totalReward;
-		bool terminal = Simulator.Step(*state, action, observation, immediateReward);	 
-		
-		int treeaction = action;
-		if (Params.MultiAgent && !Params.JointQActions)
-		{
-		    if (index == 1)
-			treeaction = Simulator.GetAgentAction(action,1);
-		    else
-			treeaction = Simulator.GetAgentAction(action,2);
-		}
+	    VNODE*& vnode = index > 1 ? Root2->Child(treeaction).Child(Simulator.GetAgentObservation(observation,1)) : 
+					Root->Child(treeaction).Child(Simulator.GetAgentObservation(observation,2));
+	    if (!vnode && !terminal)
+	    {
+		    vnode = ExpandNode(state, index);
+		    AddSample(vnode, *state);
+	    }
+	    if (index == 0)
+		History.Add(action, observation);
+	    else if (index == 1)
+		History.Add(Simulator.GetAgentAction(action,1), Simulator.GetAgentObservation(observation,1));
+	    else
+		History2.Add(Simulator.GetAgentAction(action,2), Simulator.GetAgentObservation(observation,2));
 
-		VNODE*& vnode = index > 1 ? Root2->Child(treeaction).Child(Simulator.GetAgentObservation(observation,1)) : 
-					    Root->Child(treeaction).Child(Simulator.GetAgentObservation(observation,2));
-		if (!vnode && !terminal)
-		{
-			vnode = ExpandNode(state, index);
-			AddSample(vnode, *state);
-		}
-		if (index == 0)
-		    History.Add(action, observation);
-		else if (index == 1)
-		    History.Add(Simulator.GetAgentAction(action,1), Simulator.GetAgentObservation(observation,1));
-		else
-		    History2.Add(Simulator.GetAgentAction(action,2), Simulator.GetAgentObservation(observation,2));
+	    delayedReward = Rollout(*state, index);
+	    totalReward = immediateReward + Simulator.GetDiscount() * delayedReward;
+	    if (index > 1)
+		Root2->Child(treeaction).Value.Add(totalReward);
+	    else
+		Root->Child(treeaction).Value.Add(totalReward);
 
-		delayedReward = Rollout(*state, index);
-		totalReward = immediateReward + Simulator.GetDiscount() * delayedReward;
-		if (index > 1)
-		    Root2->Child(treeaction).Value.Add(totalReward);
-		else
-		    Root->Child(treeaction).Value.Add(totalReward);
-
-		Simulator.FreeState(state);
-		if (index > 1)
-		    History2.Truncate(historyDepth);
-		else
-		    History.Truncate(historyDepth);
-	}
+	    Simulator.FreeState(state);
+	    if (index > 1)
+		History2.Truncate(historyDepth);
+	    else
+		History.Truncate(historyDepth);
+    }
 }
 
 void MCTS::UCTSearch(const int& index)

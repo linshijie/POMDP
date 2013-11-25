@@ -164,11 +164,11 @@ STATE* KITCHEN::CreateStartState() const
 	    kitchenstate->ObjectLocations.push_back(SIDEBOARD);
 	    kitchenstate->IsToppled.push_back(false);
 	}
-	else
-	{
-	    kitchenstate->ObjectLocations.push_back(static_cast<LocationType>(UTILS::Random(NumLocations)));
-	    kitchenstate->IsToppled.push_back(false);
-	}
+	//else
+	//{
+	//    kitchenstate->ObjectLocations.push_back(static_cast<LocationType>(UTILS::Random(NumLocations)));
+	//    kitchenstate->IsToppled.push_back(false);
+	//}
 	kitchenstate->AtEdge.push_back(false);
 	kitchenstate->InWhichGripper.push_back(NO_GRIPPER);
     }
@@ -308,11 +308,16 @@ bool KITCHEN::IsAppleJuiceInFridge(const KITCHEN_STATE& state, double& reward) c
 void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history, std::vector< int >& actions, const SIMULATOR::STATUS& status) const
 {
     const KITCHEN_STATE& kitchenstate = safe_cast<const KITCHEN_STATE&>(state);
+    actions.clear();
     
     LocationType location = kitchenstate.RobotLocation;
     
+    KitchenAction lastaction;
+    if (history.Size() > 0)
+	lastaction = IntToAction(history.Back().Action);
+    
     //Close actions
-    if ( (
+    if ( (history.Size() == 0 || (lastaction.type != OPEN && lastaction.type != OPEN_PARTIAL && lastaction.type != OPEN_COMPLETE)) && (
 	    (location == CUPBOARD && kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET)) || 
 	    (location == DISHWASHER && kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET)) ||
 	    (location == FRIDGE && kitchenstate.GripperEmpty.at(LEFT-GRIPPER_OFFSET))
@@ -327,7 +332,7 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history, std:
     }
     
     //Grasp actions
-    if (location == SIDEBOARD || location == STOVE)
+    if ((history.Size() == 0 || lastaction.type != PUT_DOWN) && (location == SIDEBOARD || location == STOVE))
 	for (int h = 0 ; h < 2 ; h++)
 	    if (kitchenstate.GripperEmpty.at(h))
 		for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
@@ -346,7 +351,7 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history, std:
 		}
 		    
     //Grasp from edge actions
-    if (location == SIDEBOARD || location == STOVE)
+    if ((history.Size() == 0 || lastaction.type == NUDGE) && (location == SIDEBOARD || location == STOVE))
 	for (int h = 0 ; h < 2 ; h++)
 	    if (kitchenstate.GripperEmpty.at(h))
 		for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
@@ -407,7 +412,7 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history, std:
 		}
 		    
     //Open actions
-    if ((location == CUPBOARD || location == DISHWASHER) && 
+    if ((history.Size() == 0 || lastaction.type != CLOSE) && (location == CUPBOARD || location == DISHWASHER) && 
 	!kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) && kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET))
     {
 	KitchenAction ka;
@@ -418,7 +423,8 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history, std:
     }
     
     //Open partial actions
-    if (location == FRIDGE && !kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) && 
+    if ((history.Size() == 0 || lastaction.type != CLOSE) &&  location == FRIDGE && 
+	!kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) && 
 	!kitchenstate.LocationPartiallyOpen.at(location-LOCATION_OFFSET) && 
 	kitchenstate.GripperEmpty.at(LEFT-GRIPPER_OFFSET))
     {
@@ -430,7 +436,8 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history, std:
     }
     
     //Open complete actions
-    if (location == FRIDGE && !kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) && 
+    if ((history.Size() == 0 || lastaction.type == OPEN_PARTIAL) &&  location == FRIDGE && 
+	!kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) && 
 	kitchenstate.LocationPartiallyOpen.at(location-LOCATION_OFFSET) && 
 	kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET))
     {
@@ -447,15 +454,16 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history, std:
 	int o = PreferredObjects.at(i);
 	for (int h1 = 0 ; h1 < 2 ; h1++)
 	    if (kitchenstate.InWhichGripper.at(o) == h1+GRIPPER_OFFSET && kitchenstate.GripperEmpty.at((h1+1)%2))
-	    {
-		KitchenAction ka;
-		ka.type = PASS_OBJECT;
-		ka.objectindex = o;
-		ka.objectclass = ObjectTypes[o];
-		ka.gripper = static_cast<GripperType>(h1 + GRIPPER_OFFSET);
-		ka.gripper2 = static_cast<GripperType>((h1+1)%2 + GRIPPER_OFFSET);
-		actions.push_back(ActionToInt(ka));
-	    }
+		if (location == CUPBOARD && h1 == 1)
+		{
+		    KitchenAction ka;
+		    ka.type = PASS_OBJECT;
+		    ka.objectindex = o;
+		    ka.objectclass = ObjectTypes[o];
+		    ka.gripper = static_cast<GripperType>(h1 + GRIPPER_OFFSET);
+		    ka.gripper2 = static_cast<GripperType>((h1+1)%2 + GRIPPER_OFFSET);
+		    actions.push_back(ActionToInt(ka));
+		}
     }
 	    
     //Place upright actions
@@ -477,7 +485,8 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history, std:
 	    }
 		
     //Put down actions
-    if (location == SIDEBOARD || location == STOVE)
+    if ((history.Size() == 0 || (lastaction.type != GRASP && lastaction.type != GRASP_FROM_EDGE)) &&  
+	(location == SIDEBOARD || location == STOVE))
 	for (int h = 0 ; h < 2 ; h++)
 	    for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
 	    {
@@ -495,14 +504,14 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history, std:
 	    }
     
     //Put in actions
-    if (kitchenstate.LocationOpen.at(location-LOCATION_OFFSET))
+    if ((history.Size() == 0 || lastaction.type != REMOVE_FROM) && kitchenstate.LocationOpen.at(location-LOCATION_OFFSET))
 	for (int h = 0 ; h < 2 ; h++)
 	    if ((location == CUPBOARD || (location == DISHWASHER && h == RIGHT-GRIPPER_OFFSET) || 
 		(location == FRIDGE && h == LEFT-GRIPPER_OFFSET)))
 		for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
 		{
 		    int o = PreferredObjects.at(i);
-		    if (!kitchenstate.InWhichGripper.at(o) == h+GRIPPER_OFFSET)
+		    if (kitchenstate.InWhichGripper.at(o) == h+GRIPPER_OFFSET)
 		    {
 			KitchenAction ka;
 			ka.type = PUT_IN;
@@ -515,7 +524,7 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history, std:
 		}
 		
     //Remove from actions
-    if (kitchenstate.LocationOpen.at(location-LOCATION_OFFSET))
+    if ((history.Size() == 0 || lastaction.type != PUT_IN) && kitchenstate.LocationOpen.at(location-LOCATION_OFFSET))
 	for (int h = 0 ; h < 2 ; h++)
 	    if (kitchenstate.GripperEmpty.at(h) && 
 		(location == CUPBOARD || (location == FRIDGE && h == LEFT-GRIPPER_OFFSET)))
@@ -533,8 +542,9 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history, std:
 			actions.push_back(ActionToInt(ka));
 		    }
 		}
+		
     
-    //std::cout << actions.size() << std::endl;
+    //std::cout << "Num actions " << actions.size() << std::endl;
 }
 
 void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vector< int >& legal, 
@@ -701,7 +711,7 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
 	    if ((location == CUPBOARD || (location == DISHWASHER && h == RIGHT-GRIPPER_OFFSET) || 
 		(location == FRIDGE && h == LEFT-GRIPPER_OFFSET)))
 		for (int o = 0 ; o < NumObjects ; o++)
-		    if (!kitchenstate.InWhichGripper.at(o) == h+GRIPPER_OFFSET)
+		    if (kitchenstate.InWhichGripper.at(o) == h+GRIPPER_OFFSET)
 		    {
 			KitchenAction ka;
 			ka.type = PUT_IN;
