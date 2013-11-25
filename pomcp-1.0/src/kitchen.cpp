@@ -454,7 +454,7 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history, std:
 	int o = PreferredObjects.at(i);
 	for (int h1 = 0 ; h1 < 2 ; h1++)
 	    if (kitchenstate.InWhichGripper.at(o) == h1+GRIPPER_OFFSET && kitchenstate.GripperEmpty.at((h1+1)%2))
-		if (location == CUPBOARD && h1 == 1)
+		if ((location == CUPBOARD && h1 == 1) )
 		{
 		    KitchenAction ka;
 		    ka.type = PASS_OBJECT;
