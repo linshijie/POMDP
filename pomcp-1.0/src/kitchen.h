@@ -26,16 +26,19 @@ struct KitchenAction
     GripperType gripper2;
 };
 
+struct KitchenObservation
+{
+    std::vector<bool> objectvisible;
+    LocationType location;
+};
+
 class KITCHEN_STATE : public STATE
 {
 public:
     LocationType RobotLocation;
     std::vector<bool> AtEdge;
-    //std::vector<bool> IsFlat;
     std::vector<bool> GripperEmpty;
-    //std::vector<bool> IsHand;
     std::vector<GripperType> InWhichGripper;
-    //std::vector<bool> IsObject;
     std::vector<LocationType> ObjectLocations;
     std::vector<bool> LocationOpen;
     std::vector<bool> LocationPartiallyOpen;
@@ -91,9 +94,15 @@ protected:
     std::string ActionToString(const ActionType& t) const;
     std::string ObjectToString(const ObjectClass& t) const;
     std::string GripperToString(const GripperType& t) const;
+    int MakeObservation(const KITCHEN_STATE& state) const;
+    int ObservatonToInt(const KitchenObservation& ko) const;
     
     std::vector<int> PreferredObjects;
     std::vector<LocationType> PreferredLocations;
+    
+    bool NonDeterministicActions;
+    double ProbClose, ProbGrasp, ProbGrapsFromEdge, ProbMove, ProbNudge, ProbOpen, ProbOpenPartial,
+	ProbOpenComplete, ProbPassObject, ProbPlaceUpright, ProbPutDown, ProbPutIn, ProbRemoveFrom;
     
 private:
     mutable MEMORY_POOL<KITCHEN_STATE> MemoryPool;
