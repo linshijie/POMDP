@@ -99,6 +99,7 @@ int SIMULATOR::SelectRandom(const STATE& state, const HISTORY& history,
         if (!actions.empty())
             return actions[Random(actions.size())];
     }
+    
 
     return index == 0 ? Random(NumActions) : Random(NumAgentActions);
 }

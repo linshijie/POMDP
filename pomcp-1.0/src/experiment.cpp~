@@ -13,7 +13,7 @@ EXPERIMENT::PARAMS::PARAMS()
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
-    UndiscountedHorizon(1000),
+    UndiscountedHorizon(100),
     AutoExploration(true)
 {
 }
@@ -72,7 +72,9 @@ void EXPERIMENT::Run()
 			Simulator.GetAgentAction(jointaction1,2);
 	    }
 	}
+	std::cout<<"Start real"<<std::endl;
         terminal = Real.Step(*state, action, observation, reward);
+	std::cout<<"End real"<<std::endl;
 
         Results.Reward.Add(reward);
         undiscountedReturn += reward;
@@ -148,7 +150,9 @@ void EXPERIMENT::Run()
 		action = Simulator.GetNumAgentActions()*Simulator.GetAgentAction(jointaction0,1) + 
 			    Simulator.GetAgentAction(jointaction1,2);
 	    }
+	    std::cout<<"Start real"<<std::endl;
             terminal = Real.Step(*state, action, observation, reward);
+	    std::cout<<"End real"<<std::endl;
 
             Results.Reward.Add(reward);
             undiscountedReturn += reward;

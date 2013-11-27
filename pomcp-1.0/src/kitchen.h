@@ -65,6 +65,7 @@ public:
 	
     virtual void DisplayState(const STATE& state, std::ostream& ostr) const;
     virtual void DisplayAction(int action, std::ostream& ostr) const;
+    virtual void DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const;
     
 protected:
     
@@ -96,6 +97,7 @@ protected:
     std::string GripperToString(const GripperType& t) const;
     int MakeObservation(const KITCHEN_STATE& state) const;
     int ObservatonToInt(const KitchenObservation& ko) const;
+    KitchenObservation IntToObservation(int observation) const;
     
     std::vector<int> PreferredObjects;
     std::vector<LocationType> PreferredLocations;

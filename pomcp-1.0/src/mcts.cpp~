@@ -185,8 +185,14 @@ void MCTS::RolloutSearch(const int& index)
 		    treeaction = Simulator.GetAgentAction(action,2);
 	    }
 
-	    VNODE*& vnode = index > 1 ? Root2->Child(treeaction).Child(Simulator.GetAgentObservation(observation,1)) : 
-					Root->Child(treeaction).Child(Simulator.GetAgentObservation(observation,2));
+	    VNODE*& vnode = Root->Child(action).Child(observation);
+	    
+	    if (index == 1)
+		vnode = Root->Child(treeaction).Child(Simulator.GetAgentObservation(observation,1));
+	    else if (index == 2)
+		vnode = Root2->Child(treeaction).Child(Simulator.GetAgentObservation(observation,2));
+					
+	    
 	    if (!vnode && !terminal)
 	    {
 		    vnode = ExpandNode(state, index);
@@ -304,13 +310,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index)
         Simulator.DisplayState(state, cout);
     }
 
-    VNODE*& vnode = qnode.Child(0);
-    if (index == 0)
-	qnode.Child(observation);
-    else if (index == 1)
-	vnode = qnode.Child(Simulator.GetAgentObservation(observation, 1));
-    else if (index > 1)
-	vnode = qnode.Child(Simulator.GetAgentObservation(observation, 2));
+    VNODE*& vnode = index == 0 ? qnode.Child(observation) : qnode.Child(Simulator.GetAgentObservation(observation, index));
     
     if (!vnode && !terminal && qnode.Value.GetCount() >= Params.ExpandCount)
 	vnode = ExpandNode(&state, index);
@@ -471,7 +471,6 @@ double MCTS::Rollout(STATE& state, const int& index)
 	else
 	    action = Simulator.GetNumAgentActions()*Random(Simulator.GetNumAgentActions()) + 
 			Simulator.SelectRandom(state, History, Status, index);
-	
         terminal = Simulator.Step(state, action, observation, reward);
         if (index == 0)
 	    History.Add(action, observation);

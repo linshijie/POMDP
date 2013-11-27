@@ -64,7 +64,7 @@ KITCHEN::KITCHEN(int nplates, int ncups):
     }
     
     NumActions = NumObjects*(NumLocations*14+4) + 8*NumLocations + NumLocations*NumLocations;
-    NumObservations = pow(2,NumObjects)*NumLocations;
+    NumObservations = pow(2,NumObjects);
     
     for (int i=0; i<NumPlates; i++)
     {
@@ -362,14 +362,22 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward) c
 	    break;
     }
     
-    observation = 0;//MakeObservation(kitchenstate);
+    observation = MakeObservation(kitchenstate);
     
     //Just executed an unsuccessful action
     if (reward < 0.0)
     {
-	std::cout << "fail " << ActionToString(ka.type) << std::endl;
+	//std::cout << "fail " << ActionToString(ka.type) << std::endl;
+	/*if (ka.type == MOVE_ROBOT)
+	{
+	    std::cout << LocationToString(kitchenstate.RobotLocation) << " "  << 
+		LocationToString(ka.location) << " " <<
+		LocationToString(ka.location2) << " " << std::endl;
+	}*/
 	return false;
     }
+    
+    //std::cout << "succ " << ActionToString(ka.type) << std::endl;
     
     bool reachedGoal = false;
     
@@ -395,12 +403,15 @@ int KITCHEN::MakeObservation(const KITCHEN_STATE& state) const
     
     for (int i = 0 ; i < NumObjects ; i++)
     {
-	if (state.LocationOpen[state.RobotLocation-LOCATION_OFFSET])
+	if (state.ObjectLocations[i] == NO_LOCATION || (state.ObjectLocations[i] == state.RobotLocation &&
+	    (state.RobotLocation == SIDEBOARD || state.RobotLocation == STOVE ||
+	    state.LocationOpen[state.RobotLocation-LOCATION_OFFSET]))
+	    )
 	    ko.objectvisible.push_back(true);
 	else
 	    ko.objectvisible.push_back(false);
     }
-    ko.location = state.RobotLocation;
+    //ko.location = state.RobotLocation;
     
     return ObservatonToInt(ko);
 }
@@ -409,18 +420,36 @@ int KITCHEN::ObservatonToInt(const KitchenObservation& ko) const
 {
     int observation = 0;
     
-    
     for (int i = 0 ; i < NumObjects ; i++)
     {
 	if (ko.objectvisible[i])
 	    observation += pow(2,i);
     }
     
-    observation += pow(2,NumObjects)*(ko.location-LOCATION_OFFSET);
+    //observation += pow(2,NumObjects)*(ko.location-LOCATION_OFFSET);
     
     return observation;
 }
 
+KitchenObservation KITCHEN::IntToObservation(int observation) const
+{
+    KitchenObservation ko;
+    ko.objectvisible.clear();
+    ko.location = NO_LOCATION;
+    
+    for (int i = 0 ; i < NumObjects ; i++)
+    {
+	if (observation%2 == 1)
+	    ko.objectvisible.push_back(true);
+	else
+	    ko.objectvisible.push_back(false);
+	observation = observation >> 1;
+    }
+    
+    
+    
+    return ko; 
+}
 
 
 bool KITCHEN::IsCerealInCupboard(const KITCHEN_STATE& state, double& reward) const
@@ -466,6 +495,20 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
     
     LocationType location = kitchenstate.RobotLocation;
     
+    std::vector<bool> ObjectHere;
+    KitchenObservation ko;
+    if (history.Size() > 0 && NumObservations > 1)
+	ko = IntToObservation(history.Back().Observation);
+    for (int i = 0 ; i < NumObjects ; i++)
+    {
+	if (history.Size() > 0 && NumObservations > 1)
+	    ObjectHere.push_back(ko.objectvisible[i]);
+	else
+	    ObjectHere.push_back(kitchenstate.ObjectLocations[i] == location);
+    }
+    
+    
+    
     //Close actions
     if ( (
 	    (location == CUPBOARD && kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET)) || 
@@ -486,7 +529,7 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
 	for (int h = 0 ; h < 2 ; h++)
 	    if (kitchenstate.GripperEmpty.at(h))
 		for (int o = 0 ; o < NumObjects ; o++)
-		    if (!IsFlat(ObjectTypes.at(o)) && !kitchenstate.IsToppled.at(o) && kitchenstate.ObjectLocations.at(o) == location)
+		    if (!IsFlat(ObjectTypes.at(o)) && !kitchenstate.IsToppled.at(o) && ObjectHere.at(o))
 		    {
 			KitchenAction ka;
 			ka.type = GRASP;
@@ -502,7 +545,7 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
 	for (int h = 0 ; h < 2 ; h++)
 	    if (kitchenstate.GripperEmpty.at(h))
 		for (int o = 0 ; o < NumObjects ; o++)
-		    if (IsFlat(ObjectTypes.at(o)) && kitchenstate.AtEdge.at(o) && kitchenstate.ObjectLocations.at(o) == location)
+		    if (IsFlat(ObjectTypes.at(o)) && kitchenstate.AtEdge.at(o) && ObjectHere.at(o))
 		    {
 			KitchenAction ka;
 			ka.type = GRASP_FROM_EDGE;
@@ -529,7 +572,7 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
 	for (int h = 0 ; h < 2 ; h++)
 	    if (kitchenstate.GripperEmpty.at(h))
 		for (int o = 0 ; o < NumObjects ; o++)
-		    if (IsFlat(ObjectTypes.at(o)) && !kitchenstate.AtEdge.at(o) && kitchenstate.ObjectLocations.at(o) == location)
+		    if (IsFlat(ObjectTypes.at(o)) && !kitchenstate.AtEdge.at(o) && ObjectHere.at(o))
 		    {
 			KitchenAction ka;
 			ka.type = NUDGE;
@@ -591,7 +634,7 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
     for (int h = 0 ; h < 2 ; h++)
 	if (kitchenstate.GripperEmpty.at(h))
 	    for (int o = 0 ; o < NumObjects ; o++)
-		if (kitchenstate.ObjectLocations.at(o) == location && kitchenstate.IsToppled.at(o))
+		if (ObjectHere.at(o) && kitchenstate.IsToppled.at(o))
 		{
 		    KitchenAction ka;
 		    ka.type = PLACE_UPRIGHT;
@@ -639,7 +682,7 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
 	for (int h = 0 ; h < 2 ; h++)
 	    if (kitchenstate.GripperEmpty.at(h) && (location == CUPBOARD || (location == FRIDGE && h == LEFT-GRIPPER_OFFSET)))
 		for (int o = 0 ; o < NumObjects ; o++)
-		    if (kitchenstate.ObjectLocations.at(o) == location && !kitchenstate.IsToppled.at(o))
+		    if (ObjectHere.at(o) && !kitchenstate.IsToppled.at(o))
 		    {
 			KitchenAction ka;
 			ka.type = REMOVE_FROM;
@@ -1212,6 +1255,21 @@ void KITCHEN::DisplayState(const STATE& state, std::ostream& ostr) const
     
     ostr << "\n";
 }
+
+void KITCHEN::DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const
+{
+    KitchenObservation ko = IntToObservation(observation);
+    
+    for (int i = 0 ; i < NumObjects ; i++)
+    {
+	ostr << ObjectToString(ObjectTypes[i]) << ":" << ko.objectvisible[i];
+	if (i < NumObjects-1)
+	    ostr << ",";
+    }
+    
+    ostr << "\n";
+}
+
 
 
 std::string KITCHEN::ActionToString(const ActionType& t) const
