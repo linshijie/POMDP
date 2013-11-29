@@ -35,10 +35,10 @@ struct KitchenObservation
 class KITCHEN_STATE : public STATE
 {
 public:
-    LocationType RobotLocation;
+    std::vector<LocationType> RobotLocations;
     std::vector<bool> AtEdge;
     std::vector<bool> GripperEmpty;
-    std::vector<GripperType> InWhichGripper;
+    std::vector< std::pair< int, GripperType > > InWhichGripper;
     std::vector<LocationType> ObjectLocations;
     std::vector<bool> LocationOpen;
     std::vector<bool> LocationPartiallyOpen;
@@ -57,11 +57,17 @@ public:
     virtual void FreeState(STATE* state) const;
     virtual bool Step(STATE& state, int action, 
         int& observation, double& reward) const;
+    virtual bool LocalMove(STATE& state, const HISTORY& history,
+        int stepObs, const STATUS& status) const;
 	
     void GenerateLegal(const STATE& state, const HISTORY& history,
         std::vector<int>& legal, const STATUS& status) const;
     void GeneratePreferred(const STATE& state, const HISTORY& history,
         std::vector<int>& actions, const STATUS& status) const;
+    void GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTORY& history,
+        std::vector<int>& legal, const STATUS& status, const int& index) const;
+    void GeneratePreferredAgent(const KITCHEN_STATE& kitchenstate, const HISTORY& history,
+        std::vector<int>& actions, const STATUS& status, const int& index) const;
 	
     virtual void DisplayState(const STATE& state, std::ostream& ostr) const;
     virtual void DisplayAction(int action, std::ostream& ostr) const;
@@ -84,6 +90,10 @@ protected:
     bool IsCerealInCupboard(const KITCHEN_STATE& state, double& reward) const;
     bool IsPlate1InDishwasher(const KITCHEN_STATE& state, double& reward) const;
     bool IsAppleJuiceInFridge(const KITCHEN_STATE& state, double& reward) const;
+    bool Collision(const KITCHEN_STATE& state, const LocationType& location, const int& index) const;
+    bool StepAgent(KITCHEN_STATE& kitchenstate, int action, 
+        int& observation, double& reward, const int& index) const;
+    
     int CerealIndex, Plate1Index, AppleJuiceIndex;
     //std::tr1::unordered_map< int, int > ObjectIndexMap;
     
@@ -95,16 +105,18 @@ protected:
     std::string ActionToString(const ActionType& t) const;
     std::string ObjectToString(const ObjectClass& t) const;
     std::string GripperToString(const GripperType& t) const;
-    int MakeObservation(const KITCHEN_STATE& state) const;
+    int MakeObservation(const KITCHEN_STATE& state, const int& index) const;
     int ObservatonToInt(const KitchenObservation& ko) const;
     KitchenObservation IntToObservation(int observation) const;
     
-    std::vector<int> PreferredObjects;
-    std::vector<LocationType> PreferredLocations;
+    int NumAgents;
     
     bool NonDeterministicActions;
     double ProbClose, ProbGrasp, ProbGrapsFromEdge, ProbMove, ProbNudge, ProbOpen, ProbOpenPartial,
 	ProbOpenComplete, ProbPassObject, ProbPlaceUpright, ProbPutDown, ProbPutIn, ProbRemoveFrom;
+	
+    std::vector<int> PreferredObjects;
+    std::vector<LocationType> PreferredLocations;
     
 private:
     mutable MEMORY_POOL<KITCHEN_STATE> MemoryPool;
