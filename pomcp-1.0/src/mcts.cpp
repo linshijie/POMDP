@@ -14,7 +14,7 @@ MCTS::PARAMS::PARAMS()
     MaxDepth(100),
     NumSimulations(1000),
     NumStartStates(1),
-    UseTransforms(true),
+    UseTransforms(false),
     NumTransforms(0),
     MaxAttempts(0),
     ExpandCount(1),

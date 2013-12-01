@@ -507,8 +507,7 @@ bool KITCHEN::LocalMove(STATE& state, const HISTORY& history, int stepObs, const
 	std::tr1::unordered_set<int>::iterator it2 = UnexploredLocations.begin();
 	for (int i = 0; i < UTILS::Random(0,(int)UnexploredLocations.size()); i++)
 	    ++it2;
-	std::cout << *it-LOCATION_OFFSET << std::endl;
-	kitchenstate.ObjectLocations[*it-LOCATION_OFFSET] = static_cast<LocationType>(*it2);
+	kitchenstate.ObjectLocations[*it] = static_cast<LocationType>(*it2);
     }
     
     return true;
@@ -683,11 +682,21 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     for (int i = LOCATION_OFFSET ; i < LOCATION_OFFSET + NumLocations ; i++)
 	if (static_cast<LocationType>(i) != location)
 	{
-	    KitchenAction ka;
-	    ka.type = MOVE_ROBOT;
-	    ka.location = location;
-	    ka.location2 = static_cast<LocationType>(i);
-	    legal.push_back(ActionToInt(ka));
+	    bool otheragentthere = false;
+	    for (int j = 0 ; j < NumAgents ; j++)
+		if (i != j && kitchenstate.RobotLocations[j] == static_cast<LocationType>(i))
+		{
+		    otheragentthere = true;
+		    break;
+		}
+	    if (!otheragentthere)
+	    {
+		KitchenAction ka;
+		ka.type = MOVE_ROBOT;
+		ka.location = location;
+		ka.location2 = static_cast<LocationType>(i);
+		legal.push_back(ActionToInt(ka));
+	    }
 	}
 		    
     //Nudge actions
@@ -1366,7 +1375,7 @@ void KITCHEN::DisplayAction(int action, std::ostream& ostr) const
 
 bool KITCHEN::Collision(const KITCHEN_STATE& state, const LocationType& location, const int& index) const
 {
-    for (int i = 0 ; i < state.RobotLocations.size() ; i++)
+    for (int i = 0 ; i < (int) state.RobotLocations.size() ; i++)
 	if (i != index && state.RobotLocations[i] == location)
 	    return true;
     return false;
