@@ -86,10 +86,6 @@ protected:
     bool HaveAppleJuice, HaveCalgonit, HaveGranini, HaveMeasuringCup, HaveRiceBox, HaveCereal;
     int NumObjects;
     int LOCATION_OFFSET, GRIPPER_OFFSET, ACTION_OFFSET;
-    bool TestCerealInCupboard, TestPlate1InDishwasher, TestAppleJuiceInFridge;
-    bool IsCerealInCupboard(const KITCHEN_STATE& state, double& reward) const;
-    bool IsPlate1InDishwasher(const KITCHEN_STATE& state, double& reward) const;
-    bool IsAppleJuiceInFridge(const KITCHEN_STATE& state, double& reward) const;
     bool Collision(const KITCHEN_STATE& state, const LocationType& location, const int& index) const;
     bool StepAgent(KITCHEN_STATE& kitchenstate, int action, 
         int& observation, double& reward, const int& index) const;
@@ -117,6 +113,13 @@ protected:
 	
     std::vector<int> PreferredObjects;
     std::vector<LocationType> PreferredLocations;
+    
+    //GOALS
+    bool TestCerealInCupboard, TestPlate1InDishwasher, TestAppleJuiceInFridge;
+    
+    bool IsCerealInCupboard(const KITCHEN_STATE& state, double& reward) const;
+    bool IsPlate1InDishwasher(const KITCHEN_STATE& state, double& reward) const;
+    bool IsAppleJuiceInFridge(const KITCHEN_STATE& state, double& reward) const;
     
 private:
     mutable MEMORY_POOL<KITCHEN_STATE> MemoryPool;
