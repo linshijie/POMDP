@@ -40,6 +40,7 @@ public:
     std::vector<bool> AtEdge;
     std::vector<bool> GripperEmpty;
     std::vector< std::pair< int, GripperType > > InWhichGripper;
+    std::pair< int, GripperType > TraySecondGripper;
     std::vector<LocationType> ObjectLocations;
     std::vector<bool> LocationOpen;
     std::vector<bool> LocationPartiallyOpen;
@@ -90,6 +91,7 @@ protected:
     bool Collision(const KITCHEN_STATE& state, const LocationType& location, const int& index) const;
     bool StepAgent(KITCHEN_STATE& kitchenstate, int action, 
         int& observation, double& reward, const int& index) const;
+    void DisplayActionAgent(int action, std::ostream& ostr) const;
     
     int CerealIndex, Plate1Index, AppleJuiceIndex, TrayIndex;
     //std::tr1::unordered_map< int, int > ObjectIndexMap;

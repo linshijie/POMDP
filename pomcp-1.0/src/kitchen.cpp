@@ -125,10 +125,12 @@ STATE* KITCHEN::CreateStartState() const
     kitchenstate->LocationPartiallyOpen.clear();
     kitchenstate->GripperEmpty.clear();
     
+    kitchenstate->TraySecondGripper = std::make_pair(-1, NO_GRIPPER);
+    
     //first robot location
     kitchenstate->RobotLocations.push_back(SIDEBOARD);
     for (int i = 1; i < NumAgents; i++)
-	kitchenstate->RobotLocations.push_back(NO_LOCATION);
+	kitchenstate->RobotLocations.push_back(static_cast<LocationType>(UTILS::Random(NumLocations)));
     for (int i = 1; i < NumAgents; i++)
     {
 	LocationType agentlocation;
@@ -896,23 +898,43 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
 		    }
 		    
 
-    //Grasp joint
+    //Grasp joint actions
     if (location == SIDEBOARD || location == STOVE)
-	for (int h = 0 ; h < 2 ; h++)
-	    if (kitchenstate.GripperEmpty.at(index*2+h))
-		for (int o = 0 ; o < NumObjects ; o++)
-		    if (!IsFlat(ObjectTypes.at(o)) && !kitchenstate.IsToppled.at(o) && ObjectHere.at(o) &&
-			ObjectTypes.at(o) != TRAY
-		    )
-		    {
-			KitchenAction ka;
-			ka.type = GRASP;
-			ka.location = location;
-			ka.gripper = h == 0 ? LEFT : RIGHT;
-			ka.objectindex = o;
-			ka.objectclass = ObjectTypes[o];
-			legal.push_back(ActionToInt(ka));
-		    }
+	for (int i = 0; i < NumAgents; i++)
+	   if (i != index && kitchenstate.RobotLocations[i] == location) 
+		for (int h = 0 ; h < 2 ; h++)
+		    if (kitchenstate.GripperEmpty.at(index*2+h))
+			for (int o = 0 ; o < NumObjects ; o++)
+			    if (ObjectTypes.at(o) == TRAY && ObjectHere.at(o))
+			    {
+				KitchenAction ka;
+				ka.type = GRASP_JOINT;
+				ka.location = location;
+				ka.gripper = h == 0 ? LEFT : RIGHT;
+				ka.objectindex = o;
+				ka.objectclass = ObjectTypes[o];
+				legal.push_back(ActionToInt(ka));
+			    }
+			    
+    //Put down joint actions
+    if (location == SIDEBOARD || location == STOVE)
+	for (int i = 0; i < NumAgents; i++)
+	   if (i != index && kitchenstate.RobotLocations[i] == location) 
+		for (int h = 0 ; h < 2 ; h++)
+		    for (int o = 0 ; o < NumObjects ; o++)
+			if (ObjectTypes.at(o) == TRAY && ((kitchenstate.InWhichGripper.at(o).first  == index && 
+			    kitchenstate.InWhichGripper.at(o).second == h+GRIPPER_OFFSET) || 
+			    (kitchenstate.TraySecondGripper.first  == index && 
+			    kitchenstate.TraySecondGripper.second == h+GRIPPER_OFFSET)))
+			{
+			    KitchenAction ka;
+			    ka.type = PUT_DOWN_JOINT;
+			    ka.objectindex = o;
+			    ka.objectclass = ObjectTypes[o];
+			    ka.location = location;
+			    ka.gripper = h == 0 ? LEFT : RIGHT;
+			    legal.push_back(ActionToInt(ka));
+			}
 }
 
 
@@ -1185,6 +1207,21 @@ LocationType KITCHEN::IntToLocation(const int& i) const
 
 void KITCHEN::DisplayAction(int action, std::ostream& ostr) const
 {
+    if (NumAgents == 1)
+	DisplayActionAgent(action, ostr);
+    else
+    {
+	for (int i = 0 ; i < NumAgents ; i++)
+	{
+	    ostr << "Agent " << i << ":";
+	    DisplayActionAgent(action/((int) pow(NumAgentActions, NumAgents-1-i)), ostr);
+	    action = action%((int) pow(NumAgentActions, NumAgents-1-i));
+	}
+    }
+}
+
+void KITCHEN::DisplayActionAgent(int action, std::ostream& ostr) const
+{
     KitchenAction ka = IntToAction(action);
     
     switch(ka.type)
@@ -1203,6 +1240,8 @@ void KITCHEN::DisplayAction(int action, std::ostream& ostr) const
 	case(PUT_DOWN):
 	case(PUT_IN):
 	case(REMOVE_FROM):
+	case(GRASP_JOINT):
+	case(PUT_DOWN_JOINT):
 	    ostr << ActionToString(ka.type) << "("  << ObjectToString(ka.objectclass) << ","
 		    << LocationToString(ka.location) << "," << GripperToString(ka.gripper) << ")\n";
 	    break;
@@ -1219,10 +1258,11 @@ void KITCHEN::DisplayAction(int action, std::ostream& ostr) const
     }
 }
 
+
 bool KITCHEN::Collision(const KITCHEN_STATE& state, const LocationType& location, const int& index) const
 {
     for (int i = 0 ; i < (int) state.RobotLocations.size() ; i++)
-	if (i != index && state.RobotLocations[i] == location)
+	if (i != index && state.RobotLocations[i] == location && location != STOVE && location != SIDEBOARD)
 	    return true;
     return false;
 }
@@ -1244,7 +1284,10 @@ void KITCHEN::DisplayState(const STATE& state, std::ostream& ostr) const
     {
 	ostr << ObjectToString(ObjectTypes[i]) << " : " << 
 	    LocationToString(kitchenstate.ObjectLocations[i]) << "," << 
-	    GripperToString(kitchenstate.InWhichGripper[i].second) << kitchenstate.InWhichGripper[i].first << "," <<
+	    GripperToString(kitchenstate.InWhichGripper[i].second) << kitchenstate.InWhichGripper[i].first;
+	if (ObjectTypes[i] == TRAY)
+	    ostr << "-" << GripperToString(kitchenstate.TraySecondGripper.second) << kitchenstate.TraySecondGripper.first;
+	ostr  << "," <<
 	    (kitchenstate.AtEdge[i] ? "AT_EDGE" : "NOT_AT_EDGE") << "," <<
 	    (kitchenstate.IsToppled[i] ? "TOPPLED" : "NOT_TOPPLED") << "," <<
 	    (IsFlat(ObjectTypes[i]) ? "FLAT" : "NOT_FLAT") <<"\n";

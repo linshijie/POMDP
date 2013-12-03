@@ -68,13 +68,11 @@ void EXPERIMENT::Run()
 	    {
 		jointaction0 = mcts.SelectAction(1);
 		jointaction1 = mcts.SelectAction(2);
-		action = Simulator.GetNumAgentActions()*Simulator.GetAgentAction(jointaction0,1) + 
-			Simulator.GetAgentAction(jointaction1,2);
+		action = Simulator.GetAgentAction(jointaction0,1) + 
+			Simulator.GetNumAgentActions()*Simulator.GetAgentAction(jointaction1,2);
 	    }
 	}
-	std::cout<<"Start real"<<std::endl;
         terminal = Real.Step(*state, action, observation, reward);
-	std::cout<<"End real"<<std::endl;
 
         Results.Reward.Add(reward);
         undiscountedReturn += reward;
@@ -150,9 +148,7 @@ void EXPERIMENT::Run()
 		action = Simulator.GetNumAgentActions()*Simulator.GetAgentAction(jointaction0,1) + 
 			    Simulator.GetAgentAction(jointaction1,2);
 	    }
-	    std::cout<<"Start real"<<std::endl;
             terminal = Real.Step(*state, action, observation, reward);
-	    std::cout<<"End real"<<std::endl;
 
             Results.Reward.Add(reward);
             undiscountedReturn += reward;

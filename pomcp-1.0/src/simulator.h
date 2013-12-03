@@ -136,10 +136,10 @@ public:
     int GetNumObservations() const { return NumObservations; }
     int GetNumAgentActions() const { return NumAgentActions; }
     int GetNumAgentObservations() const { return NumAgentObservations; }
-    int GetAgentAction(const int& action, const int& index) const { return index > 1 ? action/NumAgentActions : 
-									    action%NumAgentActions;}
-    int GetAgentObservation(const int& observation, const int& index) const { return index > 1 ? 
-						    observation/NumAgentObservations : observation%NumAgentObservations;}
+    int GetAgentAction(const int& action, const int& index) const { return index > 1 || index == 0 ? action%NumAgentActions : 
+									    action/NumAgentActions;}
+    int GetAgentObservation(const int& observation, const int& index) const { return index > 1 || index == 0 ? 
+						    observation%NumAgentObservations : observation/NumAgentObservations;}
     bool IsEpisodic() const { return false; }
     double GetDiscount() const { return Discount; }
     double GetRewardRange() const { return RewardRange; }
