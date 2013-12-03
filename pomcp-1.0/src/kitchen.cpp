@@ -8,7 +8,9 @@ KITCHEN::KITCHEN(int nplates, int ncups):
   ACTION_OFFSET(static_cast<int>(CLOSE)),
   HaveAppleJuice(true), HaveCalgonit(false), HaveGranini(false),
   HaveMeasuringCup(false), HaveRiceBox(false), HaveCereal(true),
+  HaveTray(false),
   TestCerealInCupboard(false), TestPlate1InDishwasher(false), TestAppleJuiceInFridge(true),
+  TestTrayOnStove(false),
   NumAgents(1),
   NonDeterministicActions(true),
   ProbClose(0.95), ProbGrasp(0.95), ProbGrapsFromEdge(0.95), ProbMove(0.95), ProbNudge(0.95), ProbOpen(0.95),
@@ -17,9 +19,6 @@ KITCHEN::KITCHEN(int nplates, int ncups):
 {
     NumObjects = NumPlates+NumCups;
     
-    PreferredLocations.clear();
-    PreferredObjects.clear();
-    
     ObjectTypes.clear();
     int index = 0;
     if (HaveAppleJuice)
@@ -27,8 +26,6 @@ KITCHEN::KITCHEN(int nplates, int ncups):
 	ObjectTypes.push_back(APPLEJUICE);
 	NumObjects++;
 	AppleJuiceIndex = index;
-	if (TestAppleJuiceInFridge)
-	    PreferredObjects.push_back(index);
 	index++;
     }
     if (HaveCalgonit)
@@ -60,13 +57,18 @@ KITCHEN::KITCHEN(int nplates, int ncups):
 	ObjectTypes.push_back(CEREAL);
 	NumObjects++;
 	CerealIndex = index;
-	if (TestCerealInCupboard)
-	    PreferredObjects.push_back(index);
+	index++;
+    }
+    if (HaveTray)
+    {
+	ObjectTypes.push_back(TRAY);
+	NumObjects++;
+	TrayIndex = index;
 	index++;
     }
     
-    NumAgentActions = NumObjects*(NumLocations*14+4) + 8*NumLocations + NumLocations*NumLocations;
-    NumAgentObservations = pow(2,NumObjects)*NumLocations;
+    NumAgentActions = NumObjects*(NumLocations*18+4) + 8*NumLocations + NumLocations*NumLocations;
+    NumAgentObservations = pow(2,NumObjects)*(NumLocations+1);
     
     NumActions = pow(NumAgentActions, NumAgents);
     NumObservations = pow(NumAgentObservations, NumAgents);
@@ -75,11 +77,7 @@ KITCHEN::KITCHEN(int nplates, int ncups):
     {
 	ObjectTypes.push_back(PLATE);
 	if (i == 0)
-	{
 	    Plate1Index = index;
-	    if (TestPlate1InDishwasher)
-		PreferredObjects.push_back(index);
-	}
 	index++;
     }
     for (int i=0; i<NumCups; i++)
@@ -87,13 +85,6 @@ KITCHEN::KITCHEN(int nplates, int ncups):
 	ObjectTypes.push_back(CUP);
 	index++;
     }
-	
-    if (TestAppleJuiceInFridge)
-	PreferredLocations.push_back(FRIDGE);
-    if (TestCerealInCupboard)
-	PreferredLocations.push_back(CUPBOARD);
-    if (TestPlate1InDishwasher)
-	PreferredLocations.push_back(DISHWASHER);
 	
     RewardRange = 99.9;
     Discount = 1.0;
@@ -178,8 +169,12 @@ STATE* KITCHEN::CreateStartState() const
 	kitchenstate->LocationOpen.push_back(false);
 	kitchenstate->LocationPartiallyOpen.push_back(false);
     }
-    kitchenstate->GripperEmpty.push_back(true);
-    kitchenstate->GripperEmpty.push_back(true);
+    for (int i = 0; i < NumAgents; i++)
+    {
+	//left first, then right
+	kitchenstate->GripperEmpty.push_back(true);
+	kitchenstate->GripperEmpty.push_back(true);
+    }
     
     return kitchenstate;
 }
@@ -254,7 +249,7 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
     {
 	case(CLOSE):
 	    if (kitchenstate.RobotLocations[index] == ka.location && 
-		kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET] &&
+		kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET] &&
 		(kitchenstate.LocationOpen[ka.location-LOCATION_OFFSET] || 
 		kitchenstate.LocationPartiallyOpen[ka.location-LOCATION_OFFSET])
 	    )
@@ -271,15 +266,21 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	case(GRASP):
 	    if (kitchenstate.RobotLocations[index] == ka.location && !kitchenstate.IsToppled[ka.objectindex] &&
 		kitchenstate.ObjectLocations[ka.objectindex] == ka.location && 
-		kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET]
+		kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET] &&
+		ObjectTypes[ka.objectindex] != TRAY
 	    )
 	    {
 		if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbGrasp)
 		{
 		    kitchenstate.InWhichGripper[ka.objectindex].first = index;
 		    kitchenstate.InWhichGripper[ka.objectindex].second = ka.gripper;
-		    kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET] = false;
+		    kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET] = false;
 		    kitchenstate.ObjectLocations[ka.objectindex] = NO_LOCATION;
+		}
+		else
+		{
+		    if (ObjectTypes[ka.objectindex] != PLATE)
+			kitchenstate.IsToppled[ka.objectindex] = true;
 		}
 	    }
 	    else
@@ -288,16 +289,22 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	case(GRASP_FROM_EDGE):
 	    if (kitchenstate.RobotLocations[index] == ka.location && kitchenstate.AtEdge[ka.objectindex] &&
 		kitchenstate.ObjectLocations[ka.objectindex] == ka.location &&
-		kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET]
+		kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET] &&
+		ObjectTypes[ka.objectindex] != TRAY
 	    )
 	    {
 		if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbGrapsFromEdge)
 		{
 		    kitchenstate.InWhichGripper[ka.objectindex].first = index;
 		    kitchenstate.InWhichGripper[ka.objectindex].second = ka.gripper;
-		    kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET] = false;
+		    kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET] = false;
 		    kitchenstate.AtEdge[ka.objectindex] = false;
 		    kitchenstate.ObjectLocations[ka.objectindex] = NO_LOCATION;
+		}
+		else
+		{
+		    if (ObjectTypes[ka.objectindex] != PLATE)
+			kitchenstate.IsToppled[ka.objectindex] = true;
 		}
 	    }
 	    else
@@ -308,7 +315,10 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	    )
 	    {
 		for (int i = 0; i < NumAgents; i++)
-		    if (i != index && kitchenstate.RobotLocations[i] == kitchenstate.RobotLocations[index])
+		    if (i != index && kitchenstate.RobotLocations[i] == kitchenstate.RobotLocations[index] &&
+			(kitchenstate.RobotLocations[i] == CUPBOARD || kitchenstate.RobotLocations[i] == FRIDGE ||
+			    kitchenstate.RobotLocations[i] == DISHWASHER)
+		    )
 		    {
 			reward = -10.0;
 			break;
@@ -322,11 +332,17 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	case(NUDGE):
 	    if (kitchenstate.RobotLocations[index] == ka.location && !kitchenstate.AtEdge[ka.objectindex] &&
 		kitchenstate.ObjectLocations[ka.objectindex] == ka.location &&
-		kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET]
+		kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET] &&
+		ObjectTypes[ka.objectindex] != TRAY
 	    )
 	    {
 		if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbNudge)
 		    kitchenstate.AtEdge[ka.objectindex] = true;
+		else
+		{
+		    if (ObjectTypes[ka.objectindex] != PLATE)
+			kitchenstate.IsToppled[ka.objectindex] = true;
+		}
 	    }
 	    else
 		reward = -5.0;    
@@ -334,7 +350,7 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	case(OPEN):
 	    if (kitchenstate.RobotLocations[index] == ka.location && 
 		!kitchenstate.LocationOpen[ka.location-LOCATION_OFFSET] &&
-		kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET]
+		kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET]
 	    )
 	    {
 		if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbOpen)
@@ -347,7 +363,7 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	    if (kitchenstate.RobotLocations[index] == ka.location && 
 		!kitchenstate.LocationOpen[ka.location-LOCATION_OFFSET] &&
 		!kitchenstate.LocationPartiallyOpen[ka.location-LOCATION_OFFSET] && 
-		kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET]
+		kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET]
 	    )
 	    {
 		if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbOpenPartial)
@@ -360,7 +376,7 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	    if (kitchenstate.RobotLocations[index] == ka.location && 
 		!kitchenstate.LocationOpen[ka.location-LOCATION_OFFSET] &&
 		kitchenstate.LocationPartiallyOpen[ka.location-LOCATION_OFFSET] && 
-		kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET]
+		kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET]
 	    )
 	    {
 		if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbOpenComplete)
@@ -375,13 +391,14 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	case(PASS_OBJECT):
 	    if (kitchenstate.InWhichGripper[ka.objectindex].first == index &&
 		kitchenstate.InWhichGripper[ka.objectindex].second == ka.gripper &&
-		kitchenstate.GripperEmpty[ka.gripper2-GRIPPER_OFFSET]
+		kitchenstate.GripperEmpty[index*2+ka.gripper2-GRIPPER_OFFSET] &&
+		ObjectTypes[ka.objectindex] != TRAY
 	    )
 	    {
 		if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbPassObject)
 		{
-		    kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET] = true;
-		    kitchenstate.GripperEmpty[ka.gripper2-GRIPPER_OFFSET] = false;
+		    kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET] = true;
+		    kitchenstate.GripperEmpty[index*2+ka.gripper2-GRIPPER_OFFSET] = false;
 		    kitchenstate.InWhichGripper[ka.objectindex].first = index;
 		    kitchenstate.InWhichGripper[ka.objectindex].second = ka.gripper2;
 		}
@@ -392,7 +409,8 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	case(PLACE_UPRIGHT):
 	    if (kitchenstate.RobotLocations[index] == ka.location && 
 		kitchenstate.ObjectLocations[ka.objectindex] == ka.location &&
-		kitchenstate.IsToppled[ka.objectindex] && kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET]
+		kitchenstate.IsToppled[ka.objectindex] && kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET] &&
+		ObjectTypes[ka.objectindex] != TRAY
 	    )
 	    {
 		if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbPlaceUpright)
@@ -404,12 +422,13 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	case(PUT_DOWN):
 	    if (kitchenstate.RobotLocations[index] == ka.location && 
 		kitchenstate.InWhichGripper[ka.objectindex].first == index &&
-		kitchenstate.InWhichGripper[ka.objectindex].second == ka.gripper
+		kitchenstate.InWhichGripper[ka.objectindex].second == ka.gripper &&
+		ObjectTypes[ka.objectindex] != TRAY
 	    )
 	    {
 		if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbPutDown)
 		{
-		    kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET] = true;
+		    kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET] = true;
 		    kitchenstate.ObjectLocations[ka.objectindex] = ka.location;
 		    kitchenstate.InWhichGripper[ka.objectindex].first = -1;
 		    kitchenstate.InWhichGripper[ka.objectindex].second = NO_GRIPPER;
@@ -422,12 +441,13 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	    if (kitchenstate.RobotLocations[index] == ka.location && 
 		kitchenstate.LocationOpen[ka.location-LOCATION_OFFSET] &&
 		kitchenstate.InWhichGripper[ka.objectindex].first == index &&
-		kitchenstate.InWhichGripper[ka.objectindex].second == ka.gripper
+		kitchenstate.InWhichGripper[ka.objectindex].second == ka.gripper &&
+		ObjectTypes[ka.objectindex] != TRAY
 	    )
 	    {
 		if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbPutIn)
 		{
-		    kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET] = true;
+		    kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET] = true;
 		    kitchenstate.ObjectLocations[ka.objectindex] = ka.location;
 		    kitchenstate.InWhichGripper[ka.objectindex].first = -1;
 		    kitchenstate.InWhichGripper[ka.objectindex].second = NO_GRIPPER;
@@ -440,14 +460,15 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	    if (kitchenstate.RobotLocations[index] == ka.location && 
 		kitchenstate.LocationOpen[ka.location-LOCATION_OFFSET] &&
 		kitchenstate.ObjectLocations[ka.objectindex] == ka.location &&
-		!kitchenstate.IsToppled[ka.objectindex] && kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET]
+		!kitchenstate.IsToppled[ka.objectindex] && kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET] &&
+		ObjectTypes[ka.objectindex] != TRAY
 	    )
 	    {
 		if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbRemoveFrom)
 		{
 		    kitchenstate.InWhichGripper[ka.objectindex].first = index;
 		    kitchenstate.InWhichGripper[ka.objectindex].second = ka.gripper;
-		    kitchenstate.GripperEmpty[ka.gripper-GRIPPER_OFFSET] = false;
+		    kitchenstate.GripperEmpty[index*2+ka.gripper-GRIPPER_OFFSET] = false;
 		    kitchenstate.ObjectLocations[ka.objectindex] = NO_LOCATION;
 		}
 	    }
@@ -477,7 +498,7 @@ bool KITCHEN::LocalMove(STATE& state, const HISTORY& history, int stepObs, const
 	for (int j = 0; j < NumObjects; j++)
 	    if (ko.objectvisible[j])
 		UnseenObjects.erase(j);
-	
+	     
 	if (ko.location == SIDEBOARD || ko.location == STOVE)
 	    UnexploredLocations.erase(static_cast<int>(ko.location));
 	else
@@ -494,7 +515,7 @@ bool KITCHEN::LocalMove(STATE& state, const HISTORY& history, int stepObs, const
 		    break;
 		}
 	    }
-	    if (removefromunseen)
+	    if (ko.location != NO_LOCATION && removefromunseen)
 		UnexploredLocations.erase(static_cast<int>(ko.location));
 	}
 	
@@ -529,6 +550,13 @@ int KITCHEN::MakeObservation(const KITCHEN_STATE& state, const int& index) const
 	    ko.objectvisible.push_back(false);
     }
     ko.location = state.RobotLocations[index];
+    /*for (int i = 0 ; i < NumAgents ; i++)
+    {
+	if (index == i || state.RobotLocations[i] == state.RobotLocations[index])
+	    ko.robotlocations.push_back(state.RobotLocations[i]);
+	else
+	    ko.robotlocations.push_back(NO_LOCATION);
+    }*/
     
     return ObservatonToInt(ko);
 }
@@ -543,8 +571,10 @@ int KITCHEN::ObservatonToInt(const KitchenObservation& ko) const
 	    observation += pow(2,i);
     }
     
+    //for (int i = 0 ; i < NumAgents ; i++)
+	//observation += pow(2,NumObjects)*pow(NumLocations+1,i)*(ko.robotlocations[i]-LOCATION_OFFSET);
     observation += pow(2,NumObjects)*(ko.location-LOCATION_OFFSET);
-    
+  
     return observation;
 }
 
@@ -552,8 +582,16 @@ KitchenObservation KITCHEN::IntToObservation(int observation) const
 {
     KitchenObservation ko;
     ko.objectvisible.clear();
-    ko.location = static_cast<LocationType>(observation/((int) pow(2,NumObjects))+LOCATION_OFFSET);
+
+    /*for (int i = NumAgents-1 ; i >= 0 ; i--)
+    {
+	ko.robotlocations.push_front(static_cast<LocationType>(
+	    observation/((int) (pow(2,NumObjects)*pow(NumLocations+1,i)))+LOCATION_OFFSET)
+	);
+	observation = observation%((int) (pow(2,NumObjects)*pow(NumLocations+1,i)));
+    }*/
     
+    ko.location = static_cast<LocationType>(observation/((int) pow(2,NumObjects))+LOCATION_OFFSET);
     observation = observation%((int) pow(2,NumObjects));
     
     for (int i = 0 ; i < NumObjects ; i++)
@@ -605,6 +643,18 @@ bool KITCHEN::IsAppleJuiceInFridge(const KITCHEN_STATE& state, double& reward) c
     return false;
 }
 
+bool KITCHEN::IsTrayOnStove(const KITCHEN_STATE& state, double& reward) const
+{
+    if (state.ObjectLocations[TrayIndex] == STOVE)
+    {
+	reward = 99.9;
+	return true;
+    }
+    reward = -0.1;
+    return false;
+}
+
+
 void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vector< int >& legal, 
 			    const SIMULATOR::STATUS& status) const
 {
@@ -633,9 +683,9 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     
     //Close actions
     if ( (
-	    (location == CUPBOARD && kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET)) || 
-	    (location == DISHWASHER && kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET)) ||
-	    (location == FRIDGE && kitchenstate.GripperEmpty.at(LEFT-GRIPPER_OFFSET))
+	    (location == CUPBOARD && kitchenstate.GripperEmpty.at(index*2+RIGHT-GRIPPER_OFFSET)) || 
+	    (location == DISHWASHER && kitchenstate.GripperEmpty.at(index*2+RIGHT-GRIPPER_OFFSET)) ||
+	    (location == FRIDGE && kitchenstate.GripperEmpty.at(index*2+LEFT-GRIPPER_OFFSET))
     ) && 
 	(kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) || kitchenstate.LocationPartiallyOpen.at(location-LOCATION_OFFSET)))
     {
@@ -649,9 +699,11 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     //Grasp actions
     if (location == SIDEBOARD || location == STOVE)
 	for (int h = 0 ; h < 2 ; h++)
-	    if (kitchenstate.GripperEmpty.at(h))
+	    if (kitchenstate.GripperEmpty.at(index*2+h))
 		for (int o = 0 ; o < NumObjects ; o++)
-		    if (!IsFlat(ObjectTypes.at(o)) && !kitchenstate.IsToppled.at(o) && ObjectHere.at(o))
+		    if (!IsFlat(ObjectTypes.at(o)) && !kitchenstate.IsToppled.at(o) && ObjectHere.at(o) &&
+			ObjectTypes.at(o) != TRAY
+		    )
 		    {
 			KitchenAction ka;
 			ka.type = GRASP;
@@ -665,9 +717,10 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     //Grasp from edge actions
     if (location == SIDEBOARD || location == STOVE)
 	for (int h = 0 ; h < 2 ; h++)
-	    if (kitchenstate.GripperEmpty.at(h))
+	    if (kitchenstate.GripperEmpty.at(index*2+h))
 		for (int o = 0 ; o < NumObjects ; o++)
-		    if (IsFlat(ObjectTypes.at(o)) && kitchenstate.AtEdge.at(o) && ObjectHere.at(o))
+		    if (IsFlat(ObjectTypes.at(o)) && kitchenstate.AtEdge.at(o) && ObjectHere.at(o) &&
+			ObjectTypes.at(o) != TRAY)
 		    {
 			KitchenAction ka;
 			ka.type = GRASP_FROM_EDGE;
@@ -682,9 +735,13 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     for (int i = LOCATION_OFFSET ; i < LOCATION_OFFSET + NumLocations ; i++)
 	if (static_cast<LocationType>(i) != location)
 	{
+	    //only one agent at a time can be at the cupboard, fridge, and dishwasher
 	    bool otheragentthere = false;
 	    for (int j = 0 ; j < NumAgents ; j++)
-		if (i != j && kitchenstate.RobotLocations[j] == static_cast<LocationType>(i))
+		if (i != j && kitchenstate.RobotLocations[j] == static_cast<LocationType>(i) &&
+		    (kitchenstate.RobotLocations[j] == CUPBOARD || kitchenstate.RobotLocations[j] == FRIDGE
+			|| kitchenstate.RobotLocations[j] == DISHWASHER)
+		)
 		{
 		    otheragentthere = true;
 		    break;
@@ -702,9 +759,10 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     //Nudge actions
     if (location == SIDEBOARD || location == STOVE)
 	for (int h = 0 ; h < 2 ; h++)
-	    if (kitchenstate.GripperEmpty.at(h))
+	    if (kitchenstate.GripperEmpty.at(index*2+h))
 		for (int o = 0 ; o < NumObjects ; o++)
-		    if (IsFlat(ObjectTypes.at(o)) && !kitchenstate.AtEdge.at(o) && ObjectHere.at(o))
+		    if (IsFlat(ObjectTypes.at(o)) && !kitchenstate.AtEdge.at(o) && ObjectHere.at(o) &&
+			ObjectTypes.at(o) != TRAY)
 		    {
 			KitchenAction ka;
 			ka.type = NUDGE;
@@ -717,7 +775,7 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
 		    
     //Open actions
     if ((location == CUPBOARD || location == DISHWASHER) && !kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) &&
-	kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET))
+	kitchenstate.GripperEmpty.at(index*2+RIGHT-GRIPPER_OFFSET))
     {
 	KitchenAction ka;
 	ka.type = OPEN;
@@ -728,7 +786,8 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     
     //Open partial actions
     if (location == FRIDGE && !kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) && 
-	!kitchenstate.LocationPartiallyOpen.at(location-LOCATION_OFFSET) && kitchenstate.GripperEmpty.at(LEFT-GRIPPER_OFFSET))
+	!kitchenstate.LocationPartiallyOpen.at(location-LOCATION_OFFSET) && 
+	kitchenstate.GripperEmpty.at(index*2+LEFT-GRIPPER_OFFSET))
     {
 	KitchenAction ka;
 	ka.type = OPEN_PARTIAL;
@@ -739,7 +798,8 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     
     //Open complete actions
     if (location == FRIDGE && !kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) && 
-	kitchenstate.LocationPartiallyOpen.at(location-LOCATION_OFFSET) && kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET))
+	kitchenstate.LocationPartiallyOpen.at(location-LOCATION_OFFSET) && 
+	kitchenstate.GripperEmpty.at(index*2+RIGHT-GRIPPER_OFFSET))
     {
 	KitchenAction ka;
 	ka.type = OPEN_COMPLETE;
@@ -750,24 +810,27 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     
     //Pass object actions
     for (int o = 0 ; o < NumObjects ; o++)
-	for (int h1 = 0 ; h1 < 2 ; h1++)
-	    if (kitchenstate.InWhichGripper.at(o).first == index && 
-		kitchenstate.InWhichGripper.at(o).second == h1+GRIPPER_OFFSET && kitchenstate.GripperEmpty.at((h1+1)%2))
-	    {
-		KitchenAction ka;
-		ka.type = PASS_OBJECT;
-		ka.objectindex = o;
-		ka.objectclass = ObjectTypes[o];
-		ka.gripper = static_cast<GripperType>(h1 + GRIPPER_OFFSET);
-		ka.gripper2 = static_cast<GripperType>((h1+1)%2 + GRIPPER_OFFSET);
-		legal.push_back(ActionToInt(ka));
-	    }
+	if (ObjectTypes.at(o) != TRAY)
+	    for (int h1 = 0 ; h1 < 2 ; h1++)
+		if (kitchenstate.InWhichGripper.at(o).first == index && 
+		    kitchenstate.InWhichGripper.at(o).second == h1+GRIPPER_OFFSET && 
+		    kitchenstate.GripperEmpty.at(index*2+(h1+1)%2))
+		{
+		    KitchenAction ka;
+		    ka.type = PASS_OBJECT;
+		    ka.objectindex = o;
+		    ka.objectclass = ObjectTypes[o];
+		    ka.gripper = static_cast<GripperType>(h1 + GRIPPER_OFFSET);
+		    ka.gripper2 = static_cast<GripperType>((h1+1)%2 + GRIPPER_OFFSET);
+		    legal.push_back(ActionToInt(ka));
+		}
 	    
     //Place upright actions
     for (int h = 0 ; h < 2 ; h++)
-	if (kitchenstate.GripperEmpty.at(h))
+	if (kitchenstate.GripperEmpty.at(index*2+h))
 	    for (int o = 0 ; o < NumObjects ; o++)
-		if (ObjectHere.at(o) && kitchenstate.IsToppled.at(o))
+		if (ObjectHere.at(o) && kitchenstate.IsToppled.at(o) &&
+			ObjectTypes.at(o) != TRAY)
 		{
 		    KitchenAction ka;
 		    ka.type = PLACE_UPRIGHT;
@@ -783,7 +846,8 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
 	for (int h = 0 ; h < 2 ; h++)
 	    for (int o = 0 ; o < NumObjects ; o++)
 		if (kitchenstate.InWhichGripper.at(o).first  == index && 
-		    kitchenstate.InWhichGripper.at(o).second == h+GRIPPER_OFFSET)
+		    kitchenstate.InWhichGripper.at(o).second == h+GRIPPER_OFFSET &&
+			ObjectTypes.at(o) != TRAY)
 		{
 		    KitchenAction ka;
 		    ka.type = PUT_DOWN;
@@ -801,7 +865,8 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
 		(location == FRIDGE && h == LEFT-GRIPPER_OFFSET)))
 		for (int o = 0 ; o < NumObjects ; o++)
 		    if (kitchenstate.InWhichGripper.at(o).first  == index && 
-			kitchenstate.InWhichGripper.at(o).second == h+GRIPPER_OFFSET)
+			kitchenstate.InWhichGripper.at(o).second == h+GRIPPER_OFFSET &&
+			ObjectTypes.at(o) != TRAY)
 		    {
 			KitchenAction ka;
 			ka.type = PUT_IN;
@@ -815,9 +880,11 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     //Remove from actions
     if (kitchenstate.LocationOpen.at(location-LOCATION_OFFSET))
 	for (int h = 0 ; h < 2 ; h++)
-	    if (kitchenstate.GripperEmpty.at(h) && (location == CUPBOARD || (location == FRIDGE && h == LEFT-GRIPPER_OFFSET)))
+	    if (kitchenstate.GripperEmpty.at(index*2+h) && (location == CUPBOARD || 
+		(location == FRIDGE && h == LEFT-GRIPPER_OFFSET)))
 		for (int o = 0 ; o < NumObjects ; o++)
-		    if (ObjectHere.at(o) && !kitchenstate.IsToppled.at(o))
+		    if (ObjectHere.at(o) && !kitchenstate.IsToppled.at(o) &&
+			ObjectTypes.at(o) != TRAY)
 		    {
 			KitchenAction ka;
 			ka.type = REMOVE_FROM;
@@ -825,6 +892,25 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
 			ka.objectclass = ObjectTypes[o];
 			ka.location = location;
 			ka.gripper = h == 0 ? LEFT : RIGHT;
+			legal.push_back(ActionToInt(ka));
+		    }
+		    
+
+    //Grasp joint
+    if (location == SIDEBOARD || location == STOVE)
+	for (int h = 0 ; h < 2 ; h++)
+	    if (kitchenstate.GripperEmpty.at(index*2+h))
+		for (int o = 0 ; o < NumObjects ; o++)
+		    if (!IsFlat(ObjectTypes.at(o)) && !kitchenstate.IsToppled.at(o) && ObjectHere.at(o) &&
+			ObjectTypes.at(o) != TRAY
+		    )
+		    {
+			KitchenAction ka;
+			ka.type = GRASP;
+			ka.location = location;
+			ka.gripper = h == 0 ? LEFT : RIGHT;
+			ka.objectindex = o;
+			ka.objectclass = ObjectTypes[o];
 			legal.push_back(ActionToInt(ka));
 		    }
 }
@@ -842,244 +928,7 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history,
 void KITCHEN::GeneratePreferredAgent(const KITCHEN_STATE& kitchenstate, const HISTORY& history, 
 				     std::vector< int >& actions, const SIMULATOR::STATUS& status, const int& index) const
 {
-    LocationType location = kitchenstate.RobotLocations[index];
     
-    KitchenAction lastaction;
-    if (history.Size() > 0)
-	lastaction = IntToAction(history.Back().Action);
-    
-    //Close actions
-    if ( (history.Size() == 0 || (lastaction.type != OPEN && lastaction.type != OPEN_PARTIAL && lastaction.type != OPEN_COMPLETE)) && (
-	    (location == CUPBOARD && kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET)) || 
-	    (location == DISHWASHER && kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET)) ||
-	    (location == FRIDGE && kitchenstate.GripperEmpty.at(LEFT-GRIPPER_OFFSET))
-    ) && 
-	(kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) || kitchenstate.LocationPartiallyOpen.at(location-LOCATION_OFFSET)))
-    {
-	KitchenAction ka;
-	ka.type = CLOSE;
-	ka.location = location;
-	ka.gripper = location == FRIDGE ? LEFT : RIGHT;
-	actions.push_back(ActionToInt(ka));
-    }
-    
-    //Grasp actions
-    if ((history.Size() == 0 || lastaction.type != PUT_DOWN) && (location == SIDEBOARD || location == STOVE))
-	for (int h = 0 ; h < 2 ; h++)
-	    if (kitchenstate.GripperEmpty.at(h))
-		for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
-		{
-		    int o = PreferredObjects.at(i);
-		    if (!IsFlat(ObjectTypes.at(o)) && !kitchenstate.IsToppled.at(o) && kitchenstate.ObjectLocations.at(o) == location)
-		    {
-			KitchenAction ka;
-			ka.type = GRASP;
-			ka.location = location;
-			ka.gripper = h == 0 ? LEFT : RIGHT;
-			ka.objectindex = o;
-			ka.objectclass = ObjectTypes[o];
-			actions.push_back(ActionToInt(ka));
-		    }
-		}
-		    
-    //Grasp from edge actions
-    if ((history.Size() == 0 || lastaction.type == NUDGE) && (location == SIDEBOARD || location == STOVE))
-	for (int h = 0 ; h < 2 ; h++)
-	    if (kitchenstate.GripperEmpty.at(h))
-		for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
-		{
-		    int o = PreferredObjects.at(i);
-		    if (IsFlat(ObjectTypes.at(o)) && kitchenstate.AtEdge.at(o) && kitchenstate.ObjectLocations.at(o) == location)
-		    {
-			KitchenAction ka;
-			ka.type = GRASP_FROM_EDGE;
-			ka.location = location;
-			ka.gripper = h == 0 ? LEFT : RIGHT;
-			ka.objectindex = o;
-			ka.objectclass = ObjectTypes[o];
-			actions.push_back(ActionToInt(ka));
-		    }
-		}
-		    
-    //Move actions
-    bool shouldmove = false;
-    for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
-    {
-	if (kitchenstate.InWhichGripper[PreferredObjects[i]].second != NO_GRIPPER)
-	{
-	    shouldmove = true;
-	    break;
-	}
-    }
-    
-    if (shouldmove)
-    for (int i = 0 ; i < (int)PreferredLocations.size() ; i++)
-	if (PreferredLocations.at(i) != location)
-	{
-	    KitchenAction ka;
-	    ka.type = MOVE_ROBOT;
-	    ka.location = location;
-	    ka.location2 = PreferredLocations.at(i);
-	    actions.push_back(ActionToInt(ka));
-	}
-		    
-    //Nudge actions
-    if (location == SIDEBOARD || location == STOVE)
-	for (int h = 0 ; h < 2 ; h++)
-	    if (kitchenstate.GripperEmpty.at(h))
-		for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
-		{
-		    int o = PreferredObjects.at(i);
-		    if (IsFlat(ObjectTypes.at(o)) && !kitchenstate.AtEdge.at(o) && 
-			kitchenstate.ObjectLocations.at(o) == location)
-		    {
-			KitchenAction ka;
-			ka.type = NUDGE;
-			ka.location = location;
-			ka.gripper = h == 0 ? LEFT : RIGHT;
-			ka.objectindex = o;
-			ka.objectclass = ObjectTypes[o];
-			actions.push_back(ActionToInt(ka));
-		    }
-		}
-		    
-    //Open actions
-    if ((history.Size() == 0 || lastaction.type != CLOSE) && (location == CUPBOARD || location == DISHWASHER) && 
-	!kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) && kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET))
-    {
-	KitchenAction ka;
-	ka.type = OPEN;
-	ka.location = location;
-	ka.gripper = RIGHT;
-	actions.push_back(ActionToInt(ka));
-    }
-    
-    //Open partial actions
-    if ((history.Size() == 0 || lastaction.type != CLOSE) &&  location == FRIDGE && 
-	!kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) && 
-	!kitchenstate.LocationPartiallyOpen.at(location-LOCATION_OFFSET) && 
-	kitchenstate.GripperEmpty.at(LEFT-GRIPPER_OFFSET))
-    {
-	KitchenAction ka;
-	ka.type = OPEN_PARTIAL;
-	ka.location = location;
-	ka.gripper = LEFT;
-	actions.push_back(ActionToInt(ka));
-    }
-    
-    //Open complete actions
-    if ((history.Size() == 0 || lastaction.type == OPEN_PARTIAL) &&  location == FRIDGE && 
-	!kitchenstate.LocationOpen.at(location-LOCATION_OFFSET) && 
-	kitchenstate.LocationPartiallyOpen.at(location-LOCATION_OFFSET) && 
-	kitchenstate.GripperEmpty.at(RIGHT-GRIPPER_OFFSET))
-    {
-	KitchenAction ka;
-	ka.type = OPEN_COMPLETE;
-	ka.location = location;
-	ka.gripper = RIGHT;
-	actions.push_back(ActionToInt(ka));
-    }
-    
-    //Pass object actions
-    for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
-    {
-	int o = PreferredObjects.at(i);
-	for (int h1 = 0 ; h1 < 2 ; h1++)
-	    if (kitchenstate.InWhichGripper.at(o).first == index &&
-		kitchenstate.InWhichGripper.at(o).second == h1+GRIPPER_OFFSET && 
-		kitchenstate.GripperEmpty.at((h1+1)%2))
-	    {
-		KitchenAction ka;
-		ka.type = PASS_OBJECT;
-		ka.objectindex = o;
-		ka.objectclass = ObjectTypes[o];
-		ka.gripper = static_cast<GripperType>(h1 + GRIPPER_OFFSET);
-		ka.gripper2 = static_cast<GripperType>((h1+1)%2 + GRIPPER_OFFSET);
-		actions.push_back(ActionToInt(ka));
-	    }
-    }
-	    
-    //Place upright actions
-    for (int h = 0 ; h < 2 ; h++)
-	if (kitchenstate.GripperEmpty.at(h))
-	    for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
-	    {
-		int o = PreferredObjects.at(i);
-		if (kitchenstate.ObjectLocations.at(o) == location && kitchenstate.IsToppled.at(o))
-		{
-		    KitchenAction ka;
-		    ka.type = PLACE_UPRIGHT;
-		    ka.objectindex = o;
-		    ka.objectclass = ObjectTypes[o];
-		    ka.location = location;
-		    ka.gripper = h == 0 ? LEFT : RIGHT;
-		    actions.push_back(ActionToInt(ka));
-		}
-	    }
-		
-    //Put down actions
-    if ((history.Size() == 0 || (lastaction.type != GRASP && lastaction.type != GRASP_FROM_EDGE)) &&  
-	(location == SIDEBOARD || location == STOVE))
-	for (int h = 0 ; h < 2 ; h++)
-	    for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
-	    {
-		int o = PreferredObjects.at(i);
-		if (kitchenstate.InWhichGripper.at(o).first  == index && 
-		    kitchenstate.InWhichGripper.at(o).second == h+GRIPPER_OFFSET)
-		{
-		    KitchenAction ka;
-		    ka.type = PUT_DOWN;
-		    ka.objectindex = o;
-		    ka.objectclass = ObjectTypes[o];
-		    ka.location = location;
-		    ka.gripper = h == 0 ? LEFT : RIGHT;
-		    actions.push_back(ActionToInt(ka));
-		}
-	    }
-    
-    //Put in actions
-    if ((history.Size() == 0 || lastaction.type != REMOVE_FROM) && kitchenstate.LocationOpen.at(location-LOCATION_OFFSET))
-	for (int h = 0 ; h < 2 ; h++)
-	    if ((location == CUPBOARD || (location == DISHWASHER && h == RIGHT-GRIPPER_OFFSET) || 
-		(location == FRIDGE && h == LEFT-GRIPPER_OFFSET)))
-		for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
-		{
-		    int o = PreferredObjects.at(i);
-		    if (kitchenstate.InWhichGripper.at(o).first  == index && 
-			kitchenstate.InWhichGripper.at(o).second == h+GRIPPER_OFFSET)
-		    {
-			KitchenAction ka;
-			ka.type = PUT_IN;
-			ka.objectindex = o;
-			ka.objectclass = ObjectTypes[o];
-			ka.location = location;
-			ka.gripper = h == 0 ? LEFT : RIGHT;
-			actions.push_back(ActionToInt(ka));
-		    }
-		}
-		
-    //Remove from actions
-    if ((history.Size() == 0 || lastaction.type != PUT_IN) && kitchenstate.LocationOpen.at(location-LOCATION_OFFSET))
-	for (int h = 0 ; h < 2 ; h++)
-	    if (kitchenstate.GripperEmpty.at(h) && 
-		(location == CUPBOARD || (location == FRIDGE && h == LEFT-GRIPPER_OFFSET)))
-		for (int i = 0 ; i < (int)PreferredObjects.size() ; i++)
-		{
-		    int o = PreferredObjects.at(i);
-		    if (kitchenstate.ObjectLocations.at(o) == location && !kitchenstate.IsToppled.at(o))
-		    {
-			KitchenAction ka;
-			ka.type = REMOVE_FROM;
-			ka.objectindex = o;
-			ka.objectclass = ObjectTypes[o];
-			ka.location = location;
-			ka.gripper = h == 0 ? LEFT : RIGHT;
-			actions.push_back(ActionToInt(ka));
-		    }
-		}
-		
-    
-    //std::cout << "Num actions " << actions.size() << std::endl;
 }
 
 
@@ -1149,6 +998,12 @@ int KITCHEN::ActionToInt(const KitchenAction& ka) const
 	    action += NumLocations*2*4 + NumObjects*NumLocations*2*6 + NumLocations*NumLocations + NumObjects*4;
 	    action += object*NumLocations*2 + location*2 + gripper; 
 	    break;
+	case(GRASP_JOINT):
+	    action += NumLocations*2*4 + NumObjects*NumLocations*2*7 + NumLocations*NumLocations + NumObjects*4;
+	    action += object*NumLocations*2 + location*2 + gripper; 
+	case(PUT_DOWN_JOINT):
+	    action += NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4;
+	    action += object*NumLocations*2 + location*2 + gripper; 
 	default:
 	    break;
 	    
@@ -1162,7 +1017,7 @@ int KITCHEN::ActionToInt(const KitchenAction& ka) const
 
 KitchenAction KITCHEN::IntToAction(int action) const
 {
-    assert(action >= 0 && action < NumObjects*(NumLocations*14+4) + 8*NumLocations + NumLocations*NumLocations);
+    assert(action >= 0 && action < NumAgentActions);
     KitchenAction ka;
     
     //std::cout << "Int" << action << std::endl;
@@ -1264,10 +1119,28 @@ KitchenAction KITCHEN::IntToAction(int action) const
 	ka.location = IntToLocation((action%(NumLocations*2))/2);
 	ka.gripper = IntToGripper(action%2);
     }
-    else
+    else if (action < NumLocations*2*4 + NumObjects*NumLocations*2*7 + NumLocations*NumLocations + NumObjects*4)
     {
 	ka.type = REMOVE_FROM;
 	action -= (NumLocations*2*4 + NumObjects*NumLocations*2*6 + NumLocations*NumLocations + NumObjects*4);
+	ka.objectclass = ObjectTypes[action/(NumLocations*2)];
+	ka.objectindex = action/(NumLocations*2);
+	ka.location = IntToLocation((action%(NumLocations*2))/2);
+	ka.gripper = IntToGripper(action%2);
+    }
+    else if (action < NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4)
+    {
+	ka.type = GRASP_JOINT;
+	action -= (NumLocations*2*4 + NumObjects*NumLocations*2*7 + NumLocations*NumLocations + NumObjects*4);
+	ka.objectclass = ObjectTypes[action/(NumLocations*2)];
+	ka.objectindex = action/(NumLocations*2);
+	ka.location = IntToLocation((action%(NumLocations*2))/2);
+	ka.gripper = IntToGripper(action%2);
+    }
+    else
+    {
+	ka.type = PUT_DOWN_JOINT;
+	action -= (NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4);
 	ka.objectclass = ObjectTypes[action/(NumLocations*2)];
 	ka.objectindex = action/(NumLocations*2);
 	ka.location = IntToLocation((action%(NumLocations*2))/2);
@@ -1317,14 +1190,19 @@ void KITCHEN::DisplayAction(int action, std::ostream& ostr) const
     switch(ka.type)
     {
 	case(CLOSE):
+	case(OPEN):
+	case(OPEN_PARTIAL):
+	case(OPEN_COMPLETE):
 	    ostr << ActionToString(ka.type) << "("  << LocationToString(ka.location) << ","
 		    << GripperToString(ka.gripper) << ")\n";
 	    break;
 	case(GRASP):
-	    ostr << ActionToString(ka.type) << "("  << ObjectToString(ka.objectclass) << ","
-		    << LocationToString(ka.location) << "," << GripperToString(ka.gripper) << ")\n";
-	    break;
 	case(GRASP_FROM_EDGE):
+	case(NUDGE):
+	case(PLACE_UPRIGHT):
+	case(PUT_DOWN):
+	case(PUT_IN):
+	case(REMOVE_FROM):
 	    ostr << ActionToString(ka.type) << "("  << ObjectToString(ka.objectclass) << ","
 		    << LocationToString(ka.location) << "," << GripperToString(ka.gripper) << ")\n";
 	    break;
@@ -1332,41 +1210,9 @@ void KITCHEN::DisplayAction(int action, std::ostream& ostr) const
 	    ostr << ActionToString(ka.type) << "("  << LocationToString(ka.location) << ","
 		    << LocationToString(ka.location2) << ")\n";
 	    break;
-	case(NUDGE):
-	    ostr << ActionToString(ka.type) << "("  << ObjectToString(ka.objectclass) << ","
-		    << LocationToString(ka.location) << "," << GripperToString(ka.gripper) << ")\n";
-	    break;
-	case(OPEN):
-	    ostr << ActionToString(ka.type) << "("  << LocationToString(ka.location) << ","
-		    << GripperToString(ka.gripper) << ")\n";
-	    break;
-	case(OPEN_PARTIAL):
-	    ostr << ActionToString(ka.type) << "("  << LocationToString(ka.location) << ","
-		    << GripperToString(ka.gripper) << ")\n";
-	    break;
-	case(OPEN_COMPLETE):
-	    ostr << ActionToString(ka.type) << "("  << LocationToString(ka.location) << ","
-		    << GripperToString(ka.gripper) << ")\n";
-	    break;
 	case(PASS_OBJECT):
 	    ostr << ActionToString(ka.type) << "("  << ObjectToString(ka.objectclass) << ","
 		    << GripperToString(ka.gripper) << "," << GripperToString(ka.gripper2) << ")\n";
-	    break;
-	case(PLACE_UPRIGHT):
-	    ostr << ActionToString(ka.type) << "("  << ObjectToString(ka.objectclass) << ","
-		    << LocationToString(ka.location) << "," << GripperToString(ka.gripper) << ")\n";
-	    break;
-	case(PUT_DOWN):
-	    ostr << ActionToString(ka.type) << "("  << ObjectToString(ka.objectclass) << ","
-		    << LocationToString(ka.location) << "," << GripperToString(ka.gripper) << ")\n";
-	    break;
-	case(PUT_IN):
-	    ostr << ActionToString(ka.type) << "("  << ObjectToString(ka.objectclass) << ","
-		    << LocationToString(ka.location) << "," << GripperToString(ka.gripper) << ")\n";
-	    break;
-	case(REMOVE_FROM):
-	    ostr << ActionToString(ka.type) << "("  << ObjectToString(ka.objectclass) << ","
-		    << LocationToString(ka.location) << "," << GripperToString(ka.gripper) << ")\n";
 	    break;
 	default:
 	    break;
@@ -1391,8 +1237,8 @@ void KITCHEN::DisplayState(const STATE& state, std::ostream& ostr) const
     for (int i = 0 ; i < NumAgents ; i++)
     {
 	ostr << "Robot " << i << ": " << LocationToString(kitchenstate.RobotLocations[i]) << "," <<
-		(kitchenstate.GripperEmpty[0] ? "LEFT_EMPTY" : "LEFT_FULL") << "," <<
-		(kitchenstate.GripperEmpty[1] ? "RIGHT_EMPTY" : "RIGHT_FULL") <<"\n";
+		(kitchenstate.GripperEmpty[i*2] ? "LEFT_EMPTY" : "LEFT_FULL") << "," <<
+		(kitchenstate.GripperEmpty[i*2+1] ? "RIGHT_EMPTY" : "RIGHT_FULL") <<"\n";
     }
     for (int i = 0 ; i < NumObjects ; i++)
     {
@@ -1461,6 +1307,10 @@ std::string KITCHEN::ActionToString(const ActionType& t) const
 	    return "PUT_IN";
 	case(REMOVE_FROM):
 	    return "REMOVE_FROM";
+	case(GRASP_JOINT):
+	    return "GRASP_JOINT";
+	case(PUT_DOWN_JOINT):
+	    return "PUT_DOWN_JOINT";
 	default:
 	    return "INVALID_ACTION";
     }
@@ -1522,6 +1372,8 @@ std::string KITCHEN::ObjectToString(const ObjectClass& t) const
 	    return "PLATE";
 	case(CUP):
 	    return "CUP";
+	case(TRAY):
+	    return "TRAY";
 	default:
 	    return "INVALID_OBJECT";
     }

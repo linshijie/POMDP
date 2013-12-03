@@ -2,16 +2,17 @@
 #define KITCHEN_H
 #include "simulator.h"
 #include <tr1/unordered_map>
+#include <deque>
 
 
-enum ObjectClass {APPLEJUICE = 0, CALGONIT, GRANINI, MEASURINGCUP, RICEBOX, CEREAL, PLATE, CUP};
+enum ObjectClass {APPLEJUICE = 0, CALGONIT, GRANINI, MEASURINGCUP, RICEBOX, CEREAL, PLATE, CUP, TRAY};
 
-enum LocationType {CUPBOARD = 8, DISHWASHER, FRIDGE, SIDEBOARD, STOVE, NO_LOCATION};
+enum LocationType {CUPBOARD = 9, DISHWASHER, FRIDGE, SIDEBOARD, STOVE, NO_LOCATION};
 
-enum GripperType {LEFT = 14, RIGHT, NO_GRIPPER};
+enum GripperType {LEFT = 15, RIGHT, NO_GRIPPER};
 
-enum ActionType {CLOSE = 17, GRASP, GRASP_FROM_EDGE, MOVE_ROBOT, NUDGE, OPEN, OPEN_PARTIAL, OPEN_COMPLETE,
-    PASS_OBJECT, PLACE_UPRIGHT, PUT_DOWN, PUT_IN, REMOVE_FROM};
+enum ActionType {CLOSE = 18, GRASP, GRASP_FROM_EDGE, MOVE_ROBOT, NUDGE, OPEN, OPEN_PARTIAL, OPEN_COMPLETE,
+    PASS_OBJECT, PLACE_UPRIGHT, PUT_DOWN, PUT_IN, REMOVE_FROM, GRASP_JOINT, PUT_DOWN_JOINT};
 
 //typedef std::tr1::unordered_map< ObjectClass, int, std::tr1::hash<int> >  hashmap;
     
@@ -83,14 +84,14 @@ protected:
     bool IsObject(const int& o) const { return o >= APPLEJUICE && o <= CUP; }
     bool IsFlat(const int& o) const { return o == PLATE; }
     bool IsHand(const int& h) const {return h == LEFT || h == RIGHT;}
-    bool HaveAppleJuice, HaveCalgonit, HaveGranini, HaveMeasuringCup, HaveRiceBox, HaveCereal;
+    bool HaveAppleJuice, HaveCalgonit, HaveGranini, HaveMeasuringCup, HaveRiceBox, HaveCereal, HaveTray;
     int NumObjects;
     int LOCATION_OFFSET, GRIPPER_OFFSET, ACTION_OFFSET;
     bool Collision(const KITCHEN_STATE& state, const LocationType& location, const int& index) const;
     bool StepAgent(KITCHEN_STATE& kitchenstate, int action, 
         int& observation, double& reward, const int& index) const;
     
-    int CerealIndex, Plate1Index, AppleJuiceIndex;
+    int CerealIndex, Plate1Index, AppleJuiceIndex, TrayIndex;
     //std::tr1::unordered_map< int, int > ObjectIndexMap;
     
     int ActionToInt(const KitchenAction& ka) const;
@@ -110,16 +111,15 @@ protected:
     bool NonDeterministicActions;
     double ProbClose, ProbGrasp, ProbGrapsFromEdge, ProbMove, ProbNudge, ProbOpen, ProbOpenPartial,
 	ProbOpenComplete, ProbPassObject, ProbPlaceUpright, ProbPutDown, ProbPutIn, ProbRemoveFrom;
-	
-    std::vector<int> PreferredObjects;
-    std::vector<LocationType> PreferredLocations;
     
     //GOALS
     bool TestCerealInCupboard, TestPlate1InDishwasher, TestAppleJuiceInFridge;
+    bool TestTrayOnStove;
     
     bool IsCerealInCupboard(const KITCHEN_STATE& state, double& reward) const;
     bool IsPlate1InDishwasher(const KITCHEN_STATE& state, double& reward) const;
     bool IsAppleJuiceInFridge(const KITCHEN_STATE& state, double& reward) const;
+    bool IsTrayOnStove(const KITCHEN_STATE& state, double& reward) const;
     
 private:
     mutable MEMORY_POOL<KITCHEN_STATE> MemoryPool;
