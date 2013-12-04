@@ -112,7 +112,8 @@ protected:
     
     bool NonDeterministicActions;
     double ProbClose, ProbGrasp, ProbGrapsFromEdge, ProbMove, ProbNudge, ProbOpen, ProbOpenPartial,
-	ProbOpenComplete, ProbPassObject, ProbPlaceUpright, ProbPutDown, ProbPutIn, ProbRemoveFrom;
+	ProbOpenComplete, ProbPassObject, ProbPlaceUpright, ProbPutDown, ProbPutIn, ProbRemoveFrom,
+	ProbGraspJoint, ProbPutDownJoint, ProbMoveJoint;
     
     //GOALS
     bool TestCerealInCupboard, TestPlate1InDishwasher, TestAppleJuiceInFridge;

@@ -15,7 +15,8 @@ KITCHEN::KITCHEN(int nplates, int ncups):
   NonDeterministicActions(true),
   ProbClose(0.95), ProbGrasp(0.95), ProbGrapsFromEdge(0.95), ProbMove(0.95), ProbNudge(0.95), ProbOpen(0.95),
   ProbOpenPartial(0.95), ProbOpenComplete(0.95), ProbPassObject(0.95), 
-  ProbPlaceUpright(0.95), ProbPutDown(0.95), ProbPutIn(0.95), ProbRemoveFrom(0.95)
+  ProbPlaceUpright(0.95), ProbPutDown(0.95), ProbPutIn(0.95), ProbRemoveFrom(0.95),
+  ProbGraspJoint(0.9), ProbPutDownJoint(0.9), ProbMoveJoint(0.9)
 {
     NumObjects = NumPlates+NumCups;
     
@@ -185,23 +186,167 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward) c
 {
     KITCHEN_STATE& kitchenstate = safe_cast<KITCHEN_STATE&>(state);
     
+    std::vector< std::pair< int, int > > agentactions;
+    
     if (NumAgents == 1)
+    {
+	agentactions.push_back(std::make_pair(0,action));
 	StepAgent(kitchenstate, action, observation, reward, 0);
+    }
     else
     {
 	for (int i = 0; i < NumAgents; i++)
 	{
-	    if (UTILS::RandomDouble(0.0,1.0) < 0.5)
+	    agentactions.push_back(std::make_pair(i,action/((int) pow(NumAgentActions, NumAgents-1-i))));
+	    action = action%((int) pow(NumAgentActions, NumAgents-1-i)); 
+	}
+	std::random_shuffle(agentactions.begin(), agentactions.end());
+	
+	//Check for joint actions
+	std::vector< std::pair<int, int> > jointinds;
+	std::vector<KitchenAction> kitchenactions;
+	for (int i = 0; i < (int) agentactions.size(); i++)
+	{
+	    KitchenAction ka = IntToAction(agentactions[i].second);
+	    kitchenactions.push_back(ka);
+	    if (ka.type == GRASP_JOINT || ka.type == PUT_DOWN_JOINT || 
+		(ka.type == MOVE_ROBOT && 
+		(kitchenstate.InWhichGripper[TrayIndex].first == agentactions[i].first) ||
+		 kitchenstate.TraySecondGripper.first == agentactions[i].first))
 	    {
-		StepAgent(kitchenstate, action%NumAgentActions, observation, reward, 0);
-		StepAgent(kitchenstate, action/NumAgentActions, observation, reward, 1);
-	    }
-	    else
-	    {
-		StepAgent(kitchenstate, action/NumAgentActions, observation, reward, 1);
-		StepAgent(kitchenstate, action%NumAgentActions, observation, reward, 0);
+		if (jointinds.empty())
+		    jointinds.push_back(std::make_pair(i,-1));
+		else
+		{
+		    bool assigned = false;
+		    for (int j = 0; j < jointinds.size() ; j++)
+			if (!assigned && jointinds[j].second == -1)
+			{
+			    KitchenAction otherka = kitchenactions[jointinds[j].first];
+			    if (ka.type == otherka.type && ka.location == otherka.location &&
+				(((ka.type == GRASP_JOINT || ka.type == PUT_DOWN_JOINT) && 
+				    ka.objectindex == otherka.objectindex) ||
+				    ka.type == MOVE_ROBOT)
+				)
+			    {
+				jointinds[j].second = i;
+				assigned = true;
+				break;
+			    }
+			}
+		    if (!assigned)
+			jointinds.push_back(std::make_pair(i,-1));
+		}
 	    }
 	}
+	
+	bool executedjointactions[NumAgents];
+	for (int i = 0 ; i < NumAgents ; i++)
+	    executedjointactions[i] = false;
+	
+	for (int i = 0 ; i < (int) jointinds.size() ; i++)
+	{
+	    int firstaction = jointinds[i].first, secondaction = jointinds[i].second;
+
+	    if (firstaction != -1 && secondaction != -1)
+	    {
+		int firstagent = agentactions[firstaction].first, secondagent = agentactions[secondaction].first;
+		executedjointactions[firstagent] = true;
+		executedjointactions[secondagent] = true;
+		KitchenAction firstka = kitchenactions[firstaction], secondka = kitchenactions[secondaction];
+		if (firstka.type == GRASP_JOINT)
+		{
+		    if (ObjectTypes[firstka.objectindex] == TRAY && firstka.objectindex == secondka.objectindex &&
+			firstka.location == secondka.location &&
+			kitchenstate.RobotLocations[firstagent] == firstka.location &&
+			kitchenstate.RobotLocations[secondagent] == secondka.location &&
+			kitchenstate.ObjectLocations[firstka.objectindex] == firstka.location && 
+			kitchenstate.GripperEmpty[firstagent*2+firstka.gripper-GRIPPER_OFFSET] &&
+			kitchenstate.GripperEmpty[secondagent*2+secondka.gripper-GRIPPER_OFFSET] 
+		    )
+		    {
+			if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbGraspJoint)
+			{
+			    kitchenstate.InWhichGripper[firstka.objectindex].first = firstagent;
+			    kitchenstate.InWhichGripper[firstka.objectindex].second = firstka.gripper;
+			    kitchenstate.TraySecondGripper = std::make_pair(secondagent, secondka.gripper);
+			    kitchenstate.GripperEmpty[firstagent*2+firstka.gripper-GRIPPER_OFFSET] = false;
+			    kitchenstate.GripperEmpty[secondagent*2+secondka.gripper-GRIPPER_OFFSET] = false;
+			    kitchenstate.ObjectLocations[firstka.objectindex] = NO_LOCATION;
+			}
+		    }
+		    else
+			reward = -10.0;
+		}
+		else if (firstka.type == PUT_DOWN_JOINT)
+		{
+		    if (ObjectTypes[firstka.objectindex] == TRAY && firstka.objectindex == secondka.objectindex &&
+			firstka.location == secondka.location &&
+			kitchenstate.RobotLocations[firstagent] == firstka.location && 
+			kitchenstate.RobotLocations[secondagent] == secondka.location && 
+			((kitchenstate.InWhichGripper[firstka.objectindex].first == firstagent &&
+			  kitchenstate.InWhichGripper[firstka.objectindex].second == firstka.gripper && 
+			  kitchenstate.TraySecondGripper.first == secondagent &&
+			  kitchenstate.TraySecondGripper.second == secondka.gripper) ||
+			 (kitchenstate.InWhichGripper[firstka.objectindex].first == secondagent &&
+			  kitchenstate.InWhichGripper[firstka.objectindex].second == secondka.gripper && 
+			  kitchenstate.TraySecondGripper.first == firstagent &&
+			  kitchenstate.TraySecondGripper.second == firstka.gripper)    
+			)
+		    )
+		    {
+			if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbPutDownJoint)
+			{
+			    kitchenstate.GripperEmpty[firstagent*2+firstka.gripper-GRIPPER_OFFSET] = true;
+			    kitchenstate.GripperEmpty[secondagent*2+secondka.gripper-GRIPPER_OFFSET] = true;
+			    kitchenstate.ObjectLocations[firstka.objectindex] = firstka.location;
+			    kitchenstate.InWhichGripper[firstka.objectindex].first = -1;
+			    kitchenstate.InWhichGripper[firstka.objectindex].second = NO_GRIPPER;
+			    kitchenstate.TraySecondGripper.first = -1;
+			    kitchenstate.TraySecondGripper.second = NO_GRIPPER;
+			}
+		    }
+		    else
+			reward = -10.0;
+		}
+		else if (firstka.type == MOVE_ROBOT)
+		{
+		    if (firstka.location == secondka.location &&
+			kitchenstate.RobotLocations[firstagent] == firstka.location && 
+			firstka.location2 == secondka.location2 &&
+			firstka.location != firstka.location2 && 
+			((kitchenstate.InWhichGripper[TrayIndex].first == firstagent &&
+			  kitchenstate.TraySecondGripper.first == secondagent) ||
+			 (kitchenstate.InWhichGripper[TrayIndex].first == secondagent &&
+			  kitchenstate.TraySecondGripper.first == firstagent)) 
+		    )
+		    {
+			if (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbMoveJoint)
+			{
+			    kitchenstate.RobotLocations[firstagent] = firstka.location2;
+			    kitchenstate.RobotLocations[secondagent] = secondka.location2;
+			}
+		    }
+		    else
+			reward = -10.0;
+		}
+	    }
+	    else if (firstaction != -1 && kitchenactions[firstaction].type == MOVE_ROBOT)
+	    {
+		//only one robot is trying to move while holding the tray
+		executedjointactions[agentactions[firstaction].first] = true;
+		reward = -10.0;
+	    }
+	}
+	
+	//No joint actions, proceed independently
+	for (int i = 0; i < (int) agentactions.size(); i++)
+	    if (!executedjointactions[agentactions.at(i).first])
+	    {
+		double tempreward = 0.0;
+		StepAgent(kitchenstate, agentactions.at(i).second, observation, tempreward, agentactions.at(i).first);
+		reward += tempreward;
+	    }
     }
     
     observation = 0;
@@ -209,19 +354,8 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward) c
 	observation += pow(NumAgentObservations,i)*MakeObservation(kitchenstate, i);
     
     //Just executed an unsuccessful action
-    if (reward < 0.0)
-    {
-	//std::cout << "fail " << ActionToString(ka.type) << std::endl;
-	/*if (ka.type == MOVE_ROBOT)
-	{
-	    std::cout << LocationToString(kitchenstate.RobotLocation) << " "  << 
-		LocationToString(ka.location) << " " <<
-		LocationToString(ka.location2) << " " << std::endl;
-	}*/
-	return false;
-    }
-    
-    //std::cout << "succ " << ActionToString(ka.type) << std::endl;
+    //if (reward < 0.0)
+	//return false;
     
     bool reachedGoal = false;
     
@@ -231,6 +365,8 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward) c
 	reachedGoal = reachedGoal || IsPlate1InDishwasher(kitchenstate, reward);
     if (TestAppleJuiceInFridge)
 	reachedGoal = reachedGoal || IsAppleJuiceInFridge(kitchenstate, reward);
+    if (TestTrayOnStove)
+	reachedGoal = reachedGoal || IsTrayOnStove(kitchenstate, reward);
     
     if (reachedGoal)
 	reward = 99.9;
@@ -240,8 +376,8 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward) c
     return reachedGoal;
 }
 
-bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observation, 
-			double& reward, const int& index) const
+bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, 
+			int& observation, double& reward, const int& index) const
 {
     KitchenAction ka = IntToAction(action);
     
@@ -316,14 +452,34 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	    if (kitchenstate.RobotLocations[index] == ka.location && kitchenstate.RobotLocations[index] != ka.location2
 	    )
 	    {
+		int countsideboard = 0, countstove = 0;
 		for (int i = 0; i < NumAgents; i++)
-		    if (i != index && kitchenstate.RobotLocations[i] == kitchenstate.RobotLocations[index] &&
-			(kitchenstate.RobotLocations[i] == CUPBOARD || kitchenstate.RobotLocations[i] == FRIDGE ||
-			    kitchenstate.RobotLocations[i] == DISHWASHER)
-		    )
+		    if (i != index && kitchenstate.RobotLocations[i] == kitchenstate.RobotLocations[index] && reward > 0.0) 
 		    {
-			reward = -10.0;
-			break;
+			if (kitchenstate.RobotLocations[i] == CUPBOARD || kitchenstate.RobotLocations[i] == FRIDGE ||
+			    kitchenstate.RobotLocations[i] == DISHWASHER)
+			{
+			    reward = -10.0;
+			    break;
+			}
+			else if (kitchenstate.RobotLocations[i] == SIDEBOARD)
+			{
+			    countsideboard++;
+			    if (countsideboard > 1)
+			    {
+				reward = -10.0;
+				break;
+			    }
+			}
+			else if (kitchenstate.RobotLocations[i] == STOVE)
+			{
+			    countstove++;
+			    if (countstove > 1)
+			    {
+				reward = -10.0;
+				break;
+			    }
+			}
 		    }
 		if (reward > 0.0 && (!NonDeterministicActions || UTILS::RandomDouble(0.0,1.0) < ProbMove))
 		    kitchenstate.RobotLocations[index] = ka.location2;
@@ -476,6 +632,14 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action, int& observatio
 	    }
 	    else
 		reward = -5.0;
+	    break;
+	//for joint actions, if we've reached this point, it means that the preconditions were not met
+	//i.e. only one agent was trying to execute the action
+	case(GRASP_JOINT):
+	    reward = -5.0;
+	    break;
+	case(PUT_DOWN_JOINT):
+	    reward = -5.0;
 	    break;
 	default:
 	    break;
@@ -738,17 +902,37 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
 	if (static_cast<LocationType>(i) != location)
 	{
 	    //only one agent at a time can be at the cupboard, fridge, and dishwasher
-	    bool otheragentthere = false;
+	    bool dontgothere = false;
+	    int countsideboard = 0, countstove = 0;
 	    for (int j = 0 ; j < NumAgents ; j++)
-		if (i != j && kitchenstate.RobotLocations[j] == static_cast<LocationType>(i) &&
-		    (kitchenstate.RobotLocations[j] == CUPBOARD || kitchenstate.RobotLocations[j] == FRIDGE
-			|| kitchenstate.RobotLocations[j] == DISHWASHER)
-		)
+		if (i != j && kitchenstate.RobotLocations[j] == static_cast<LocationType>(i) && !dontgothere) 
 		{
-		    otheragentthere = true;
-		    break;
+		    if (kitchenstate.RobotLocations[j] == CUPBOARD || kitchenstate.RobotLocations[j] == FRIDGE
+			|| kitchenstate.RobotLocations[j] == DISHWASHER)
+		    {
+			dontgothere = true;
+			break;
+		    }
+		    else if (kitchenstate.RobotLocations[j] == SIDEBOARD)
+		    {
+			countsideboard++;
+			if (countsideboard > 1)
+			{
+			    dontgothere = true;
+			    break;
+			}
+		    }
+		    else if (kitchenstate.RobotLocations[j] == STOVE)
+		    {
+			countstove++;
+			if (countstove > 1)
+			{
+			    dontgothere = true;
+			    break;
+			}
+		    }
 		}
-	    if (!otheragentthere)
+	    if (!dontgothere)
 	    {
 		KitchenAction ka;
 		ka.type = MOVE_ROBOT;
