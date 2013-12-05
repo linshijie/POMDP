@@ -880,8 +880,13 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     }
     for (int i = 0 ; i < NumObjects ; i++)
     {
-	if (history.Size() > 0 && NumObservations > 1 && perspindex == index)
-	    ObjectHere.push_back(ko.objectvisible[i]);
+	if (history.Size() > 0 && NumObservations > 1)
+	{
+	    if (index == perspindex) //planning for myself
+		ObjectHere.push_back(ko.objectvisible[i]);
+	    else
+		ObjectHere.push_back(kitchenstate.ObjectLocations[i] == location);
+	}
 	else
 	    ObjectHere.push_back(UTILS::RandomDouble(0.0,1.0) < 0.5 ? true : false);
     }
