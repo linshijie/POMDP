@@ -13,7 +13,7 @@ MCTS::PARAMS::PARAMS()
 :   Verbose(0),
     MaxDepth(100),
     NumSimulations(1000),
-    NumStartStates(1),
+    NumStartStates(20),
     UseTransforms(false),
     NumTransforms(0),
     MaxAttempts(0),
@@ -24,7 +24,7 @@ MCTS::PARAMS::PARAMS()
     RaveConstant(0.01),
     DisableTree(false),
     MultiAgent(false),
-    JointQActions(false),
+    JointQActions(true),
     RewardAdaptive(false)
 {
 }
@@ -68,10 +68,14 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
 	History.Add(action, observation);
     else
     {
-	if (index == 1)
+	if (index == 1 && Params.JointQActions)
 	    History.Add(Simulator.GetAgentAction(action,1), observation);
-	else
+	else if (index == 1 && !Params.JointQActions)
+	    History.Add(action, observation);
+	else if (index == 2 && Params.JointQActions)
 	    History2.Add(Simulator.GetAgentAction(action,2), observation);
+	else if (index == 2 && !Params.JointQActions)
+	    History2.Add(action, observation);
     }
     BELIEF_STATE beliefs;
 
@@ -286,9 +290,14 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index)
     if (Params.MultiAgent && !Params.JointQActions)
     {
 	if (index == 1)
-	    action = Simulator.GetNumAgentActions()*action + Random(Simulator.GetNumAgentActions());
+	    action = action + 
+		Simulator.GetNumAgentActions()*Simulator.GetAgentAction(
+		    Simulator.SelectRandom(state, History, Status,0),2);
+		//action + Simulator.GetNumAgentActions()*Random(Simulator.GetNumAgentActions());
 	else
-	    action = Simulator.GetNumAgentActions()*Random(Simulator.GetNumAgentActions()) + action;
+	    action = Simulator.GetAgentAction(Simulator.SelectRandom(state, History2, Status2,0),1) + 
+		Simulator.GetNumAgentActions()*action;
+		//Random(Simulator.GetNumAgentActions()) + Simulator.GetNumAgentActions()*action;
     }
 
     if (Simulator.HasAlpha())
@@ -349,9 +358,9 @@ void MCTS::AddRave(VNODE* vnode, double totalReward, const int& index)
 	    for (int a = 0; a < Simulator.GetNumAgentActions(); ++a)
 		otherActions.push_back(a);
 	    if (index == 1)
-		action = Simulator.GetNumAgentActions()*History[t].Action + otherActions[Random(otherActions.size())];
+		action = History[t].Action + Simulator.GetNumAgentActions()*otherActions[Random(otherActions.size())];
 	    else
-		action = Simulator.GetNumAgentActions()*otherActions[Random(otherActions.size())] + History2[t].Action;
+		action = otherActions[Random(otherActions.size())] + Simulator.GetNumAgentActions()*History2[t].Action;
 	}
         QNODE& qnode = vnode->Child(action);
         qnode.AMAF.Add(totalReward, totalDiscount);
@@ -363,6 +372,7 @@ VNODE* MCTS::ExpandNode(const STATE* state, const int& index)
 {
     VNODE* vnode = VNODE::Create();
     vnode->Value.Set(0, 0);
+    
     if (index > 1)
 	Simulator.Prior(state, History2, vnode, Status2, index);
     else
@@ -466,11 +476,13 @@ double MCTS::Rollout(STATE& state, const int& index)
 	if (index == 0)
 	    action = Simulator.SelectRandom(state, History, Status, index);
 	else if (index == 1)
-	    action = Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, History, Status, index) +
-			Random(Simulator.GetNumAgentActions());
+	    action = Simulator.SelectRandom(state, History, Status, 0);
+	    //action = Simulator.SelectRandom(state, History, Status, index) +
+		//	Simulator.GetNumAgentActions()*Random(Simulator.GetNumAgentActions());
 	else
-	    action = Simulator.GetNumAgentActions()*Random(Simulator.GetNumAgentActions()) + 
-			Simulator.SelectRandom(state, History2, Status2, index);
+	    action = Simulator.SelectRandom(state, History2, Status2, 0);
+	    //action = Random(Simulator.GetNumAgentActions()) + 
+		//	Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, History2, Status2, index);
         terminal = Simulator.Step(state, action, observation, reward);
         if (index == 0)
 	    History.Add(action, observation);

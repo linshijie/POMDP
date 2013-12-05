@@ -104,15 +104,16 @@ public:
 
     // Generate set of legal actions
     virtual void GenerateLegal(const STATE& state, const HISTORY& history, 
-        std::vector<int>& actions, const STATUS& status) const;
-
+        std::vector<int>& actions, const STATUS& status, const int& perspindex, 
+	const bool& jointhistory) const;
+	
     // Generate set of preferred actions
     virtual void GeneratePreferred(const STATE& state, const HISTORY& history, 
         std::vector<int>& actions, const STATUS& status) const;
 	
-	
     virtual void GenerateLegalAgent(const STATE& state, const HISTORY& history, 
-        std::vector<int>& actions, const STATUS& status) const;
+        std::vector<int>& actions, const STATUS& status, const int& index, const int& perspindex, 
+	const bool& jointhistory) const;
 	
     virtual void GeneratePreferredAgent(const STATE& state, const HISTORY& history, 
         std::vector<int>& actions, const STATUS& status) const;
@@ -136,10 +137,10 @@ public:
     int GetNumObservations() const { return NumObservations; }
     int GetNumAgentActions() const { return NumAgentActions; }
     int GetNumAgentObservations() const { return NumAgentObservations; }
-    int GetAgentAction(const int& action, const int& index) const { return index > 1 || index == 0 ? action%NumAgentActions : 
-									    action/NumAgentActions;}
-    int GetAgentObservation(const int& observation, const int& index) const { return index > 1 || index == 0 ? 
-						    observation%NumAgentObservations : observation/NumAgentObservations;}
+    int GetAgentAction(const int& action, const int& index) const { return index > 1 ? action/NumAgentActions : 
+									    action%NumAgentActions;}
+    int GetAgentObservation(const int& observation, const int& index) const { return index > 1 ? 
+						    observation/NumAgentObservations : observation%NumAgentObservations;}
     bool IsEpisodic() const { return false; }
     double GetDiscount() const { return Discount; }
     double GetRewardRange() const { return RewardRange; }

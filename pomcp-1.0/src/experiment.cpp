@@ -64,13 +64,13 @@ void EXPERIMENT::Run()
 	    action = mcts.SelectAction(0);
 	else
 	{
+	    jointaction0 = mcts.SelectAction(1);
+	    jointaction1 = mcts.SelectAction(2);
 	    if (SearchParams.JointQActions)
-	    {
-		jointaction0 = mcts.SelectAction(1);
-		jointaction1 = mcts.SelectAction(2);
-		action = Simulator.GetNumAgentActions()*Simulator.GetAgentAction(jointaction0,1) + 
-			Simulator.GetAgentAction(jointaction1,2);
-	    }
+		action = Simulator.GetAgentAction(jointaction0,1) + 
+			Simulator.GetNumAgentActions()*Simulator.GetAgentAction(jointaction1,2);
+	    else
+		action = jointaction0 + Simulator.GetNumAgentActions()*jointaction1;
 	}
         terminal = Real.Step(*state, action, observation, reward);
 
@@ -135,18 +135,18 @@ void EXPERIMENT::Run()
 	    else
 	    {
 		if (outOfParticles)
-		    jointaction0 = Simulator.GetNumAgentActions()*Simulator.SelectRandom(*state, history, 
-					mcts.GetStatus(1), 1) + rand()%Simulator.GetNumAgentActions();
+		    jointaction0 = Simulator.SelectRandom(*state, history, 
+			mcts.GetStatus(1), 1) + Simulator.GetNumAgentActions()*rand()%Simulator.GetNumAgentActions();
 		else
 		    jointaction0 = mcts.SelectAction(1);
 		if (outOfParticles2)
-		    jointaction1 = Simulator.GetNumAgentActions()*(rand()%Simulator.GetNumAgentActions()) 
-					+ Simulator.SelectRandom(*state, history2, mcts.GetStatus(2), 2);
+		    jointaction1 = (rand()%Simulator.GetNumAgentActions()) 
+			+ Simulator.GetNumAgentActions()*Simulator.SelectRandom(*state, history2, mcts.GetStatus(2), 2);
 		else
 		    jointaction1 = mcts.SelectAction(2);
 		
-		action = Simulator.GetNumAgentActions()*Simulator.GetAgentAction(jointaction0,1) + 
-			    Simulator.GetAgentAction(jointaction1,2);
+		action = Simulator.GetAgentAction(jointaction0,1) + 
+			    Simulator.GetNumAgentActions()*Simulator.GetAgentAction(jointaction1,2);
 	    }
             terminal = Real.Step(*state, action, observation, reward);
 

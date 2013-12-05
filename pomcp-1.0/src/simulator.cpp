@@ -50,17 +50,19 @@ bool SIMULATOR::LocalMove(STATE& state, const HISTORY& history,
 }
 
 void SIMULATOR::GenerateLegal(const STATE& state, const HISTORY& history, 
-    std::vector<int>& actions, const STATUS& status) const
+			      std::vector< int >& actions, const SIMULATOR::STATUS& status,
+			      const int& perspindex, const bool& jointhistory) const
 {
     for (int a = 0; a < NumActions; ++a)
         actions.push_back(a);
 }
 
+
 void SIMULATOR::GenerateLegalAgent(const STATE& state, const HISTORY& history, 
-    std::vector<int>& actions, const STATUS& status) const
+    std::vector<int>& actions, const STATUS& status, 
+    const int& index, const int& perspindex, const bool& jointhistory) const
 {
-    for (int a = 0; a < NumAgentActions; ++a)
-        actions.push_back(a);
+    
 }
 
 void SIMULATOR::GeneratePreferred(const STATE& state, const HISTORY& history, 
@@ -95,7 +97,7 @@ int SIMULATOR::SelectRandom(const STATE& state, const HISTORY& history,
 	if (index == 0)
 	    GenerateLegal(state, history, actions, status);
 	else
-	    GenerateLegalAgent(state, history, actions, status);
+	    GenerateLegalAgent(state, history, actions, status, index);
         if (!actions.empty())
             return actions[Random(actions.size())];
     }
@@ -125,7 +127,7 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
         if (index == 0)
 	    GenerateLegal(*state, history, actions, status);
 	else
-	    GenerateLegalAgent(*state, history, actions, status);
+	    GenerateLegalAgent(*state, history, actions, status, index);
 
         for (vector<int>::const_iterator i_action = actions.begin(); i_action != actions.end(); ++i_action)
         {
