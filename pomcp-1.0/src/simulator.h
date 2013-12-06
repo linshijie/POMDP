@@ -150,7 +150,7 @@ public:
     
 protected:
 
-    int NumActions, NumObservations, NumAgentActions, NumAgentObservations;
+    int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations;
     double Discount, RewardRange;
     KNOWLEDGE Knowledge;
 };

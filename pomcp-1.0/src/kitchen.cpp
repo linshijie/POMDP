@@ -11,7 +11,6 @@ KITCHEN::KITCHEN(int nplates, int ncups):
   HaveTray(true),
   TestCerealInCupboard(false), TestPlate1InDishwasher(false), TestAppleJuiceInFridge(false),
   TestTrayOnStove(true),
-  NumAgents(2),
   NonDeterministicActions(true),
   ProbClose(0.95), ProbGrasp(0.95), ProbGrapsFromEdge(0.95), ProbMove(0.95), ProbNudge(0.95), ProbOpen(0.95),
   ProbOpenPartial(0.95), ProbOpenComplete(0.95), ProbPassObject(0.95), 
@@ -19,6 +18,11 @@ KITCHEN::KITCHEN(int nplates, int ncups):
   ProbGraspJoint(0.9), ProbPutDownJoint(0.9), ProbMoveJoint(0.9)
 {
     NumObjects = NumPlates+NumCups;
+    
+    if (TestTrayOnStove)
+	NumAgents = 2;
+    else
+	NumAgents = 1;
     
     ObjectTypes.clear();
     int index = 0;

@@ -110,8 +110,6 @@ protected:
     int ObservatonToInt(const KitchenObservation& ko) const;
     KitchenObservation IntToObservation(int observation) const;
     
-    int NumAgents;
-    
     bool NonDeterministicActions;
     double ProbClose, ProbGrasp, ProbGrapsFromEdge, ProbMove, ProbNudge, ProbOpen, ProbOpenPartial,
 	ProbOpenComplete, ProbPassObject, ProbPlaceUpright, ProbPutDown, ProbPutIn, ProbRemoveFrom,

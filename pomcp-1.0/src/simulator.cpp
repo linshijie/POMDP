@@ -18,9 +18,10 @@ SIMULATOR::STATUS::STATUS()
 }
 
 SIMULATOR::SIMULATOR() 
-:   Discount(1.0),
-    NumActions(0),
+:   NumActions(0),
     NumObservations(0),
+    NumAgents(1),
+    Discount(1.0),
     RewardRange(1.0)
 {
 }
@@ -28,6 +29,7 @@ SIMULATOR::SIMULATOR()
 SIMULATOR::SIMULATOR(int numActions, int numObservations, double discount)
 :   NumActions(numActions),
     NumObservations(numObservations),
+    NumAgents(1),
     NumAgentActions(numActions),
     NumAgentObservations(numObservations),
     Discount(discount)

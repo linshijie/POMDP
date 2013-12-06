@@ -14,7 +14,7 @@ MCTS::PARAMS::PARAMS()
     MaxDepth(100),
     NumSimulations(1000),
     NumStartStates(20),
-    UseTransforms(true),
+    UseTransforms(false),
     NumTransforms(0),
     MaxAttempts(0),
     ExpandCount(1),
@@ -23,7 +23,7 @@ MCTS::PARAMS::PARAMS()
     RaveDiscount(1.0),
     RaveConstant(0.01),
     DisableTree(false),
-    MultiAgent(true),
+    MultiAgent(false),
     JointQActions(false),
     RewardAdaptive(false)
 {
