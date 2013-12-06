@@ -63,15 +63,13 @@ public:
         int stepObs, const STATUS& status) const;
 	
     virtual void GenerateLegal(const STATE& state, const HISTORY& history,
-        std::vector<int>& legal, const STATUS& status, const int& perspindex, const int& jointhistory) const;
+        std::vector<int>& legal, const STATUS& status) const;
     virtual void GeneratePreferred(const STATE& state, const HISTORY& history,
         std::vector<int>& actions, const STATUS& status) const;
     virtual void GenerateLegalAgent(const STATE& state, const HISTORY& history, 
-	std::vector<int>& actions, const STATUS& status, const int& index, const int& perspindex,
-	const bool& jointhistory) const;
+	std::vector<int>& actions, const STATUS& status, const int& index) const;
     void GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTORY& history,
-        std::vector<int>& legal, const STATUS& status, const int& index, const int& perspindex,
-	const bool& jointhistory) const;
+        std::vector<int>& legal, const STATUS& status, const int& index) const;
     void GeneratePreferredAgent(const KITCHEN_STATE& kitchenstate, const HISTORY& history,
         std::vector<int>& actions, const STATUS& status, const int& index) const;
 	

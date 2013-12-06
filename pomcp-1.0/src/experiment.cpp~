@@ -59,18 +59,18 @@ void EXPERIMENT::Run()
         int observation;
         double reward;
         int action;
-	int jointaction0 = 0, jointaction1 = 0;
+	int action0 = 0, action1 = 0;
 	if (!SearchParams.MultiAgent)
 	    action = mcts.SelectAction(0);
 	else
 	{
-	    jointaction0 = mcts.SelectAction(1);
-	    jointaction1 = mcts.SelectAction(2);
+	    action0 = mcts.SelectAction(1);
+	    action1 = mcts.SelectAction(2);
 	    if (SearchParams.JointQActions)
-		action = Simulator.GetAgentAction(jointaction0,1) + 
-			Simulator.GetNumAgentActions()*Simulator.GetAgentAction(jointaction1,2);
+		action = Simulator.GetAgentAction(action0,1) + 
+			Simulator.GetNumAgentActions()*Simulator.GetAgentAction(action1,2);
 	    else
-		action = jointaction0 + Simulator.GetNumAgentActions()*jointaction1;
+		action = action0 + Simulator.GetNumAgentActions()*action1;
 	}
         terminal = Real.Step(*state, action, observation, reward);
 
@@ -97,14 +97,8 @@ void EXPERIMENT::Run()
 	    outOfParticles = !mcts.Update(action, observation, reward, 0);
 	else
 	{
-	    if (SearchParams.JointQActions)
-	    {
-	    }
-	    else
-	    {
-		outOfParticles = !mcts.Update(jointaction0, Simulator.GetAgentObservation(observation,1), reward, 1);
-		outOfParticles2 = !mcts.Update(jointaction1, Simulator.GetAgentObservation(observation,2), reward, 2);
-	    }
+	    outOfParticles = !mcts.Update(action0, Simulator.GetAgentObservation(observation,1), reward, 1);
+	    outOfParticles2 = !mcts.Update(action1, Simulator.GetAgentObservation(observation,2), reward, 2);
 	}
 	    
         if (outOfParticles || outOfParticles2)
@@ -121,10 +115,6 @@ void EXPERIMENT::Run()
     if (outOfParticles || outOfParticles2)
     {
         cout << "Out of particles, finishing episode with SelectRandom" << endl;
-        HISTORY history = mcts.GetHistory(0);
-	HISTORY history2;
-	if (SearchParams.MultiAgent)
-	    history2 = mcts.GetHistory(2);
 	
         while (++t < ExpParams.NumSteps)
         {
@@ -135,24 +125,35 @@ void EXPERIMENT::Run()
             // SelectRandom must only use fully observable state
             // to avoid "cheating"
             int action;
-	    int jointaction0 = 0, jointaction1 = 0;
+	    int action0 = 0, action1 = 0;
 	    if (!SearchParams.MultiAgent)
-		action = Simulator.SelectRandom(*state, history, mcts.GetStatus(0), 0);
+		action = Simulator.SelectRandom(*state, mcts.GetHistory(0), mcts.GetStatus(0), 0);
 	    else
 	    {
 		if (outOfParticles)
-		    jointaction0 = Simulator.SelectRandom(*state, history, 
-			mcts.GetStatus(1), 1) + Simulator.GetNumAgentActions()*rand()%Simulator.GetNumAgentActions();
+		{
+		    if (SearchParams.JointQActions)
+			action0 = Simulator.SelectRandom(*state, history, mcts.GetStatus(1), 0);
+		    else
+			action0 = Simulator.SelectRandom(*state, history, mcts.GetStatus(1), 1);
+		}
 		else
-		    jointaction0 = mcts.SelectAction(1);
+		    action0 = mcts.SelectAction(1);
 		if (outOfParticles2)
-		    jointaction1 = (rand()%Simulator.GetNumAgentActions()) 
-			+ Simulator.GetNumAgentActions()*Simulator.SelectRandom(*state, history2, mcts.GetStatus(2), 2);
+		{
+		    if (SearchParams.JointQActions)
+			action1 = Simulator.SelectRandom(*state, history2, mcts.GetStatus(2), 0);
+		    else
+			action1 = Simulator.SelectRandom(*state, history2, mcts.GetStatus(2), 2);
+		}
 		else
-		    jointaction1 = mcts.SelectAction(2);
+		    action1 = mcts.SelectAction(2);
 		
-		action = Simulator.GetAgentAction(jointaction0,1) + 
-			    Simulator.GetNumAgentActions()*Simulator.GetAgentAction(jointaction1,2);
+		if (SearchParams.JointQActions)
+		    action = Simulator.GetAgentAction(action0,1) + 
+			Simulator.GetNumAgentActions()*Simulator.GetAgentAction(action1,2);
+		else
+		    action = action0 + Simulator.GetNumAgentActions()*action1;
 	    }
             terminal = Real.Step(*state, action, observation, reward);
 
@@ -180,13 +181,23 @@ void EXPERIMENT::Run()
 	    else
 	    {
 		if (outOfParticles)
-		    history.Add(Simulator.GetAgentAction(action,1), Simulator.GetAgentObservation(observation,1));
+		{
+		    if (SearchParams.JointQActions)
+			history.Add(Simulator.GetAgentAction(action,1), Simulator.GetAgentObservation(observation,1));
+		    else
+			history.Add(action0, Simulator.GetAgentObservation(observation,1));
+		}
 		else
-		    outOfParticles = !mcts.Update(jointaction0, Simulator.GetAgentObservation(observation,1), reward, 1);
+		    outOfParticles = !mcts.Update(action0, Simulator.GetAgentObservation(observation,1), reward, 1);
 		if (outOfParticles2)
-		    history2.Add(Simulator.GetAgentAction(action,2), Simulator.GetAgentObservation(observation,2));
+		{
+		    if (SearchParams.JointQActions)
+			history2.Add(Simulator.GetAgentAction(action,2), Simulator.GetAgentObservation(observation,2));
+		    else
+			history2.Add(action1, Simulator.GetAgentObservation(observation,2));
+		}
 		else
-		    outOfParticles2 = !mcts.Update(jointaction1, Simulator.GetAgentObservation(observation,2), reward, 2);
+		    outOfParticles2 = !mcts.Update(action1, Simulator.GetAgentObservation(observation,2), reward, 2);
 	    }
         }
     }

@@ -830,18 +830,19 @@ bool KITCHEN::IsTrayOnStove(const KITCHEN_STATE& state, double& reward) const
 
 
 void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vector< int >& legal, 
-			    const SIMULATOR::STATUS& status, const int& perspindex, const bool& jointhistory) const
+			    const SIMULATOR::STATUS& status) const
 {
     const KITCHEN_STATE& kitchenstate = safe_cast<const KITCHEN_STATE&>(state);
+    
     for (int i = 0; i < NumAgents; i++)
     {
 	if (i == 0)
-	    GenerateLegalAgent(kitchenstate, history, legal, status, i, perspindex, jointhistory);	  
+	    GenerateLegalAgent(kitchenstate, history, legal, status, i);	  
 	else
 	{
 	    std::vector<int> currlegal;
 	    currlegal.clear();
-	    GenerateLegalAgent(kitchenstate, history, currlegal, status, i, perspindex, jointhistory);
+	    GenerateLegalAgent(kitchenstate, history, currlegal, status, i);
 	    int s = legal.size();
 	    for (int k = (int)currlegal.size()-1 ; k >= 0; k--)
 		for (int j = 0 ; j < s ; j++)
@@ -856,16 +857,15 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
 }
 
 void KITCHEN::GenerateLegalAgent(const STATE& state, const HISTORY& history, std::vector< int >& actions, 
-				 const SIMULATOR::STATUS& status, const int& index, const int& perspindex,
-				 const bool& jointhistory) const
+				 const SIMULATOR::STATUS& status, const int& index) const
 {
     const KITCHEN_STATE& kitchenstate = safe_cast<const KITCHEN_STATE&>(state);
-    GenerateLegalAgent(kitchenstate, history, actions, status, index-1, perspindex, jointhistory);
+
+    GenerateLegalAgent(kitchenstate, history, actions, status, index-1);
 }
 
 void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTORY& history, 
-				 std::vector< int >& legal, const SIMULATOR::STATUS& status, 
-				 const int& index, const int& perspindex, const bool& jointhistory) const
+				 std::vector< int >& legal, const SIMULATOR::STATUS& status, const int& index) const
 {
     LocationType location = kitchenstate.RobotLocations[index];
     
@@ -873,7 +873,7 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     KitchenObservation ko;
     if (history.Size() > 0 && NumObservations > 1)
     {
-	if (jointhistory)
+	if (status.jointhistory)
 	    ko = IntToObservation(GetAgentObservation(history.Back().Observation, index));
 	else
 	    ko = IntToObservation(history.Back().Observation);
@@ -882,7 +882,7 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     {
 	if (history.Size() > 0 && NumObservations > 1)
 	{
-	    if (index == perspindex) //planning for myself
+	    if (index == status.perspindex) //planning for myself
 		ObjectHere.push_back(ko.objectvisible[i]);
 	    else
 		ObjectHere.push_back(kitchenstate.ObjectLocations[i] == location);

@@ -76,7 +76,7 @@ private:
     int SelectRandom() const;
     double SimulateV(STATE& state, VNODE* vnode, const int& index);
     double SimulateQ(STATE& state, QNODE& qnode, int action, const int& index);
-    void AddRave(VNODE* vnode, double totalReward, const int& index);
+    void AddRave(VNODE* vnode, double totalReward, const STATE& state, const int& index);
     VNODE* ExpandNode(const STATE* state, const int& index);
     void AddSample(VNODE* node, const STATE& state);
     void AddTransforms(VNODE* root, BELIEF_STATE& beliefs, const int& index);
