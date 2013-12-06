@@ -42,9 +42,10 @@ public:
 
     double Rollout(STATE& state, const int& index);
 
-    const BELIEF_STATE& BeliefState() const { return Root->Beliefs(); }
-    const HISTORY& GetHistory(const int& index) const { return index > 1 ? History2 : History; }
-    const SIMULATOR::STATUS& GetStatus(const int& index) const { return index > 1 ? Status2 : Status; }
+    const BELIEF_STATE& BeliefState(const int& index) const { return index > 0 ? Roots[index-1]->Beliefs() :
+								    Roots[index]->Beliefs(); }
+    const HISTORY& GetHistory(const int& index) const { return index > 0 ? Histories[index-1] : Histories[index]; }
+    const SIMULATOR::STATUS& GetStatus(const int& index) const { return index > 0 ? Statuses[index-1] : Statuses[index];}
     void ClearStatistics(const int& index);
     void DisplayStatistics(std::ostream& ostr, const int& index) const;
     void DisplayValue(int depth, const int& index, std::ostream& ostr) const;
@@ -58,19 +59,14 @@ private:
     const SIMULATOR& Simulator;
     int TreeDepth, PeakTreeDepth;
     PARAMS Params;
-    VNODE* Root;
-    VNODE* Root2;
-    HISTORY History;
-    HISTORY History2;
-    SIMULATOR::STATUS Status;
-    SIMULATOR::STATUS Status2;
+    std::vector<VNODE*> Roots;
+    std::vector<HISTORY> Histories;
+    HISTORY myhistory;
+    std::vector<SIMULATOR::STATUS> Statuses;
 
-    STATISTIC StatTreeDepth;
-    STATISTIC StatRolloutDepth;
-    STATISTIC StatTotalReward;
-    STATISTIC StatTreeDepth2;
-    STATISTIC StatRolloutDepth2;
-    STATISTIC StatTotalReward2;
+    std::vector<STATISTIC> StatTreeDepths;
+    std::vector<STATISTIC> StatRolloutDepths;
+    std::vector<STATISTIC> StatTotalRewards;
     
     int GreedyUCB(VNODE* vnode, bool ucb) const;
     int SelectRandom() const;

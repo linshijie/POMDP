@@ -23,8 +23,8 @@ MCTS::PARAMS::PARAMS()
     RaveDiscount(1.0),
     RaveConstant(0.01),
     DisableTree(false),
-    MultiAgent(false),
-    JointQActions(false),
+    MultiAgent(true),
+    JointQActions(true),
     RewardAdaptive(false)
 {
 }
@@ -38,63 +38,76 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 			Simulator.GetNumActions();
     QNODE::NumChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
     
-    if (!Params.MultiAgent)
+    Statuses.clear();
+    Roots.clear();
+    Histories.clear();
+    StatTreeDepths.clear();
+    StatRolloutDepths.clear();
+    StatTotalRewards.clear();
+    
+    
+    for (int i = 0 ; i < Simulator.GetNumAgents(); i++)
     {
-	Status.perspindex = 0;
-	Status.jointhistory = true;
+	//status
+	SIMULATOR::STATUS status;
+	status.perspindex = i;
+	status.jointhistory = Params.MultiAgent ? true : false;
+	Statuses.push_back(status);
+	//histories
+	HISTORY history;
+	Histories.push_back(history);
+	//statistics
+	STATISTIC StatTreeDepth;
+	StatTreeDepths.push_back(StatTreeDepth);
+	STATISTIC StatRolloutDepth;
+	StatRolloutDepths.push_back(StatRolloutDepth);
+	STATISTIC StatTotalReward;
+	StatTotalRewards.push_back(StatTotalReward);
+	//root
+	VNODE* root = ExpandNode(Simulator.CreateStartState(), Params.MultiAgent ? i+1 : i);
+	Roots.push_back(root);
     }
-    else
-    {
-	Status.perspindex = 0;
-	Status.jointhistory = false;
-	Status2.perspindex = 1;
-	Status2.jointhistory = false;
-    }
+    
 
-    if (!Params.MultiAgent)
-	Root = ExpandNode(Simulator.CreateStartState(), 0);
-    else
-    {
-	Root = ExpandNode(Simulator.CreateStartState(), 1);
-	Root2 = ExpandNode(Simulator.CreateStartState(), 2);
-    }
+    for (int i = 0 ; i < Simulator.GetNumAgents(); i++)
+	for (int j = 0; j < Params.NumStartStates; j++)
+	{
+	    Roots[i]->Beliefs().AddSample(Simulator.CreateStartState());
+	    if (Params.MultiAgent)
+		Roots[i]->Beliefs().AddSample(Simulator.CreateStartState());
+	}
 	
-    for (int i = 0; i < Params.NumStartStates; i++)
-    {
-	Root->Beliefs().AddSample(Simulator.CreateStartState());
-	if (Params.MultiAgent)
-	    Root2->Beliefs().AddSample(Simulator.CreateStartState());
-    }
+	
 }
 
 MCTS::~MCTS()
 {
-    VNODE::Free(Root, Simulator);
-    if (Params.MultiAgent)
-	VNODE::Free(Root2, Simulator);
+    for (int i = 0; i < Simulator.GetNumAgents() ; i++)
+	VNODE::Free(Roots[i], Simulator);
     VNODE::FreeAll();
 }
 
 bool MCTS::Update(int action, int observation, double reward, const int& index)
 {
+    
     if (!Params.MultiAgent)
-	History.Add(action, observation);
+	Histories[index == 0 ? index : index-1].Add(action, observation);
     else
     {
 	if (index == 1 && Params.JointQActions)
-	    History.Add(Simulator.GetAgentAction(action,1), observation);
+	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,1), observation);
 	else if (index == 1 && !Params.JointQActions)
-	    History.Add(action, observation);
+	    Histories[index == 0 ? index : index-1].Add(action, observation);
 	else if (index == 2 && Params.JointQActions)
-	    History2.Add(Simulator.GetAgentAction(action,2), observation);
+	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,2), observation);
 	else if (index == 2 && !Params.JointQActions)
-	    History2.Add(action, observation);
+	    Histories[index == 0 ? index : index-1].Add(action, observation);
     }
     BELIEF_STATE beliefs;
 
     // Find matching vnode from the rest of the tree
 	
-    QNODE& qnode = index > 1 ? Root2->Child(action) : Root->Child(action);
+    QNODE& qnode = Roots[index == 0 ? index : index-1]->Child(action);
     VNODE* vnode = qnode.Child(observation);
     if (vnode)
     {
@@ -110,12 +123,7 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
 
     // Generate transformed states to avoid particle deprivation
     if (Params.UseTransforms)
-    {
-	if (index > 1)
-	    AddTransforms(Root2, beliefs, index);
-	else
-	    AddTransforms(Root, beliefs, index);
-    }
+	AddTransforms(Roots[index == 0 ? index : index-1], beliefs, index);
 
     // If we still have no particles, fail
     if (beliefs.Empty() && (!vnode || vnode->Beliefs().Empty()))
@@ -132,20 +140,13 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
         state = beliefs.GetSample(0);
 
     // Delete old tree and create new root
-    if (index > 1)
-    {
-	VNODE::Free(Root2, Simulator);
-	VNODE* newRoot2 = ExpandNode(state, index);
-	newRoot2->Beliefs() = beliefs;
-	Root2 = newRoot2;
-    }
+    VNODE::Free(Roots[index == 0 ? index : index-1], Simulator);
+    VNODE* newRoot = ExpandNode(state, index);
+    newRoot->Beliefs() = beliefs;
+    if (!Params.MultiAgent)
+	Roots[index] = newRoot;
     else
-    {
-	VNODE::Free(Root, Simulator);
-	VNODE* newRoot = ExpandNode(state, index);
-	newRoot->Beliefs() = beliefs;
-	Root = newRoot;
-    }
+	Roots[index-1] = newRoot;
     
     return true;
 }
@@ -156,30 +157,24 @@ int MCTS::SelectAction(const int& index)
 	RolloutSearch(index);
     else
 	UCTSearch(index);
-    if (index > 1)
-	return GreedyUCB(Root2, false);
-    else
-	return GreedyUCB(Root, false);
+    return GreedyUCB(Roots[index == 0 ? index : index-1], false);
 
 }
 
 void MCTS::RolloutSearch(const int& index)
 {
     std::vector<double> totals(Simulator.GetNumActions(), 0.0);
-    int historyDepth = index > 1 ? History2.Size() : History.Size();
+    int historyDepth = GetHistory(index).Size();
     std::vector<int> legal;
-    assert(BeliefState().GetNumSamples() > 0);
-    Simulator.GenerateLegal(*BeliefState().GetSample(0), GetHistory(index), legal, GetStatus(index));
+    assert(BeliefState(index).GetNumSamples() > 0);
+    Simulator.GenerateLegal(*BeliefState(index).GetSample(0), GetHistory(index), legal, GetStatus(index));
     random_shuffle(legal.begin(), legal.end());
 
     for (int i = 0; i < Params.NumSimulations; i++)
     {
 	    int action = legal[i % legal.size()];
 	    STATE* state;
-	    if (index > 1)
-		state = Root2->Beliefs().CreateSample(Simulator);
-	    else
-		state = Root->Beliefs().CreateSample(Simulator);
+	    state = Roots[index == 0 ? index : index-1]->Beliefs().CreateSample(Simulator);
 	    Simulator.Validate(*state);
 
 	    int observation;
@@ -195,54 +190,38 @@ void MCTS::RolloutSearch(const int& index)
 		    treeaction = Simulator.GetAgentAction(action,2);
 	    }
 
-	    VNODE*& vnode = Root->Child(action).Child(observation);
-	    
-	    if (index == 1)
-		vnode = Root->Child(treeaction).Child(Simulator.GetAgentObservation(observation,1));
-	    else if (index == 2)
-		vnode = Root2->Child(treeaction).Child(Simulator.GetAgentObservation(observation,2));
-					
+	    VNODE*& vnode = Roots[index == 0 ? index : index-1]->Child(treeaction).Child(index == 0 ?
+		    observation : Simulator.GetAgentObservation(observation,index));			
 	    
 	    if (!vnode && !terminal)
 	    {
 		    vnode = ExpandNode(state, index);
 		    AddSample(vnode, *state);
 	    }
-	    if (index == 0)
-		History.Add(action, observation);
-	    else if (index == 1)
-		History.Add(Simulator.GetAgentAction(action,1), Simulator.GetAgentObservation(observation,1));
-	    else
-		History2.Add(Simulator.GetAgentAction(action,2), Simulator.GetAgentObservation(observation,2));
+	    
+	    Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action,index), 
+				       index == 0 ? observation : Simulator.GetAgentObservation(observation,index));
 
 	    delayedReward = Rollout(*state, index);
 	    totalReward = immediateReward + Simulator.GetDiscount() * delayedReward;
-	    if (index > 1)
-		Root2->Child(treeaction).Value.Add(totalReward);
-	    else
-		Root->Child(treeaction).Value.Add(totalReward);
+	    Roots[index == 0 ? index : index-1]->Child(treeaction).Value.Add(totalReward);
 
 	    Simulator.FreeState(state);
-	    if (index > 1)
-		History2.Truncate(historyDepth);
-	    else
-		History.Truncate(historyDepth);
+	    Histories[index == 0 ? index : index-1].Truncate(historyDepth);
     }
 }
 
 void MCTS::UCTSearch(const int& index)
 {
     ClearStatistics(index);
-    int historyDepth = index > 1 ? History2.Size() : History.Size();
+    int historyDepth = GetHistory(index).Size();
 
     for (int n = 0; n < Params.NumSimulations; n++)
     {
-        STATE* state = index > 1 ? Root2->Beliefs().CreateSample(Simulator) : Root->Beliefs().CreateSample(Simulator);
+        STATE* state = Roots[index == 0 ? index : index-1]->Beliefs().CreateSample(Simulator);
         Simulator.Validate(*state);
-	if (index > 1)
-	    Status2.Phase = SIMULATOR::STATUS::TREE;
-	else
-	    Status.Phase = SIMULATOR::STATUS::TREE;
+	Statuses[index == 0 ? index : index-1].Phase = SIMULATOR::STATUS::TREE;
+	
         if (Params.Verbose >= 2)
         {
             cout << "Starting simulation" << endl;
@@ -251,9 +230,9 @@ void MCTS::UCTSearch(const int& index)
 
         TreeDepth = 0;
         PeakTreeDepth = 0;
-        double totalReward = index > 1 ? SimulateV(*state, Root2, index) : SimulateV(*state, Root, index);
-        StatTotalReward.Add(totalReward);
-        StatTreeDepth.Add(PeakTreeDepth);
+        double totalReward = SimulateV(*state, Roots[index == 0 ? index : index-1], index);
+        StatTotalRewards[index == 0 ? index : index-1].Add(totalReward);
+        StatTreeDepths[index == 0 ? index : index-1].Add(PeakTreeDepth);
 
         if (Params.Verbose >= 2)
             cout << "Total reward = " << totalReward << endl;
@@ -261,10 +240,7 @@ void MCTS::UCTSearch(const int& index)
             DisplayValue(4, index, cout);
 
         Simulator.FreeState(state);
-        if (index > 1)
-	    History2.Truncate(historyDepth);
-	else
-	    History.Truncate(historyDepth);
+	Histories[index == 0 ? index : index-1].Truncate(historyDepth);
     }
 
     DisplayStatistics(cout, index);
@@ -297,10 +273,10 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index)
     {
 	if (index == 1)
 	    action = action + 
-		Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, History, Status,2);
+		Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 2);
 		//action + Simulator.GetNumAgentActions()*Random(Simulator.GetNumAgentActions());
 	else
-	    action = Simulator.SelectRandom(state, History2, Status2,1) + 
+	    action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),1) + 
 		Simulator.GetNumAgentActions()*action;
 		//Random(Simulator.GetNumAgentActions()) + Simulator.GetNumAgentActions()*action;
     }
@@ -309,12 +285,8 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index)
         Simulator.UpdateAlpha(qnode, state);
     bool terminal = Simulator.Step(state, action, observation, immediateReward);
     assert(observation >= 0 && observation < Simulator.GetNumObservations());
-    if (index == 0)
-	History.Add(action, observation);
-    else if (index == 1)
-	History.Add(Simulator.GetAgentAction(action, 1), Simulator.GetAgentObservation(observation, 1));
-    else
-	History2.Add(Simulator.GetAgentAction(action, 2), Simulator.GetAgentObservation(observation, 2));
+    Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
+			       index == 0 ? observation : Simulator.GetAgentObservation(observation, index));
 
     if (Params.Verbose >= 3)
     {
@@ -324,7 +296,8 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index)
         Simulator.DisplayState(state, cout);
     }
 
-    VNODE*& vnode = index == 0 ? qnode.Child(observation) : qnode.Child(Simulator.GetAgentObservation(observation, index));
+    VNODE*& vnode = index == 0 ? qnode.Child(observation) : 
+	    qnode.Child(Simulator.GetAgentObservation(observation, index));
     
     if (!vnode && !terminal && qnode.Value.GetCount() >= Params.ExpandCount)
 	vnode = ExpandNode(&state, index);
@@ -347,11 +320,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index)
 void MCTS::AddRave(VNODE* vnode, double totalReward, const STATE& state, const int& index)
 {
     double totalDiscount = 1.0;
-    int maxIter = 0;
-    if (index > 1)
-	maxIter = History2.Size();
-    else
-	maxIter = History.Size();
+    int maxIter = GetHistory(index).Size();
     for (int t = TreeDepth; t < maxIter; ++t)
     {
 	int action;
@@ -360,11 +329,11 @@ void MCTS::AddRave(VNODE* vnode, double totalReward, const STATE& state, const i
 	else
 	{
 	    if (index == 1)
-		action = History[t].Action + 
-		    Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, History, Status,2);
+		action = GetHistory(index)[t].Action + 
+		    Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),2);
 	    else
-		action = Simulator.SelectRandom(state, History2, Status2,1) + 
-		    Simulator.GetNumAgentActions()*History2[t].Action;
+		action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),1) + 
+		    Simulator.GetNumAgentActions()*GetHistory(index)[t].Action;
 	}
         QNODE& qnode = vnode->Child(action);
         qnode.AMAF.Add(totalReward, totalDiscount);
@@ -378,32 +347,19 @@ VNODE* MCTS::ExpandNode(const STATE* state, const int& index)
     vnode->Value.Set(0, 0);
     
     if (!Params.MultiAgent)
-	Simulator.Prior(state, History, vnode, Status, index);
+	Simulator.Prior(state, GetHistory(index), vnode, GetStatus(index), index);
     else
     {
 	if (Params.JointQActions)
-	{
-	    if (index > 1)
-		Simulator.Prior(state, History2, vnode, Status2, 0);
-	    else
-		Simulator.Prior(state, History, vnode, Status, 0);
-	}
+	    Simulator.Prior(state, GetHistory(index), vnode, GetStatus(index), 0);
 	else
-	{
-	    if (index > 1)
-		Simulator.Prior(state, History2, vnode, Status2, 2);
-	    else
-		Simulator.Prior(state, History, vnode, Status, 1);
-	}
+	    Simulator.Prior(state, GetHistory(index), vnode, GetStatus(index), index);
     }
 
     if (Params.Verbose >= 2)
     {
         cout << "Expanding node: ";
-	if (index > 1)
-	    History2.Display(cout);
-	else
-	    History.Display(cout);
+	GetHistory(index).Display(cout);
         cout << endl;
     }
 
@@ -478,7 +434,7 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb) const
 
 double MCTS::Rollout(STATE& state, const int& index)
 {
-    Status.Phase = SIMULATOR::STATUS::ROLLOUT;
+    Statuses[index == 0 ? index : index-1].Phase = SIMULATOR::STATUS::ROLLOUT;
     if (Params.Verbose >= 3)
         cout << "Starting rollout" << endl;
 
@@ -491,19 +447,12 @@ double MCTS::Rollout(STATE& state, const int& index)
         int observation;
         double reward;
 
-        int action;
-	if (index == 0 || index == 1)
-	    action = Simulator.SelectRandom(state, History, Status, 0);
-	else
-	    action = Simulator.SelectRandom(state, History2, Status2, 0);
+        int action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 0);
 	
         terminal = Simulator.Step(state, action, observation, reward);
-        if (index == 0)
-	    History.Add(action, observation);
-	else if (index == 1)
-	    History.Add(Simulator.GetAgentAction(action, 1), Simulator.GetAgentObservation(observation, 1));
-	else
-	    History2.Add(Simulator.GetAgentAction(action, 2), Simulator.GetAgentObservation(observation, 2));
+	    
+	Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
+			      index == 0 ? observation : Simulator.GetAgentObservation(observation, index));
 
         if (Params.Verbose >= 4)
         {
@@ -517,10 +466,7 @@ double MCTS::Rollout(STATE& state, const int& index)
         discount *= Simulator.GetDiscount();
     }
 
-    if (index > 1)
-	StatRolloutDepth2.Add(numSteps);
-    else
-	StatRolloutDepth.Add(numSteps);
+    StatRolloutDepths[index == 0 ? index : index-1].Add(numSteps);
     if (Params.Verbose >= 3)
         cout << "Ending rollout after " << numSteps
             << " steps, with total reward " << totalReward << endl;
@@ -529,9 +475,11 @@ double MCTS::Rollout(STATE& state, const int& index)
 
 void MCTS::AddTransforms(VNODE* root, BELIEF_STATE& beliefs, const int& index)
 {
+    
     int attempts = 0, added = 0;
 
     // Local transformations of state that are consistent with history
+    
     while (added < Params.NumTransforms && attempts < Params.MaxAttempts)
     {
         STATE* transform = CreateTransform(index);
@@ -555,34 +503,22 @@ STATE* MCTS::CreateTransform(const int& index) const
     int stepObs;
     double stepReward;
 
-    STATE* state;
-    if (index > 1)
-	state = Root2->Beliefs().CreateSample(Simulator);
-    else
-	state = Root->Beliefs().CreateSample(Simulator);
+    STATE* state = Roots[index == 0 ? index : index-1]->Beliefs().CreateSample(Simulator);
     int action;
     if (index == 0)
-	action = History.Back().Action;
+	action = GetHistory(index).Back().Action;
     else
     {
 	if (index == 1)
-	    action = History.Back().Action + 
-		Simulator.GetNumAgentActions()*Simulator.SelectRandom(*state, History, Status,2);
+	    action = GetHistory(index).Back().Action + 
+		Simulator.GetNumAgentActions()*Simulator.SelectRandom(*state, GetHistory(index), GetStatus(index), 2);
 	else
-	    action = Simulator.SelectRandom(*state, History2, Status2,1) + 
-		Simulator.GetNumAgentActions()*History2.Back().Action;
+	    action = Simulator.SelectRandom(*state, GetHistory(index), GetStatus(index),1) + 
+		Simulator.GetNumAgentActions()*GetHistory(index).Back().Action;
     }
     Simulator.Step(*state, action, stepObs, stepReward);
-    if (index > 1)
-    {
-	if (Simulator.LocalMove(*state, History2, stepObs, Status2))
-	    return state;
-    }
-    else
-    {
-	if (Simulator.LocalMove(*state, History, stepObs, Status))
-	    return state;
-    }
+    if (Simulator.LocalMove(*state, GetHistory(index), stepObs, GetStatus(index)))
+	return state;
     Simulator.FreeState(state);
     return 0;
 }
@@ -616,36 +552,18 @@ inline double MCTS::FastUCB(int N, int n, double logN) const
 
 void MCTS::ClearStatistics(const int& index)
 {
-    if (index > 1)
-    {
-	StatTreeDepth2.Clear();
-	StatRolloutDepth2.Clear();
-	StatTotalReward2.Clear();
-    }
-    else
-    {
-	StatTreeDepth.Clear();
-	StatRolloutDepth.Clear();
-	StatTotalReward.Clear();
-    }
+    StatTreeDepths[index == 0 ? index : index-1].Clear();
+    StatRolloutDepths[index == 0 ? index : index-1].Clear();
+    StatTotalRewards[index == 0 ? index : index-1].Clear();
 }
 
 void MCTS::DisplayStatistics(ostream& ostr, const int& index) const
 {
     if (Params.Verbose >= 1)
     {
-	if (index > 1)
-	{
-	    StatTreeDepth2.Print("Tree depth", ostr);
-	    StatRolloutDepth2.Print("Rollout depth", ostr);
-	    StatTotalReward2.Print("Total reward", ostr);
-	}
-	else
-	{
-	    StatTreeDepth.Print("Tree depth", ostr);
-	    StatRolloutDepth.Print("Rollout depth", ostr);
-	    StatTotalReward.Print("Total reward", ostr);
-	}
+	StatTreeDepths[index == 0 ? index : index-1].Print("Tree depth", ostr);
+	StatRolloutDepths[index == 0 ? index : index-1].Print("Rollout depth", ostr);
+	StatTotalRewards[index == 0 ? index : index-1].Print("Total reward", ostr);
     }
 
     if (Params.Verbose >= 2)
@@ -661,20 +579,14 @@ void MCTS::DisplayValue(int depth, const int& index, ostream& ostr) const
 {
     HISTORY history;
     ostr << "MCTS Values:" << endl;
-    if (index > 1)
-	Root2->DisplayValue(history, depth, ostr);
-    else
-	Root->DisplayValue(history, depth, ostr);
+    Roots[index == 0 ? index : index-1]->DisplayValue(history, depth, ostr);
 }
 
 void MCTS::DisplayPolicy(int depth, const int& index, ostream& ostr) const
 {
     HISTORY history;
     ostr << "MCTS Policy:" << endl;
-    if (index > 1)
-	Root2->DisplayPolicy(history, depth, ostr);
-    else
-	Root->DisplayPolicy(history, depth, ostr);
+    Roots[index == 0 ? index : index-1]->DisplayPolicy(history, depth, ostr);
 }
 
 //-----------------------------------------------------------------------------
@@ -780,7 +692,7 @@ void MCTS::UnitTestSearch(int depth, const int& index)
     params.NumSimulations = pow(10, depth + 1);
     MCTS mcts(testSimulator, params);
     mcts.UCTSearch(index);
-    double rootValue = mcts.Root->Value.GetValue();
+    double rootValue = mcts.Roots[index == 0 ? index : index-1]->Value.GetValue();
     double optimalValue = testSimulator.OptimalValue();
     assert(fabs(optimalValue - rootValue) < 0.1);
 }

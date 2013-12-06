@@ -838,6 +838,7 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
 {
     const KITCHEN_STATE& kitchenstate = safe_cast<const KITCHEN_STATE&>(state);
     
+    
     for (int i = 0; i < NumAgents; i++)
     {
 	if (i == 0)
@@ -884,6 +885,7 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     }
     for (int i = 0 ; i < NumObjects ; i++)
     {
+	
 	if (history.Size() > 0 && NumObservations > 1)
 	{
 	    if (index == status.perspindex) //planning for myself

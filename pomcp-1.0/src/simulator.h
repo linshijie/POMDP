@@ -137,6 +137,7 @@ public:
     void SetKnowledge(const KNOWLEDGE& knowledge) { Knowledge = knowledge; }
     int GetNumActions() const { return NumActions; }
     int GetNumObservations() const { return NumObservations; }
+    int GetNumAgents() const { return NumAgents; }
     int GetNumAgentActions() const { return NumAgentActions; }
     int GetNumAgentObservations() const { return NumAgentObservations; }
     int GetAgentAction(const int& action, const int& index) const { return index > 1 ? action/NumAgentActions : 
