@@ -23,8 +23,9 @@ MCTS::PARAMS::PARAMS()
     RaveDiscount(1.0),
     RaveConstant(0.01),
     DisableTree(false),
-    MultiAgent(false),
+    MultiAgent(true),
     JointQActions(true),
+    MinMax(false),
     RewardAdaptive(false)
 {
 }

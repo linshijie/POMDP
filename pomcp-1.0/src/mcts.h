@@ -28,6 +28,7 @@ public:
         bool DisableTree;
 	bool MultiAgent;
 	bool JointQActions;
+	bool MinMax;
 	bool RewardAdaptive;
     };
 
