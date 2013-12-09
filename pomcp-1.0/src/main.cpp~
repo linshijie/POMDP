@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
 
     simulator->SetKnowledge(knowledge);
     EXPERIMENT experiment(*real, *simulator, outputfile, expParams, searchParams);
-    experiment.AverageReward();
+    experiment.DiscountedReturn();
 
     delete real;
     delete simulator;

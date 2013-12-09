@@ -27,9 +27,9 @@ public:
         double RaveConstant;
         bool DisableTree;
 	bool MultiAgent;
-	bool JointQActions;
-	bool MinMax;
-	bool RewardAdaptive;
+	std::vector<bool> JointQActions;
+	std::vector<bool> MinMax;
+	std::vector<bool> RewardAdaptive;
     };
 
     MCTS(const SIMULATOR& simulator, const PARAMS& params);
@@ -69,7 +69,7 @@ private:
     std::vector<STATISTIC> StatRolloutDepths;
     std::vector<STATISTIC> StatTotalRewards;
     
-    int GreedyUCB(VNODE* vnode, bool ucb) const;
+    int GreedyUCB(VNODE* vnode, bool ucb, const int& index) const;
     int SelectRandom() const;
     double SimulateV(STATE& state, VNODE* vnode, const int& index);
     double SimulateQ(STATE& state, QNODE& qnode, int action, const int& index);

@@ -74,7 +74,6 @@ int main(int argc, char* argv[])
         ("smarttreevalue", value<double>(&knowledge.SmartTreeValue), "Prior value for preferred actions during smart tree search")
         ("disabletree", value<bool>(&searchParams.DisableTree), "Use 1-ply rollout action selection")
 	("multiagent", value<bool>(&searchParams.MultiAgent), "Multi-agent problem")
-	("rewardadaptive", value<bool>(&searchParams.RewardAdaptive), "Reward-adaptive problem")
         ;
 
     variables_map vm;

@@ -23,10 +23,20 @@ MCTS::PARAMS::PARAMS()
     RaveDiscount(1.0),
     RaveConstant(0.01),
     DisableTree(false),
-    MultiAgent(true),
-    JointQActions(true),
-    RewardAdaptive(false)
+    MultiAgent(true)
 {
+    JointQActions.clear();
+    MinMax.clear();
+    RewardAdaptive.clear();
+    
+    JointQActions.push_back(true);
+    JointQActions.push_back(true);
+    
+    MinMax.push_back(false);
+    MinMax.push_back(false);
+    
+    RewardAdaptive.push_back(false);
+    RewardAdaptive.push_back(false);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
@@ -34,8 +44,8 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
     Params(params),
     TreeDepth(0)
 {
-    VNODE::NumChildren = Params.MultiAgent && !Params.JointQActions ? Simulator.GetNumAgentActions() : 
-			Simulator.GetNumActions();
+    //VNODE::NumChildren = Params.MultiAgent && !Params.JointQActions[0] ? Simulator.GetNumAgentActions() : 
+	//		Simulator.GetNumActions();
     QNODE::NumChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
     
     Statuses.clear();
@@ -64,7 +74,10 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	STATISTIC StatTotalReward;
 	StatTotalRewards.push_back(StatTotalReward);
 	//root
-	VNODE* root = ExpandNode(Simulator.CreateStartState(), Params.MultiAgent ? i+1 : i);
+	VNODE* root; 
+	root->NumChildren = Params.MultiAgent && !Params.JointQActions[i] ? Simulator.GetNumAgentActions() : 
+			Simulator.GetNumActions();
+	root = ExpandNode(Simulator.CreateStartState(), Params.MultiAgent ? i+1 : i);
 	Roots.push_back(root);
     }
     
@@ -89,18 +102,17 @@ MCTS::~MCTS()
 
 bool MCTS::Update(int action, int observation, double reward, const int& index)
 {
-    
     if (!Params.MultiAgent)
 	Histories[index == 0 ? index : index-1].Add(action, observation);
     else
     {
-	if (index == 1 && Params.JointQActions)
+	if (index == 1 && Params.JointQActions[index == 0 ? index : index-1])
 	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,1), observation);
-	else if (index == 1 && !Params.JointQActions)
+	else if (index == 1 && !Params.JointQActions[index == 0 ? index : index-1])
 	    Histories[index == 0 ? index : index-1].Add(action, observation);
-	else if (index == 2 && Params.JointQActions)
+	else if (index == 2 && Params.JointQActions[index == 0 ? index : index-1])
 	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,2), observation);
-	else if (index == 2 && !Params.JointQActions)
+	else if (index == 2 && !Params.JointQActions[index == 0 ? index : index-1])
 	    Histories[index == 0 ? index : index-1].Add(action, observation);
     }
     BELIEF_STATE beliefs;
@@ -157,7 +169,7 @@ int MCTS::SelectAction(const int& index)
 	RolloutSearch(index);
     else
 	UCTSearch(index);
-    return GreedyUCB(Roots[index == 0 ? index : index-1], false);
+    return GreedyUCB(Roots[index == 0 ? index : index-1], false, index);
 
 }
 
@@ -182,7 +194,7 @@ void MCTS::RolloutSearch(const int& index)
 	    bool terminal = Simulator.Step(*state, action, observation, immediateReward);	 
 	    
 	    int treeaction = action;
-	    if (Params.MultiAgent && !Params.JointQActions)
+	    if (Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1])
 	    {
 		if (index == 1)
 		    treeaction = Simulator.GetAgentAction(action,1);
@@ -248,7 +260,7 @@ void MCTS::UCTSearch(const int& index)
 
 double MCTS::SimulateV(STATE& state, VNODE* vnode, const int& index)
 {
-    int action = GreedyUCB(vnode, true);
+    int action = GreedyUCB(vnode, true, index);
 
     PeakTreeDepth = TreeDepth;
     if (TreeDepth >= Params.MaxDepth) // search horizon reached
@@ -269,7 +281,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index)
     int observation;
     double immediateReward, delayedReward = 0;
     
-    if (Params.MultiAgent && !Params.JointQActions)
+    if (Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1])
     {
 	if (index == 1)
 	    action = action + 
@@ -324,7 +336,7 @@ void MCTS::AddRave(VNODE* vnode, double totalReward, const STATE& state, const i
     for (int t = TreeDepth; t < maxIter; ++t)
     {
 	int action;
-	if (index == 0 || (Params.MultiAgent && !Params.JointQActions))
+	if (index == 0 || (Params.MultiAgent && !Params.JointQActions[index-1]))
 	    action = GetHistory(index)[t].Action;
 	else
 	{
@@ -350,7 +362,7 @@ VNODE* MCTS::ExpandNode(const STATE* state, const int& index)
 	Simulator.Prior(state, GetHistory(index), vnode, GetStatus(index), index);
     else
     {
-	if (Params.JointQActions)
+	if (Params.JointQActions[index == 0 ? index : index-1])
 	    Simulator.Prior(state, GetHistory(index), vnode, GetStatus(index), 0);
 	else
 	    Simulator.Prior(state, GetHistory(index), vnode, GetStatus(index), index);
@@ -377,7 +389,7 @@ void MCTS::AddSample(VNODE* node, const STATE& state)
     }
 }
 
-int MCTS::GreedyUCB(VNODE* vnode, bool ucb) const
+int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 {
     static vector<int> besta;
     besta.clear();
@@ -387,49 +399,104 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb) const
     bool hasalpha = Simulator.HasAlpha();
     
     int maxIter;
-    if (Params.MultiAgent && !Params.JointQActions)
+    
+    if ((Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1]) ||
+	(Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
+    )
 	maxIter = Simulator.GetNumAgentActions();
     else
 	maxIter = Simulator.GetNumActions();
-
+    
+    
+    int minOwnAction = -1;
+    int minOtherAction = -1;
+    double maxRew = -Infinity;
+		
     for (int action = 0; action < maxIter; action++)
     {
-        double q, alphaq;
-        int n, alphan;
+	
+	int maxIter2 = Params.MinMax[index == 0 ? index : index-1] && 
+	    Params.JointQActions[index == 0 ? index : index-1] ? Simulator.GetNumAgentActions() : 1;
+	    
+	int currMinOtherAction = -1;
+	double currMinRew = +Infinity;
+	    
+	for (int i = 0; i < maxIter2; i++)
+	{
+	    int jointaction = action;
+	    if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
+	    {
+		if (index < 2)
+		    jointaction = action + Simulator.GetNumAgentActions()*i;
+		else
+		    jointaction = i + Simulator.GetNumAgentActions()*action;
+	    }
+	    
+	    double q, alphaq;
+	    int n, alphan;
+	    
+	    QNODE& qnode = vnode->Child(jointaction);
+	    q = qnode.Value.GetValue();
+	    n = qnode.Value.GetCount();
 
-        QNODE& qnode = vnode->Child(action);
-        q = qnode.Value.GetValue();
-        n = qnode.Value.GetCount();
+	    if (Params.UseRave && qnode.AMAF.GetCount() > 0)
+	    {
+		double n2 = qnode.AMAF.GetCount();
+		double beta = n2 / (n + n2 + Params.RaveConstant * n * n2);
+		q = (1.0 - beta) * q + beta * qnode.AMAF.GetValue();
+	    }
 
-        if (Params.UseRave && qnode.AMAF.GetCount() > 0)
-        {
-            double n2 = qnode.AMAF.GetCount();
-            double beta = n2 / (n + n2 + Params.RaveConstant * n * n2);
-            q = (1.0 - beta) * q + beta * qnode.AMAF.GetValue();
-        }
+	    if (hasalpha && n > 0)
+	    {
+		Simulator.AlphaValue(qnode, alphaq, alphan);
+		q = (n * q + alphan * alphaq) / (n + alphan);
+		//cout << "N = " << n << ", alphaN = " << alphan << endl;
+		//cout << "Q = " << q << ", alphaQ = " << alphaq << endl;
+	    }
 
-        if (hasalpha && n > 0)
-        {
-            Simulator.AlphaValue(qnode, alphaq, alphan);
-            q = (n * q + alphan * alphaq) / (n + alphan);
-            //cout << "N = " << n << ", alphaN = " << alphan << endl;
-            //cout << "Q = " << q << ", alphaQ = " << alphaq << endl;
-        }
-
-        if (ucb)
-            q += FastUCB(N, n, logN);
-
-        if (q >= bestq)
-        {
-            if (q > bestq)
-                besta.clear();
-            bestq = q;
-            besta.push_back(action);
-        }
+	    if (ucb)
+		q += FastUCB(N, n, logN);
+	    
+	    if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
+	    {
+		if (n > 0 && (q < currMinRew || (q == currMinRew && RandomDouble(0.0, 1.0) < 0.5)))
+		{
+		    currMinRew = q;
+		    currMinOtherAction = i;
+		}
+	    }
+	    else if (q >= bestq)
+	    {
+		if (q > bestq)
+		    besta.clear();
+		bestq = q;
+		besta.push_back(action);
+	    }
+	}
+	
+	if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
+	    if (currMinOtherAction > -1 && (currMinRew > maxRew || (currMinRew == maxRew && 
+		RandomDouble(0.0, 1.0) < 0.5)))
+	    {
+		maxRew = currMinRew;
+		minOtherAction = currMinOtherAction;
+		minOwnAction = action;
+	    }
     }
 
-    assert(!besta.empty());
-    return besta[Random(besta.size())];
+    if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
+    {
+	if (index < 2)
+	    return minOwnAction + Simulator.GetNumAgentActions()*minOtherAction;
+	else
+	    return minOtherAction + Simulator.GetNumAgentActions()*minOwnAction;
+    }
+    else
+    {
+	assert(!besta.empty());
+	//std::cout << bestq << " " << index <<  "\n";
+	return besta[Random(besta.size())];
+    }
 }
 
 double MCTS::Rollout(STATE& state, const int& index)
