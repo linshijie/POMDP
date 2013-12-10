@@ -32,8 +32,8 @@ MCTS::PARAMS::PARAMS()
     JointQActions.push_back(true);
     JointQActions.push_back(true);
     
-    MinMax.push_back(false);
-    MinMax.push_back(false);
+    MinMax.push_back(true);
+    MinMax.push_back(true);
     
     RewardAdaptive.push_back(false);
     RewardAdaptive.push_back(false);
@@ -411,31 +411,34 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
     int minOwnAction = -1;
     int minOtherAction = -1;
     double maxRew = -Infinity;
-		
+    
+    int maxIter2 = Params.MinMax[index == 0 ? index : index-1] && 
+	    Params.JointQActions[index == 0 ? index : index-1] ? Simulator.GetNumAgentActions() : 1;
+	    
+    int niter = 0;
+
     for (int action = 0; action < maxIter; action++)
     {
-	
-	int maxIter2 = Params.MinMax[index == 0 ? index : index-1] && 
-	    Params.JointQActions[index == 0 ? index : index-1] ? Simulator.GetNumAgentActions() : 1;
 	    
 	int currMinOtherAction = -1;
 	double currMinRew = +Infinity;
 	    
 	for (int i = 0; i < maxIter2; i++)
 	{
-	    int jointaction = action;
 	    if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
 	    {
 		if (index < 2)
-		    jointaction = action + Simulator.GetNumAgentActions()*i;
+		    action = action + Simulator.GetNumAgentActions()*i;
 		else
-		    jointaction = i + Simulator.GetNumAgentActions()*action;
+		    action = i + Simulator.GetNumAgentActions()*action;
 	    }
+	    
+	    std::cout << action << "\n";
 	    
 	    double q, alphaq;
 	    int n, alphan;
 	    
-	    QNODE& qnode = vnode->Child(jointaction);
+	    QNODE& qnode = vnode->Child(action);
 	    q = qnode.Value.GetValue();
 	    n = qnode.Value.GetCount();
 
@@ -457,7 +460,7 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 	    if (ucb)
 		q += FastUCB(N, n, logN);
 	    
-	    if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
+	    /*if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
 	    {
 		if (q < currMinRew || (q == currMinRew && RandomDouble(0.0, 1.0) < 0.5))
 		{
@@ -465,7 +468,7 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 		    currMinOtherAction = i;
 		}
 	    }
-	    else if (q >= bestq)
+	    else*/ if (q >= bestq)
 	    {
 		if (q > bestq)
 		    besta.clear();
@@ -474,28 +477,32 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 	    }
 	}
 	
-	if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
+	/*if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
 	    if (currMinOtherAction > -1 && (currMinRew > maxRew || (currMinRew == maxRew && 
 		RandomDouble(0.0, 1.0) < 0.5)))
 	    {
 		maxRew = currMinRew;
 		minOtherAction = currMinOtherAction;
 		minOwnAction = action;
-	    }
+	    }*/
     }
+    
+    //std::cout << besta.size() << "\n";
 
-    if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
+    /*if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
     {
-	if (index < 2)
+	if (index < 1)
 	    return minOwnAction + Simulator.GetNumAgentActions()*minOtherAction;
 	else
 	    return minOtherAction + Simulator.GetNumAgentActions()*minOwnAction;
     }
-    else
+    else*/
     {
 	assert(!besta.empty());
 	//std::cout << bestq << " " << index <<  "\n";
-	return besta[Random(besta.size())];
+	int a = besta[Random(besta.size())];
+	std::cout << a << "\n";
+	return a;
     }
 }
 

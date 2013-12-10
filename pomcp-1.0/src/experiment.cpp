@@ -71,7 +71,6 @@ void EXPERIMENT::Run()
 	    if (SearchParams.JointQActions[1])
 		action1 = Simulator.GetAgentAction(action1,2);
 	    action = action0 + Simulator.GetNumAgentActions()*action1;
-	    
 	}
         terminal = Real.Step(*state, action, observation, reward);
 

@@ -71,7 +71,7 @@ void EXPERIMENT::Run()
 	    if (SearchParams.JointQActions[1])
 		action1 = Simulator.GetAgentAction(action1,2);
 	    action = action0 + Simulator.GetNumAgentActions()*action1;
-	    
+	    std::cout << "action = " << action << "\n";
 	}
         terminal = Real.Step(*state, action, observation, reward);
 
@@ -111,7 +111,6 @@ void EXPERIMENT::Run()
                 << Results.Time.GetTotal() << "seconds" << endl;
             break;
         }
-        std::cout << "after\n";
     }
 
     if (outOfParticles || outOfParticles2)
