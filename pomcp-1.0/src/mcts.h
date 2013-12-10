@@ -70,8 +70,6 @@ private:
     std::vector<HISTORY> Histories;
     HISTORY myhistory;
     std::vector<SIMULATOR::STATUS> Statuses;
-    
-    std::vector< std::vector<REWARD_TEMPLATE> > RewardTemplates;
 
     std::vector<STATISTIC> StatTreeDepths;
     std::vector<STATISTIC> StatRolloutDepths;
