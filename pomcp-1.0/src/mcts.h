@@ -31,6 +31,12 @@ public:
 	std::vector<bool> MinMax;
 	std::vector<bool> RewardAdaptive;
     };
+    
+    struct REWARD_TEMPLATE
+    {
+	std::pair<double,double> RewardParams;
+	double RewardWeight;
+    };
 
     MCTS(const SIMULATOR& simulator, const PARAMS& params);
     ~MCTS();
@@ -64,6 +70,8 @@ private:
     std::vector<HISTORY> Histories;
     HISTORY myhistory;
     std::vector<SIMULATOR::STATUS> Statuses;
+    
+    std::vector< std::vector<REWARD_TEMPLATE> > RewardTemplates;
 
     std::vector<STATISTIC> StatTreeDepths;
     std::vector<STATISTIC> StatRolloutDepths;

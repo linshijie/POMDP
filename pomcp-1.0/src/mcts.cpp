@@ -29,11 +29,11 @@ MCTS::PARAMS::PARAMS()
     MinMax.clear();
     RewardAdaptive.clear();
     
-    JointQActions.push_back(true);
-    JointQActions.push_back(true);
+    JointQActions.push_back(false);
+    JointQActions.push_back(false);
     
-    MinMax.push_back(true);
-    MinMax.push_back(true);
+    MinMax.push_back(false);
+    MinMax.push_back(false);
     
     RewardAdaptive.push_back(false);
     RewardAdaptive.push_back(false);
@@ -408,9 +408,11 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 	maxIter = Simulator.GetNumActions();
     
     
-    int minOwnAction = -1;
-    int minOtherAction = -1;
-    double maxRew = -Infinity;
+    std::vector<int> maxOwnActions;
+    std::vector<int> maxOtherActions;
+    maxOwnActions.clear();
+    maxOtherActions.clear();
+    double minRew = Infinity;
     
     int maxIter2 = Params.MinMax[index == 0 ? index : index-1] && 
 	    Params.JointQActions[index == 0 ? index : index-1] ? Simulator.GetNumAgentActions() : 1;
@@ -420,25 +422,25 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
     for (int action = 0; action < maxIter; action++)
     {
 	    
-	int currMinOtherAction = -1;
-	double currMinRew = +Infinity;
+	std::vector<int> currMaxOtherActions;
+	currMaxOtherActions.clear();
+	double currMaxRew = -Infinity;
 	    
 	for (int i = 0; i < maxIter2; i++)
 	{
+	    int jointaction = action;
 	    if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
 	    {
 		if (index < 2)
-		    action = action + Simulator.GetNumAgentActions()*i;
+		    jointaction = action + Simulator.GetNumAgentActions()*i;
 		else
-		    action = i + Simulator.GetNumAgentActions()*action;
+		    jointaction = i + Simulator.GetNumAgentActions()*action;
 	    }
-	    
-	    std::cout << action << "\n";
 	    
 	    double q, alphaq;
 	    int n, alphan;
 	    
-	    QNODE& qnode = vnode->Child(action);
+	    QNODE& qnode = vnode->Child(jointaction);
 	    q = qnode.Value.GetValue();
 	    n = qnode.Value.GetCount();
 
@@ -460,48 +462,55 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 	    if (ucb)
 		q += FastUCB(N, n, logN);
 	    
-	    /*if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
+	    if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
 	    {
-		if (q < currMinRew || (q == currMinRew && RandomDouble(0.0, 1.0) < 0.5))
+		if (q >= currMaxRew)
 		{
-		    currMinRew = q;
-		    currMinOtherAction = i;
+		    if (q > currMaxRew)
+			currMaxOtherActions.clear();
+		    currMaxRew = q;
+		    currMaxOtherActions.push_back(i);
 		}
 	    }
-	    else*/ if (q >= bestq)
+	    else if (q >= bestq)
 	    {
 		if (q > bestq)
 		    besta.clear();
 		bestq = q;
-		besta.push_back(action);
+		besta.push_back(jointaction);
 	    }
 	}
 	
-	/*if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
-	    if (currMinOtherAction > -1 && (currMinRew > maxRew || (currMinRew == maxRew && 
-		RandomDouble(0.0, 1.0) < 0.5)))
+	if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
+	    if (currMaxRew <= minRew)
 	    {
-		maxRew = currMinRew;
-		minOtherAction = currMinOtherAction;
-		minOwnAction = action;
-	    }*/
+		if (currMaxRew < minRew)
+		{
+		    maxOtherActions.clear();
+		    maxOwnActions.clear();
+		}
+		minRew = currMaxRew;
+		maxOtherActions.insert(maxOtherActions.end(), currMaxOtherActions.begin(), currMaxOtherActions.end());
+		for (int j = 0; j < currMaxOtherActions.size(); j++)
+		    maxOwnActions.push_back(action);
+	    }
     }
-    
-    //std::cout << besta.size() << "\n";
 
-    /*if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
+    if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
     {
-	if (index < 1)
-	    return minOwnAction + Simulator.GetNumAgentActions()*minOtherAction;
+	assert(!maxOwnActions.size() && maxOwnActions.size() == maxOtherActions.size());
+	int r = Random(maxOwnActions.size());
+	int a;
+	if (index < 2)
+	    a = maxOwnActions[r] + Simulator.GetNumAgentActions()*maxOtherActions[r];
 	else
-	    return minOtherAction + Simulator.GetNumAgentActions()*minOwnAction;
+	    a = maxOtherActions[r] + Simulator.GetNumAgentActions()*maxOwnActions[r];
+	return a;
     }
-    else*/
+    else
     {
 	assert(!besta.empty());
-	//std::cout << bestq << " " << index <<  "\n";
 	int a = besta[Random(besta.size())];
-	std::cout << a << "\n";
 	return a;
     }
 }

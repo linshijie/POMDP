@@ -8,6 +8,9 @@
 #include "coord.h"
 #include "memorypool.h"
 #include <algorithm>
+#include <boost/math/distributions/beta.hpp>
+#include <boost/random.hpp>
+#include <boost/random/normal_distribution.hpp>
 
 #define LargeInteger 1000000
 #define Infinity 1e+10
@@ -56,6 +59,21 @@ inline bool Near(double x, double y, double tol)
 {
     return fabs(x - y) <= tol;
 }
+
+inline double Beta(double a, double b)
+{
+    boost::math::beta_distribution<> beta(a,b);
+    return boost::math::quantile(beta, RandomDouble(0.0, 1.0));
+}
+
+inline double Normal(double m, double s)
+{
+    boost::mt19937 rng;
+    boost::normal_distribution<> nd(m,s);
+    boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > vg(rng,nd);
+    return vg();
+}
+
 
 inline bool CheckFlag(int flags, int bit) { return (flags & (1 << bit)) != 0; }
 
