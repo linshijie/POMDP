@@ -484,7 +484,7 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 	if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
 	    if (currMaxRew <= minRew)
 	    {
-		if (currMaxRew < minRew)
+		if (currMaxRew < minRew && currMaxRew > -Infinity)
 		{
 		    maxOtherActions.clear();
 		    maxOwnActions.clear();

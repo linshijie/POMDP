@@ -23,14 +23,14 @@ MCTS::PARAMS::PARAMS()
     RaveDiscount(1.0),
     RaveConstant(0.01),
     DisableTree(false),
-    MultiAgent(true)
+    MultiAgent(false)
 {
     JointQActions.clear();
     MinMax.clear();
     RewardAdaptive.clear();
     
-    JointQActions.push_back(true);
-    JointQActions.push_back(true);
+    JointQActions.push_back(false);
+    JointQActions.push_back(false);
     
     MinMax.push_back(false);
     MinMax.push_back(false);
@@ -437,8 +437,6 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 		    jointaction = i + Simulator.GetNumAgentActions()*action;
 	    }
 	    
-	    //std::cout << action << "\n";
-	    
 	    double q, alphaq;
 	    int n, alphan;
 	    
@@ -486,7 +484,7 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 	if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
 	    if (currMaxRew <= minRew)
 	    {
-		if (currMaxRew < minRew)
+		if (currMaxRew < minRew && currMaxRew > -Infinity)
 		{
 		    maxOtherActions.clear();
 		    maxOwnActions.clear();
@@ -497,8 +495,6 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 		    maxOwnActions.push_back(action);
 	    }
     }
-    
-    //std::cout << besta.size() << "\n";
 
     if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
     {
