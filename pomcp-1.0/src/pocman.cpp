@@ -158,6 +158,12 @@ void POCMAN::FreeState(STATE* state) const
     MemoryPool.Free(pocstate);
 }
 
+void POCMAN::FreeReward(REWARD_TEMPLATE* reward) const
+{
+    
+}
+
+
 COORD POCMAN::NextPos(const COORD& from, int dir) const
 {
     COORD nextPos;

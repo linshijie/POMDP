@@ -23,7 +23,7 @@ MCTS::PARAMS::PARAMS()
     RaveDiscount(1.0),
     RaveConstant(0.01),
     DisableTree(false),
-    MultiAgent(true)
+    MultiAgent(false)
 {
     JointQActions.clear();
     MinMax.clear();

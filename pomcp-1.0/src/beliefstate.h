@@ -4,6 +4,7 @@
 #include <vector>
 
 class STATE;
+class REWARD_TEMPLATE;
 class SIMULATOR;
 
 class BELIEF_STATE
@@ -31,9 +32,12 @@ public:
     int GetNumSamples() const { return Samples.size(); }
     const STATE* GetSample(int index) const { return Samples[index]; }
     
+    //Rewards
+    
 private:
 
     std::vector<STATE*> Samples;
+    std::vector<REWARD_TEMPLATE*> RewardSamples;
 };
 
 #endif // BELIEF_STATE_H

@@ -90,6 +90,12 @@ void BATTLESHIP::FreeState(STATE* state) const
     MemoryPool.Free(bsstate);
 }
 
+void BATTLESHIP::FreeReward(REWARD_TEMPLATE* reward) const
+{
+
+}
+
+
 bool BATTLESHIP::Step(STATE& state, int action,
     int& observation, double& reward) const
 {

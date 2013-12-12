@@ -47,6 +47,9 @@ public:
     std::vector<bool> IsToppled;
 };
 
+
+
+
 class KITCHEN : public SIMULATOR
 {
 public:

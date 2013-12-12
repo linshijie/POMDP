@@ -26,6 +26,7 @@ public:
     virtual void Validate(const STATE& state) const;
     virtual STATE* CreateStartState() const;
     virtual void FreeState(STATE* state) const;
+    virtual void FreeReward(REWARD_TEMPLATE* reward) const;
     virtual bool Step(STATE& state, int action, 
         int& observation, double& reward) const;
 

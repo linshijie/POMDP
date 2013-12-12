@@ -45,6 +45,12 @@ void SIMULATOR::Validate(const STATE& state) const
 { 
 }
 
+void SIMULATOR::FreeReward(REWARD_TEMPLATE* reward) const
+{
+    REWARD_TEMPLATE* rewardtemplate = safe_cast<REWARD_TEMPLATE*>(reward);
+    RewardMemoryPool.Free(rewardtemplate);
+}
+
 bool SIMULATOR::LocalMove(STATE& state, const HISTORY& history,
     int stepObs, const STATUS& status) const
 {

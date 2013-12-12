@@ -32,12 +32,6 @@ public:
 	std::vector<bool> RewardAdaptive;
     };
     
-    struct REWARD_TEMPLATE
-    {
-	std::pair<double,double> RewardParams;
-	double RewardWeight;
-    };
-
     MCTS(const SIMULATOR& simulator, const PARAMS& params);
     ~MCTS();
 

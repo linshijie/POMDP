@@ -7,6 +7,7 @@ using namespace UTILS;
 BELIEF_STATE::BELIEF_STATE()
 {
     Samples.clear();
+    RewardSamples.clear();
 }
 
 void BELIEF_STATE::Free(const SIMULATOR& simulator)
@@ -17,6 +18,13 @@ void BELIEF_STATE::Free(const SIMULATOR& simulator)
         simulator.FreeState(*i_state);
     }
     Samples.clear();
+    
+    for (std::vector<REWARD_TEMPLATE*>::iterator r_temp = RewardSamples.begin();
+	    r_temp != RewardSamples.end(); ++r_temp)
+    {
+	simulator.FreeReward(*r_temp);
+    }
+    RewardSamples.clear();
 }
 
 STATE* BELIEF_STATE::CreateSample(const SIMULATOR& simulator) const

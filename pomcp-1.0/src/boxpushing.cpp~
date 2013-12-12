@@ -104,6 +104,11 @@ void BOXPUSHING::FreeState(STATE* state) const
     MemoryPool.Free(bpstate);
 }
 
+void BOXPUSHING::FreeReward(REWARD_TEMPLATE* reward) const
+{
+
+}
+
 bool BOXPUSHING::Step(STATE& state, int action,
     int& observation, double& reward) const
 {

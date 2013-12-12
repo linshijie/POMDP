@@ -13,6 +13,13 @@ class STATE : public MEMORY_OBJECT
 {
 };
 
+class REWARD_TEMPLATE : public MEMORY_OBJECT
+{
+public:
+    std::pair<double,double> RewardParams;
+    double RewardWeight;
+};
+
 class SIMULATOR
 {
 public:
@@ -95,6 +102,9 @@ public:
     // Modify state stochastically to some related state
     virtual bool LocalMove(STATE& state, const HISTORY& history,
         int stepObs, const STATUS& status) const;
+	
+    // Free memory for reward samples
+    void FreeReward(REWARD_TEMPLATE* reward) const;
 
     // Use domain knowledge to assign prior value and confidence to actions
     // Should only use fully observable state variables
@@ -154,6 +164,7 @@ protected:
     int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations;
     double Discount, RewardRange;
     KNOWLEDGE Knowledge;
+    mutable MEMORY_POOL<REWARD_TEMPLATE> RewardMemoryPool;
 };
 
 #endif // SIMULATOR_H
