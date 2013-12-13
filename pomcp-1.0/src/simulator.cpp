@@ -17,6 +17,14 @@ SIMULATOR::STATUS::STATUS()
 {
 }
 
+SIMULATOR::INITIAL_REWARD_PARAMS::INITIAL_REWARD_PARAMS()
+:   Mean(-0.5),
+    Std(1.0)
+{
+
+}
+
+
 SIMULATOR::SIMULATOR() 
 :   NumActions(0),
     NumObservations(0),
@@ -47,9 +55,25 @@ void SIMULATOR::Validate(const STATE& state) const
 
 void SIMULATOR::FreeReward(REWARD_TEMPLATE* reward) const
 {
-    REWARD_TEMPLATE* rewardtemplate = safe_cast<REWARD_TEMPLATE*>(reward);
-    RewardMemoryPool.Free(rewardtemplate);
+    RewardMemoryPool.Free(reward);
 }
+
+REWARD_TEMPLATE* SIMULATOR::Copy(const REWARD_TEMPLATE& reward) const
+{
+    REWARD_TEMPLATE* newtemplate = RewardMemoryPool.Allocate();
+    *newtemplate = reward;
+    return newtemplate; 
+}
+
+REWARD_TEMPLATE* SIMULATOR::CreateInitialReward(const double& weight) const
+{
+    REWARD_TEMPLATE* newtemplate = RewardMemoryPool.Allocate();
+    newtemplate->RewardParams = std::make_pair(Normal(InitialRewardParams.Mean,InitialRewardParams.Std), 
+					       Normal(InitialRewardParams.Mean,InitialRewardParams.Std));
+    newtemplate->RewardWeight = weight;
+    return newtemplate;
+}
+
 
 bool SIMULATOR::LocalMove(STATE& state, const HISTORY& history,
     int stepObs, const STATUS& status) const

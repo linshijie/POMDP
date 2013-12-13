@@ -17,6 +17,7 @@ public:
         int MaxDepth;
         int NumSimulations;
         int NumStartStates;
+	int NumStartRewards;
         bool UseTransforms;
         int NumTransforms;
         int MaxAttempts;

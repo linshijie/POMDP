@@ -14,6 +14,7 @@ MCTS::PARAMS::PARAMS()
     MaxDepth(100),
     NumSimulations(1000),
     NumStartStates(20),
+    NumStartRewards(20),
     UseTransforms(false),
     NumTransforms(0),
     MaxAttempts(0),
@@ -82,14 +83,18 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
     }
     
 
-    for (int i = 0 ; i < Simulator.GetNumAgents(); i++)
+    for (int i = 0; i < Simulator.GetNumAgents(); i++)
 	for (int j = 0; j < Params.NumStartStates; j++)
-	{
 	    Roots[i]->Beliefs().AddSample(Simulator.CreateStartState());
-	    if (Params.MultiAgent)
-		Roots[i]->Beliefs().AddSample(Simulator.CreateStartState());
+
+    //Reward samples
+    assert(Params.NumStartRewards > 0);
+    double RewardTemplateWeight = (double) (1.0/Params.NumStartRewards);
+    for (int i = 0; i < Simulator.GetNumAgents(); i++)
+	for (int j = 0; j < Params.NumStartRewards; j++)
+	{
+	    Roots[i]->Beliefs().AddRewardSample(Simulator.CreateInitialReward(RewardTemplateWeight));
 	}
-	
 	
 }
 

@@ -77,6 +77,14 @@ public:
 	int perspindex;
 	bool jointhistory;
     };
+    
+    struct INITIAL_REWARD_PARAMS
+    {
+	INITIAL_REWARD_PARAMS();
+	
+	double Mean;
+	double Std;
+    };
 
     SIMULATOR();
     SIMULATOR(int numActions, int numObservations, double discount = 1.0);    
@@ -96,12 +104,18 @@ public:
     // Create new state and copy argument (must be same type)
     virtual STATE* Copy(const STATE& state) const = 0;
     
+    //Same for rewards
+    REWARD_TEMPLATE* Copy(const REWARD_TEMPLATE& reward) const;
+    
     // Sanity check
     virtual void Validate(const STATE& state) const;
 
     // Modify state stochastically to some related state
     virtual bool LocalMove(STATE& state, const HISTORY& history,
         int stepObs, const STATUS& status) const;
+	
+    //Create initial reward template
+    REWARD_TEMPLATE* CreateInitialReward(const double& weight) const;
 	
     // Free memory for reward samples
     void FreeReward(REWARD_TEMPLATE* reward) const;
@@ -165,6 +179,7 @@ protected:
     double Discount, RewardRange;
     KNOWLEDGE Knowledge;
     mutable MEMORY_POOL<REWARD_TEMPLATE> RewardMemoryPool;
+    INITIAL_REWARD_PARAMS InitialRewardParams;
 };
 
 #endif // SIMULATOR_H
