@@ -18,8 +18,8 @@ SIMULATOR::STATUS::STATUS()
 }
 
 SIMULATOR::INITIAL_REWARD_PARAMS::INITIAL_REWARD_PARAMS()
-:   Mean(-0.5),
-    Std(1.0)
+:   Alpha(2.0),
+    Beta(5.0)
 {
 
 }
@@ -68,8 +68,8 @@ REWARD_TEMPLATE* SIMULATOR::Copy(const REWARD_TEMPLATE& reward) const
 REWARD_TEMPLATE* SIMULATOR::CreateInitialReward(const double& weight) const
 {
     REWARD_TEMPLATE* newtemplate = RewardMemoryPool.Allocate();
-    newtemplate->RewardParams = std::make_pair(Normal(InitialRewardParams.Mean,InitialRewardParams.Std), 
-					       Normal(InitialRewardParams.Mean,InitialRewardParams.Std));
+    newtemplate->RewardParams = std::make_pair(2.5*Beta(InitialRewardParams.Alpha,InitialRewardParams.Beta), 
+					       2.5*Beta(InitialRewardParams.Alpha,InitialRewardParams.Beta));
     newtemplate->RewardWeight = weight;
     return newtemplate;
 }

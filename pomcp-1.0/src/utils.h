@@ -9,6 +9,7 @@
 #include "memorypool.h"
 #include <algorithm>
 #include <boost/math/distributions/beta.hpp>
+#include <boost/math/distributions/gamma.hpp>
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
 
@@ -64,6 +65,12 @@ inline double Beta(double a, double b)
 {
     boost::math::beta_distribution<> beta(a,b);
     return boost::math::quantile(beta, RandomDouble(0.0, 1.0));
+}
+
+inline double Gamma(double k, double theta)
+{
+    boost::math::gamma_distribution<> gamma(k,theta);
+    return boost::math::quantile(gamma, RandomDouble(0.0, 1.0));
 }
 
 inline double Normal(double m, double s)

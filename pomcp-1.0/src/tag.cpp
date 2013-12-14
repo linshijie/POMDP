@@ -46,7 +46,7 @@ void TAG::FreeState(STATE* state) const
 }
 
 bool TAG::Step(STATE& state, int action, 
-    int& observation, double& reward) const
+    int& observation, double& reward, STATUS& status) const
 {
     TAG_STATE& tagstate = safe_cast<TAG_STATE&>(state);
 

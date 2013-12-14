@@ -24,7 +24,7 @@ public:
 
     virtual STATE* CreateStartState() const;
     virtual bool Step(STATE& state, int action, 
-        int& observation, double& reward) const;
+        int& observation, double& reward, STATUS& status) const;
     virtual STATE* Copy(const STATE& state) const;
     virtual void FreeState(STATE* state) const;
 

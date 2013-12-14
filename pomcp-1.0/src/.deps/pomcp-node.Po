@@ -701,6 +701,7 @@ pomcp-node.o: node.cpp node.h beliefstate.h /usr/include/c++/4.6/vector \
  /usr/include/boost/math/distributions/complement.hpp \
  /usr/include/boost/math/distributions/detail/common_error_handling.hpp \
  /usr/include/boost/math/distributions/detail/derived_accessors.hpp \
+ /usr/include/boost/math/distributions/gamma.hpp \
  /usr/include/boost/random.hpp \
  /usr/include/boost/random/linear_congruential.hpp \
  /usr/include/c++/4.6/cassert /usr/include/boost/random/detail/config.hpp \
@@ -2307,6 +2308,8 @@ memorypool.h:
 /usr/include/boost/math/distributions/detail/common_error_handling.hpp:
 
 /usr/include/boost/math/distributions/detail/derived_accessors.hpp:
+
+/usr/include/boost/math/distributions/gamma.hpp:
 
 /usr/include/boost/random.hpp:
 

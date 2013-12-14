@@ -76,14 +76,18 @@ public:
 	int agentindex;
 	int perspindex;
 	bool jointhistory;
+	
+	bool RewardAdaptive;
+	std::pair<double,double> RewardParams;
+	double CurrReward;
     };
     
     struct INITIAL_REWARD_PARAMS
     {
 	INITIAL_REWARD_PARAMS();
 	
-	double Mean;
-	double Std;
+	double Alpha;
+	double Beta;
     };
 
     SIMULATOR();
@@ -99,7 +103,7 @@ public:
     // Update state according to action, and get observation and reward. 
     // Return value of true indicates termination of episode (if episodic)
     virtual bool Step(STATE& state, int action, 
-        int& observation, double& reward) const = 0;
+        int& observation, double& reward, STATUS& status) const = 0;
         
     // Create new state and copy argument (must be same type)
     virtual STATE* Copy(const STATE& state) const = 0;

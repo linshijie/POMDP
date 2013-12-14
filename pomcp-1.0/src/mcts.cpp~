@@ -63,6 +63,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	SIMULATOR::STATUS status;
 	status.perspindex = i;
 	status.jointhistory = Params.MultiAgent ? true : false;
+	status.RewardAdaptive = Params.RewardAdaptive[i];
 	Statuses.push_back(status);
 	//histories
 	HISTORY history;
@@ -88,11 +89,21 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	    Roots[i]->Beliefs().AddSample(Simulator.CreateStartState());
 
     //Reward samples
-    assert(Params.NumStartRewards > 0);
-    double RewardTemplateWeight = (double) (1.0/Params.NumStartRewards);
+    //double RewardTemplateWeight = (double) (1.0/Params.NumStartRewards);
     for (int i = 0; i < Simulator.GetNumAgents(); i++)
-	for (int j = 0; j < Params.NumStartRewards; j++)
-	    Roots[i]->Beliefs().AddRewardSample(Simulator.CreateInitialReward(RewardTemplateWeight));
+    {
+	if (Params.RewardAdaptive[i] && Params.MultiAgent)
+	{
+	    for (int j = 0; j < Params.NumStartRewards; j++)
+	    {
+		REWARD_TEMPLATE* rewardTemplate = Simulator.CreateInitialReward(0.0);
+		Statuses[i].RewardParams = rewardTemplate->RewardParams;
+		STATE* state = Roots[i]->Beliefs().CreateSample(Simulator);
+		rewardTemplate->RewardWeight = Rollout(*state, i+1);
+		Roots[i]->Beliefs().AddRewardSample(rewardTemplate);
+	    }
+	}
+    }
 	
 }
 
@@ -194,7 +205,7 @@ void MCTS::RolloutSearch(const int& index)
 
 	    int observation;
 	    double immediateReward, delayedReward, totalReward;
-	    bool terminal = Simulator.Step(*state, action, observation, immediateReward);	 
+	    bool terminal = Simulator.Step(*state, action, observation, immediateReward, Statuses[index == 0 ? index : index-1]);	 
 	    
 	    int treeaction = action;
 	    if (Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1])
@@ -298,7 +309,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index)
 
     if (Simulator.HasAlpha())
         Simulator.UpdateAlpha(qnode, state);
-    bool terminal = Simulator.Step(state, action, observation, immediateReward);
+    bool terminal = Simulator.Step(state, action, observation, immediateReward, Statuses[index == 0 ? index : index-1]);
     assert(observation >= 0 && observation < Simulator.GetNumObservations());
     Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
 			       index == 0 ? observation : Simulator.GetAgentObservation(observation, index));
@@ -535,7 +546,7 @@ double MCTS::Rollout(STATE& state, const int& index)
 
         int action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 0);
 	
-        terminal = Simulator.Step(state, action, observation, reward);
+        terminal = Simulator.Step(state, action, observation, reward, Statuses[index == 0 ? index : index-1]);
 	    
 	Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
 			      index == 0 ? observation : Simulator.GetAgentObservation(observation, index));
@@ -602,7 +613,8 @@ STATE* MCTS::CreateTransform(const int& index) const
 	    action = Simulator.SelectRandom(*state, GetHistory(index), GetStatus(index),1) + 
 		Simulator.GetNumAgentActions()*GetHistory(index).Back().Action;
     }
-    Simulator.Step(*state, action, stepObs, stepReward);
+    SIMULATOR::STATUS status = Statuses[index == 0 ? index : index-1];
+    Simulator.Step(*state, action, stepObs, stepReward, Statuses[index == 0 ? index : index-1]);
     if (Simulator.LocalMove(*state, GetHistory(index), stepObs, GetStatus(index)))
 	return state;
     Simulator.FreeState(state);

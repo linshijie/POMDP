@@ -61,7 +61,7 @@ public:
     virtual STATE* CreateStartState() const;
     virtual void FreeState(STATE* state) const;
     virtual bool Step(STATE& state, int action, 
-        int& observation, double& reward) const;
+        int& observation, double& reward, STATUS& status) const;
     virtual bool LocalMove(STATE& state, const HISTORY& history,
         int stepObs, const STATUS& status) const;
 	
@@ -126,6 +126,8 @@ protected:
     bool IsPlate1InDishwasher(const KITCHEN_STATE& state, double& reward) const;
     bool IsAppleJuiceInFridge(const KITCHEN_STATE& state, double& reward) const;
     bool IsTrayOnStove(const KITCHEN_STATE& state, double& reward) const;
+    
+    double MinReward, MaxReward;
     
 private:
     mutable MEMORY_POOL<KITCHEN_STATE> MemoryPool;

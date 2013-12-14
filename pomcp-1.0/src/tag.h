@@ -25,7 +25,7 @@ public:
     virtual STATE* CreateStartState() const;
     virtual void FreeState(STATE* state) const;
     virtual bool Step(STATE& state, int action, 
-        int& observation, double& reward) const;
+        int& observation, double& reward, STATUS& status) const;
         
     void GeneratePreferred(const STATE& state, const HISTORY& history,
         std::vector<int>& legal, const STATUS& status) const;

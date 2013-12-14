@@ -91,7 +91,7 @@ void BATTLESHIP::FreeState(STATE* state) const
 }
 
 bool BATTLESHIP::Step(STATE& state, int action,
-    int& observation, double& reward) const
+    int& observation, double& reward, STATUS& status) const
 {
     BATTLESHIP_STATE& bsstate = safe_cast<BATTLESHIP_STATE&>(state);
 

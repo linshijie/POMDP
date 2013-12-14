@@ -105,7 +105,7 @@ void BOXPUSHING::FreeState(STATE* state) const
 }
 
 bool BOXPUSHING::Step(STATE& state, int action,
-    int& observation, double& reward) const
+    int& observation, double& reward, STATUS& status) const
 {
     BOXPUSHING_STATE& bpstate = safe_cast<BOXPUSHING_STATE&>(state);
     

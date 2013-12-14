@@ -46,8 +46,8 @@ REWARD_TEMPLATE* BELIEF_STATE::CreateRewardSample(const SIMULATOR& simulator) co
 	if (currRew >= randRew)
 	    break;
 	index++;
-    } while(index < (int)RewardSamples.size() && currRew < TotalRewardWeight);
-    assert(index < (int)RewardSamples.size());
+    } while(index < (int) RewardSamples.size() && currRew < TotalRewardWeight);
+    assert(index < (int) RewardSamples.size());
     return simulator.Copy(*RewardSamples[index]);
 }
 

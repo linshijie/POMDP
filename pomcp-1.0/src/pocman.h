@@ -28,7 +28,7 @@ public:
     virtual void FreeState(STATE* state) const;
     virtual void FreeReward(REWARD_TEMPLATE* reward) const;
     virtual bool Step(STATE& state, int action, 
-        int& observation, double& reward) const;
+        int& observation, double& reward, STATUS& status) const;
 
     virtual bool LocalMove(STATE& state, const HISTORY& history,
         int stepObs, const STATUS& status) const;

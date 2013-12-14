@@ -92,6 +92,8 @@ KITCHEN::KITCHEN(int nplates, int ncups):
     }
 	
     RewardRange = 99.9;
+    MinReward = -0.1;
+    MaxReward = 100.0;
     Discount = 1.0;
 }
 
@@ -195,7 +197,7 @@ STATE* KITCHEN::CreateStartState() const
     return kitchenstate;
 }
 
-bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward) const
+bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, STATUS& status) const
 {
     KITCHEN_STATE& kitchenstate = safe_cast<KITCHEN_STATE&>(state);
     

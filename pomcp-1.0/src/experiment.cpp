@@ -72,7 +72,8 @@ void EXPERIMENT::Run()
 		action1 = Simulator.GetAgentAction(action1,2);
 	    action = action0 + Simulator.GetNumAgentActions()*action1;
 	}
-        terminal = Real.Step(*state, action, observation, reward);
+	SIMULATOR::STATUS status = mcts.GetStatus(0);
+        terminal = Real.Step(*state, action, observation, reward, status);
 
         Results.Reward.Add(reward);
         undiscountedReturn += reward;
@@ -160,7 +161,8 @@ void EXPERIMENT::Run()
 		    action1 = Simulator.GetAgentAction(action1,2);
 		action = action0 + Simulator.GetNumAgentActions()*action1;
 	    }
-            terminal = Real.Step(*state, action, observation, reward);
+	    SIMULATOR::STATUS status = mcts.GetStatus(0);
+            terminal = Real.Step(*state, action, observation, reward, status);
 
             Results.Reward.Add(reward);
             undiscountedReturn += reward;

@@ -143,7 +143,7 @@ void ROCKSAMPLE::FreeState(STATE* state) const
 }
 
 bool ROCKSAMPLE::Step(STATE& state, int action,
-    int& observation, double& reward) const
+    int& observation, double& reward, STATUS& status) const
 {
     ROCKSAMPLE_STATE& rockstate = safe_cast<ROCKSAMPLE_STATE&>(state);
     reward = 0;

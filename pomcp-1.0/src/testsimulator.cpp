@@ -22,7 +22,7 @@ void TEST_SIMULATOR::FreeState(STATE* state) const
 }
 
 bool TEST_SIMULATOR::Step(STATE& state, int action, 
-    int& observation, double& reward) const
+    int& observation, double& reward, STATUS& status) const
 {
     // Up to MaxDepth action 0 is good independent of observations
     TEST_STATE& tstate = safe_cast<TEST_STATE&>(state);

@@ -27,7 +27,7 @@ public:
     virtual STATE* CreateStartState() const;
     virtual void FreeState(STATE* state) const;
     virtual bool Step(STATE& state, int action, 
-        int& observation, double& reward) const;
+        int& observation, double& reward, STATUS& status) const;
         
 //    virtual bool Prune(int action, const HISTORY& history) const;
 //    virtual int SelectRandom(const HISTORY& history) const;

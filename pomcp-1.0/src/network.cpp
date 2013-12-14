@@ -83,7 +83,7 @@ void NETWORK::FreeState(STATE* state) const
 }
 
 bool NETWORK::Step(STATE& state, int action, 
-    int& observation, double& reward) const
+    int& observation, double& reward, STATUS& status) const
 {
     NETWORK_STATE& nstate = safe_cast<NETWORK_STATE&>(state);
     reward = 0;

@@ -181,7 +181,7 @@ COORD POCMAN::NextPos(const COORD& from, int dir) const
 }
 
 bool POCMAN::Step(STATE& state, int action,
-    int& observation, double& reward) const
+    int& observation, double& reward, STATUS& status) const
 {
     POCMAN_STATE& pocstate = safe_cast<POCMAN_STATE&>(state);
     reward = RewardDefault;
