@@ -42,7 +42,7 @@ public:
     void UCTSearch(const int& index);
     void RolloutSearch(const int& index);
 
-    double Rollout(STATE& state, const int& index);
+    double Rollout(STATE& state, const int& index, double otherReward);
 
     const BELIEF_STATE& BeliefState(const int& index) const { return index > 0 ? Roots[index-1]->Beliefs() :
 								    Roots[index]->Beliefs(); }
@@ -62,6 +62,7 @@ private:
     int TreeDepth, PeakTreeDepth;
     PARAMS Params;
     std::vector<VNODE*> Roots;
+    std::vector<VNODE*> OtherValues;
     std::vector<HISTORY> Histories;
     HISTORY myhistory;
     std::vector<SIMULATOR::STATUS> Statuses;
@@ -70,12 +71,12 @@ private:
     std::vector<STATISTIC> StatRolloutDepths;
     std::vector<STATISTIC> StatTotalRewards;
     
-    int GreedyUCB(VNODE* vnode, bool ucb, const int& index) const;
+    int GreedyUCB(VNODE* vnode, VNODE* otherValue, bool ucb, const int& index) const;
     int SelectRandom() const;
-    double SimulateV(STATE& state, VNODE* vnode, const int& index);
-    double SimulateQ(STATE& state, QNODE& qnode, int action, const int& index);
+    double SimulateV(STATE& state, VNODE* vnode, const int& index, double otherTotalReward, VNODE* otherValue);
+    double SimulateQ(STATE& state, QNODE& qnode, int action, const int& index, double otherTotalReward, QNODE& otherQ);
     void AddRave(VNODE* vnode, double totalReward, const STATE& state, const int& index);
-    VNODE* ExpandNode(const STATE* state, const int& index);
+    VNODE* ExpandNode(const STATE* state, const int& perspindex, const int& agentindex);
     void AddSample(VNODE* node, const STATE& state);
     void AddTransforms(VNODE* root, BELIEF_STATE& beliefs, const int& index);
     STATE* CreateTransform(const int& index) const;

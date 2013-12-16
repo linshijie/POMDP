@@ -388,6 +388,10 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
     else
 	reward = -0.1;
     
+    //other agent reward
+    if (status.RewardAdaptive)
+	status.CurrOtherReward = UTILS::Beta(status.RewardParams.first, status.RewardParams.second)*RewardRange-MinReward;
+    
     return reachedGoal;
 }
 

@@ -79,7 +79,7 @@ public:
 	
 	bool RewardAdaptive;
 	std::pair<double,double> RewardParams;
-	double CurrReward;
+	double CurrOtherReward;
     };
     
     struct INITIAL_REWARD_PARAMS
