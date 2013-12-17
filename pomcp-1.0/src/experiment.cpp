@@ -66,9 +66,9 @@ void EXPERIMENT::Run()
 	{
 	    action0 = mcts.SelectAction(1);
 	    action1 = mcts.SelectAction(2);
-	    if (SearchParams.JointQActions[0])
+	    if (SearchParams.JointQActions[0] || SearchParams.RewardAdaptive[0])
 		action0 = Simulator.GetAgentAction(action0,1);
-	    if (SearchParams.JointQActions[1])
+	    if (SearchParams.JointQActions[1] || SearchParams.RewardAdaptive[1])
 		action1 = Simulator.GetAgentAction(action1,2);
 	    action = action0 + Simulator.GetNumAgentActions()*action1;
 	}
@@ -115,7 +115,10 @@ void EXPERIMENT::Run()
 
     if (outOfParticles || outOfParticles2)
     {
-        cout << "Out of particles, finishing episode with SelectRandom" << endl;
+	if (outOfParticles)
+	    cout << "Out of particles, finishing episode with SelectRandom" << endl;
+	if (outOfParticles2)
+	    cout << "Out of particles 2, finishing episode with SelectRandom" << endl;
         HISTORY history = mcts.GetHistory(0);
 	HISTORY history2;
 	if (SearchParams.MultiAgent)
@@ -155,9 +158,9 @@ void EXPERIMENT::Run()
 		else
 		    action1 = mcts.SelectAction(2);
 		
-		if (SearchParams.JointQActions[0])
+		if (SearchParams.JointQActions[0] || (!outOfParticles && SearchParams.RewardAdaptive[0]))
 		    action0 = Simulator.GetAgentAction(action0,1);
-		if (SearchParams.JointQActions[1])
+		if (SearchParams.JointQActions[1] || (!outOfParticles2 && SearchParams.RewardAdaptive[1]))
 		    action1 = Simulator.GetAgentAction(action1,2);
 		action = action0 + Simulator.GetNumAgentActions()*action1;
 	    }

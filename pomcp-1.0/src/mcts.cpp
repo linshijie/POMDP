@@ -30,14 +30,14 @@ MCTS::PARAMS::PARAMS()
     MinMax.clear();
     RewardAdaptive.clear();
     
-    JointQActions.push_back(true);
-    JointQActions.push_back(true);
+    JointQActions.push_back(false);
+    JointQActions.push_back(false);
     
     MinMax.push_back(false);
     MinMax.push_back(false);
     
-    RewardAdaptive.push_back(false);
-    RewardAdaptive.push_back(false);
+    RewardAdaptive.push_back(true);
+    RewardAdaptive.push_back(true);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
@@ -204,7 +204,7 @@ int MCTS::SelectAction(const int& index)
 	RolloutSearch(index);
     else
 	UCTSearch(index);
-    if (Params.RewardAdaptive[index == 0 ? index : index-1])
+    if (!Params.RewardAdaptive[index == 0 ? index : index-1])
 	return GreedyUCB(Roots[index == 0 ? index : index-1], Roots[index == 0 ? index : index-1], false, index);
     else
 	return GreedyUCB(Roots[index == 0 ? index : index-1], OtherValues[index == 0 ? index : index-1], false, index);
@@ -542,10 +542,20 @@ int MCTS::GreedyUCB(VNODE* vnode, VNODE* otherValue, bool ucb, const int& index)
     double logN = log(N + 1);
     bool hasalpha = Simulator.HasAlpha();
     
+    int otherN;
+    double otherlogN;
+    
+    if (Params.RewardAdaptive[index == 0 ? index : index-1] && !Params.JointQActions[index == 0 ? index : index-1])
+    {
+	otherN = otherValue->Value.GetCount();
+	otherlogN = log(otherN + 1);
+    }
+    
     int maxIter;
     
     if ((Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1]) ||
-	(Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
+	(Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1]) ||
+	(Params.RewardAdaptive[index == 0 ? index : index-1] && !Params.JointQActions[index == 0 ? index : index-1])
     )
 	maxIter = Simulator.GetNumAgentActions();
     else
@@ -558,8 +568,10 @@ int MCTS::GreedyUCB(VNODE* vnode, VNODE* otherValue, bool ucb, const int& index)
     maxOtherActions.clear();
     double minRew = Infinity;
     
-    int maxIter2 = Params.MinMax[index == 0 ? index : index-1] && 
-	    Params.JointQActions[index == 0 ? index : index-1] ? Simulator.GetNumAgentActions() : 1;
+    int maxIter2 = (Params.MinMax[index == 0 ? index : index-1] && 
+	    Params.JointQActions[index == 0 ? index : index-1]) || 
+	    (Params.RewardAdaptive[index == 0 ? index : index-1] && !Params.JointQActions[index == 0 ? index : index-1]) ? 
+	    Simulator.GetNumAgentActions() : 1;
 	    
     int niter = 0;
 
@@ -572,19 +584,22 @@ int MCTS::GreedyUCB(VNODE* vnode, VNODE* otherValue, bool ucb, const int& index)
 	    
 	for (int i = 0; i < maxIter2; i++)
 	{
-	    int jointaction = action;
+	    int treeaction = action;
 	    if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
 	    {
 		if (index < 2)
-		    jointaction = action + Simulator.GetNumAgentActions()*i;
+		    treeaction = action + Simulator.GetNumAgentActions()*i;
 		else
-		    jointaction = i + Simulator.GetNumAgentActions()*action;
+		    treeaction = i + Simulator.GetNumAgentActions()*action;
 	    }
 	    
 	    double q, alphaq;
 	    int n, alphan;
 	    
-	    QNODE& qnode = vnode->Child(jointaction);
+	    double otherq = 0.0, otheralphaq = 0.0;
+	    int othern, otheralphan;
+	    
+	    QNODE& qnode = vnode->Child(treeaction);
 	    q = qnode.Value.GetValue();
 	    n = qnode.Value.GetCount();
 
@@ -602,9 +617,29 @@ int MCTS::GreedyUCB(VNODE* vnode, VNODE* otherValue, bool ucb, const int& index)
 		//cout << "N = " << n << ", alphaN = " << alphan << endl;
 		//cout << "Q = " << q << ", alphaQ = " << alphaq << endl;
 	    }
-
+	    
 	    if (ucb)
 		q += FastUCB(N, n, logN);
+	    
+	    if (Params.RewardAdaptive[index == 0 ? index : index-1] && !Params.JointQActions[index == 0 ? index : index-1]) 
+	    {
+		QNODE& otherqnode = otherValue->Child(i);
+		otherq = otherqnode.Value.GetValue();
+		othern = otherqnode.Value.GetCount();
+		
+		if (hasalpha && othern > 0)
+		{
+		    Simulator.AlphaValue(otherqnode, otheralphaq, otheralphan);
+		    otherq = (othern*otherq + otheralphan*otheralphaq)/(othern+otheralphan);
+		}
+		
+		q += otherq;
+		
+		if (ucb)
+		    q += FastUCB(otherN, othern, otherlogN);
+	    }
+
+	    
 	    
 	    if (Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
 	    {
@@ -621,7 +656,17 @@ int MCTS::GreedyUCB(VNODE* vnode, VNODE* otherValue, bool ucb, const int& index)
 		if (q > bestq)
 		    besta.clear();
 		bestq = q;
-		besta.push_back(jointaction);
+		if (Params.RewardAdaptive[index == 0 ? index : index-1] && !Params.JointQActions[index == 0 ? index : index-1]) 
+		{
+		    int jointaction;
+		    if (index < 2)
+			jointaction = action + Simulator.GetNumAgentActions()*i;
+		    else
+			jointaction = i + Simulator.GetNumAgentActions()*action;
+		    besta.push_back(jointaction);
+		}
+		else
+		    besta.push_back(treeaction);
 	    }
 	}
 	
