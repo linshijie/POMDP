@@ -8,6 +8,8 @@ using namespace std;
 
 int QNODE::NumChildren = 0;
 
+int QNODE::NumOtherValues = 0;
+
 void QNODE::Initialise()
 {
     assert(NumChildren);
@@ -15,6 +17,10 @@ void QNODE::Initialise()
     for (int observation = 0; observation < QNODE::NumChildren; observation++)
         Children[observation] = 0;
     AlphaData.AlphaSum.clear();
+    assert(NumOtherValues);
+    OtherValues.resize(NumOtherValues);
+    for (int i = 0; i < QNODE::NumOtherValues; i++)
+	OtherValues[i].Set(0, 0);
 }
 
 void QNODE::DisplayValue(HISTORY& history, int maxDepth, ostream& ostr) const

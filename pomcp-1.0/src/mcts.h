@@ -16,6 +16,7 @@ public:
         int Verbose;
         int MaxDepth;
         int NumSimulations;
+	int NumLearnSimulations;
         int NumStartStates;
 	int NumStartRewards;
         bool UseTransforms;
@@ -26,11 +27,13 @@ public:
         bool UseRave;
         double RaveDiscount;
         double RaveConstant;
+	bool DoFastUCB;
         bool DisableTree;
 	bool MultiAgent;
 	std::vector<bool> JointQActions;
 	std::vector<bool> MinMax;
 	std::vector<bool> RewardAdaptive;
+	double RewardOffset;
     };
     
     MCTS(const SIMULATOR& simulator, const PARAMS& params);
@@ -62,7 +65,6 @@ private:
     int TreeDepth, PeakTreeDepth;
     PARAMS Params;
     std::vector<VNODE*> Roots;
-    std::vector<VNODE*> OtherValues;
     std::vector<HISTORY> Histories;
     HISTORY myhistory;
     std::vector<SIMULATOR::STATUS> Statuses;
@@ -71,10 +73,10 @@ private:
     std::vector<STATISTIC> StatRolloutDepths;
     std::vector<STATISTIC> StatTotalRewards;
     
-    int GreedyUCB(VNODE* vnode, VNODE* otherValue, bool ucb, const int& index) const;
+    int GreedyUCB(VNODE* vnode, bool ucb, const int& index) const;
     int SelectRandom() const;
-    double SimulateV(STATE& state, VNODE* vnode, const int& index, double otherTotalReward, VNODE* otherValue);
-    double SimulateQ(STATE& state, QNODE& qnode, int action, const int& index, double otherTotalReward, QNODE& otherQ);
+    double SimulateV(STATE& state, VNODE* vnode, const int& index, double otherTotalReward);
+    double SimulateQ(STATE& state, QNODE& qnode, int action, const int& index, double otherTotalReward);
     void AddRave(VNODE* vnode, double totalReward, const STATE& state, const int& index);
     VNODE* ExpandNode(const STATE* state, const int& perspindex, const int& agentindex);
     void AddSample(VNODE* node, const STATE& state);

@@ -68,6 +68,8 @@ public:
 
     VALUE<int> Value;
     VALUE<double> AMAF;
+    
+    std::vector<VALUE<int> > OtherValues;
 
     void Initialise();
 
@@ -80,6 +82,8 @@ public:
     void DisplayPolicy(HISTORY& history, int maxDepth, std::ostream& ostr) const;
 
     static int NumChildren;
+    
+    static int NumOtherValues;
 
 private:
 

@@ -158,9 +158,9 @@ void EXPERIMENT::Run()
 		else
 		    action1 = mcts.SelectAction(2);
 		
-		if (SearchParams.JointQActions[0] || (!outOfParticles && SearchParams.RewardAdaptive[0]))
+		if (SearchParams.JointQActions[0] || (SearchParams.RewardAdaptive[0] && !outOfParticles))
 		    action0 = Simulator.GetAgentAction(action0,1);
-		if (SearchParams.JointQActions[1] || (!outOfParticles2 && SearchParams.RewardAdaptive[1]))
+		if (SearchParams.JointQActions[1] || (SearchParams.RewardAdaptive[1] && !outOfParticles2))
 		    action1 = Simulator.GetAgentAction(action1,2);
 		action = action0 + Simulator.GetNumAgentActions()*action1;
 	    }
