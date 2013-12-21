@@ -8,8 +8,11 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(100),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(0),
+    MinDoubles(2),
     MaxDoubles(12),
+    MinRewardDoubles(2),
+    MaxRewardDoubles(4),
+    EnableRewardIterations(true),
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
@@ -226,7 +229,10 @@ void EXPERIMENT::MultiRun()
     for (int n = 0; n < ExpParams.NumRuns; n++)
     {
         cout << "Starting run " << n + 1 << " with "
-            << SearchParams.NumSimulations << " simulations... " << endl;
+            << SearchParams.NumSimulations << " simulations";
+	if (ExpParams.EnableRewardIterations)
+	    cout << " and " << SearchParams.NumLearnSimulations << " reward simulations";
+	cout << "... " << endl;
         Run();
         if (Results.Time.GetTotal() > ExpParams.TimeOut)
         {
@@ -240,7 +246,10 @@ void EXPERIMENT::MultiRun()
 void EXPERIMENT::DiscountedReturn()
 {
     cout << "Main runs" << endl;
-    OutputFile << "Simulations\tRuns\tUndiscounted return\tUndiscounted error\tDiscounted return\tDiscounted error\tTime\n";
+    if (!ExpParams.EnableRewardIterations)
+	OutputFile << "Simulations\tRuns\tUndiscounted return\tUndiscounted error\tDiscounted return\tDiscounted error\tTime\n";
+    else
+	OutputFile << "Simulations\tReward Simulations\tRuns\tUndiscounted return\tUndiscounted error\tDiscounted return\tDiscounted error\tTime\n";
 
     SearchParams.MaxDepth = Simulator.GetHorizon(ExpParams.Accuracy, ExpParams.UndiscountedHorizon);
     ExpParams.SimSteps = Simulator.GetHorizon(ExpParams.Accuracy, ExpParams.UndiscountedHorizon);
@@ -255,24 +264,46 @@ void EXPERIMENT::DiscountedReturn()
         else
             SearchParams.NumTransforms = 1;
         SearchParams.MaxAttempts = SearchParams.NumTransforms * ExpParams.TransformAttempts;
+	
+	int minIter, maxIter;
+	
+	if (ExpParams.EnableRewardIterations)
+	{
+	    minIter = ExpParams.MinRewardDoubles;
+	    maxIter = ExpParams.MaxRewardDoubles;
+	}
+	else
+	{
+	    minIter = 0;
+	    maxIter = 1;
+	}
+	
+	for (int j = minIter; j < maxIter; j++)
+	{
+	    if (ExpParams.EnableRewardIterations)
+		SearchParams.NumLearnSimulations = 1 << j;
+	    Results.Clear();
+	    MultiRun();
 
-        Results.Clear();
-        MultiRun();
-
-        cout << "Simulations = " << SearchParams.NumSimulations << endl
-            << "Runs = " << Results.Time.GetCount() << endl
-            << "Undiscounted return = " << Results.UndiscountedReturn.GetMean()
-            << " +- " << Results.UndiscountedReturn.GetStdErr() << endl
-            << "Discounted return = " << Results.DiscountedReturn.GetMean()
-            << " +- " << Results.DiscountedReturn.GetStdErr() << endl
-            << "Time = " << Results.Time.GetMean() << endl;
-        OutputFile << SearchParams.NumSimulations << "\t"
-            << Results.Time.GetCount() << "\t"
-            << Results.UndiscountedReturn.GetMean() << "\t"
-            << Results.UndiscountedReturn.GetStdErr() << "\t"
-            << Results.DiscountedReturn.GetMean() << "\t"
-            << Results.DiscountedReturn.GetStdErr() << "\t"
-            << Results.Time.GetMean() << endl;
+	    cout << "Simulations = " << SearchParams.NumSimulations << endl;
+	    if (ExpParams.EnableRewardIterations)
+		cout << "Reward Simulations = " << SearchParams.NumLearnSimulations << endl;
+	    cout << "Runs = " << Results.Time.GetCount() << endl
+		<< "Undiscounted return = " << Results.UndiscountedReturn.GetMean()
+		<< " +- " << Results.UndiscountedReturn.GetStdErr() << endl
+		<< "Discounted return = " << Results.DiscountedReturn.GetMean()
+		<< " +- " << Results.DiscountedReturn.GetStdErr() << endl
+		<< "Time = " << Results.Time.GetMean() << endl;
+	    OutputFile << SearchParams.NumSimulations << "\t";
+	    if (ExpParams.EnableRewardIterations)
+		OutputFile << SearchParams.NumLearnSimulations << "\t";
+	    OutputFile << Results.Time.GetCount() << "\t"
+		<< Results.UndiscountedReturn.GetMean() << "\t"
+		<< Results.UndiscountedReturn.GetStdErr() << "\t"
+		<< Results.DiscountedReturn.GetMean() << "\t"
+		<< Results.DiscountedReturn.GetStdErr() << "\t"
+		<< Results.Time.GetMean() << endl;
+	}
     }
 }
 

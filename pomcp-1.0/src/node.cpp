@@ -80,8 +80,10 @@ VNODE* VNODE::Create()
 
 void VNODE::Free(VNODE* vnode, const SIMULATOR& simulator)
 {
+    //std::cout << "before free\n";
     vnode->BeliefState.Free(simulator);
     VNodePool.Free(vnode);
+    //std::cout << "after free\n";
     for (int action = 0; action < VNODE::NumChildren; action++)
         for (int observation = 0; observation < QNODE::NumChildren; observation++)
             if (vnode->Child(action).Child(observation))

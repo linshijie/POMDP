@@ -75,10 +75,15 @@ inline double Gamma(double k, double theta)
 
 inline double Normal(double m, double s)
 {
+    /*std::mt19937 rng;
+    std::normal_distribution<> normal(m,s);
+    return normal(rng);*/
+    
     boost::mt19937 rng;
     boost::normal_distribution<> nd(m,s);
     boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > vg(rng,nd);
-    return vg();
+    double d = vg();
+    return d;
 }
 
 

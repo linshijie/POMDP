@@ -63,6 +63,13 @@ void BELIEF_STATE::AddRewardSample(REWARD_TEMPLATE* reward)
     TotalRewardWeight += reward->RewardWeight;
 }
 
+void BELIEF_STATE::SetRewardSample(REWARD_TEMPLATE* rewardTemplate, const int& index)
+{
+    TotalRewardWeight = TotalRewardWeight - RewardSamples[index]->RewardWeight + rewardTemplate->RewardWeight;
+    RewardSamples[index] = rewardTemplate;
+}
+
+
 void BELIEF_STATE::Copy(const BELIEF_STATE& beliefs, const SIMULATOR& simulator)
 {
     for (std::vector<STATE*>::const_iterator i_state = beliefs.Samples.begin();

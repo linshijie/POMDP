@@ -34,6 +34,7 @@ public:
 	std::vector<bool> MinMax;
 	std::vector<bool> RewardAdaptive;
 	double RewardOffset;
+	double InitialRewardWeight;
     };
     
     MCTS(const SIMULATOR& simulator, const PARAMS& params);

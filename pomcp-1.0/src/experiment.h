@@ -41,6 +41,8 @@ public:
         int SimSteps;
         double TimeOut;
         int MinDoubles, MaxDoubles;
+	int MinRewardDoubles, MaxRewardDoubles;
+	bool EnableRewardIterations;
         int TransformDoubles;
         int TransformAttempts;
         double Accuracy;

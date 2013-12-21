@@ -16,6 +16,7 @@ class STATE : public MEMORY_OBJECT
 class REWARD_TEMPLATE : public MEMORY_OBJECT
 {
 public:
+    int RewardIndex;
     std::pair<double,double> RewardParams;
     double RewardWeight;
 };
@@ -119,7 +120,8 @@ public:
         int stepObs, const STATUS& status) const;
 	
     //Create initial reward template
-    REWARD_TEMPLATE* CreateInitialReward(const double& weight) const;
+    std::pair<double, double> InitialiseRewardParams() const;
+    REWARD_TEMPLATE* CreateInitialReward(const double& weight, const int& index) const;
 	
     // Free memory for reward samples
     void FreeReward(REWARD_TEMPLATE* reward) const;

@@ -27,7 +27,8 @@ MCTS::PARAMS::PARAMS()
     DoFastUCB(false),
     DisableTree(false),
     MultiAgent(true),
-    RewardOffset(100.0)
+    RewardOffset(100.0),
+    InitialRewardWeight(20.0)
 {
     JointQActions.clear();
     MinMax.clear();
@@ -279,8 +280,54 @@ void MCTS::UCTSearch(const int& index)
 	double otherTotalReward = 0.0;
         double totalReward = SimulateV(*state, Roots[index == 0 ? index : index-1], index, 
 					otherTotalReward);
+	
+	int MainPeakTreeDepth = PeakTreeDepth;
+	
+	if (Params.RewardAdaptive[index == 0 ? index : index-1])
+	{
+	    for (int i = 0; i < Params.NumLearnSimulations; i++)
+	    {
+		STATE* tempState = Roots[index == 0 ? index : index-1]->Beliefs().CreateSample(Simulator);
+		//VNODE* tempRoot = ExpandNode(tempState, index, index);
+		
+		//*tempRoot = *Roots[index == 0 ? index : index-1];
+		
+		REWARD_TEMPLATE* tempRewardTemplate = Roots[index == 0 ? index : index-1]->Beliefs().CreateRewardSample(Simulator);
+		tempRewardTemplate->RewardParams = std::make_pair(UTILS::Normal(rewardTemplate->RewardParams.first, 1.0),
+								    UTILS::Normal(rewardTemplate->RewardParams.second, 1.0));
+		if (tempRewardTemplate->RewardParams.first <= 0.0 || tempRewardTemplate->RewardParams.second <= 0.0)
+		    tempRewardTemplate->RewardParams = Simulator.InitialiseRewardParams();
+		Statuses[index == 0 ? index : index-1].RewardParams = tempRewardTemplate->RewardParams;
+		TreeDepth = 0;
+		PeakTreeDepth = 0;
+		double tempOtherTotalReward = 0.0;
+		double tempTotalReward = SimulateV(*tempState, Roots[index == 0 ? index : index-1], index, tempOtherTotalReward);
+		tempRewardTemplate->RewardWeight = tempTotalReward + Params.RewardOffset;
+		double probRatio = exp(tempTotalReward)/exp(totalReward);
+		if (RandomDouble(0.0, 1.0) < min(1.0, probRatio))
+		{
+		    //update weight
+		    //std::cout << "update" << index <<  "\n";
+		    //*Roots[index == 0 ? index : index-1] = *tempRoot;
+		    rewardTemplate = tempRewardTemplate;
+		    totalReward = tempTotalReward;
+		    MainPeakTreeDepth = PeakTreeDepth;
+		}
+		//std::cout << Roots[index == 0 ? index : index-1]->Beliefs().GetNumSamples() << "\n";
+		//std::cout << tempRoot->Beliefs().GetNumSamples() << "\n";
+		//VNODE::Free(tempRoot, Simulator);
+		//std::cout << Roots[index == 0 ? index : index-1]->Beliefs().GetNumSamples() << "\n";
+		//std::cout << tempRoot->Beliefs().GetNumSamples() << "\n";
+		Simulator.FreeState(tempState);
+		Simulator.FreeReward(tempRewardTemplate);
+	    }
+	    Roots[index == 0 ? index : index-1]->Beliefs().SetRewardSample(rewardTemplate, rewardTemplate->RewardIndex);
+	    
+	}
+	
+	
         StatTotalRewards[index == 0 ? index : index-1].Add(totalReward);
-        StatTreeDepths[index == 0 ? index : index-1].Add(PeakTreeDepth);
+        StatTreeDepths[index == 0 ? index : index-1].Add(MainPeakTreeDepth);
 
         if (Params.Verbose >= 2)
 	{
@@ -461,10 +508,10 @@ VNODE* MCTS::ExpandNode(const STATE* state, const int& perspindex, const int& ag
     {
 	for (int j = 0; j < Params.NumStartRewards; j++)
 	{
-	    REWARD_TEMPLATE* rewardTemplate = Simulator.CreateInitialReward(0.0);
-	    Statuses[perspindex == 0 ? perspindex : perspindex-1].RewardParams = rewardTemplate->RewardParams;
+	    REWARD_TEMPLATE* rewardTemplate = Simulator.CreateInitialReward(0.0, j);
+	    //Statuses[perspindex == 0 ? perspindex : perspindex-1].RewardParams = rewardTemplate->RewardParams;
 	    double otherReward = 0;
-	    rewardTemplate->RewardWeight = 20.0;
+	    rewardTemplate->RewardWeight = Params.InitialRewardWeight;
 	    //Rollout(*Simulator.CreateStartState(), perspindex, otherReward) + Params.RewardOffset;
 	    vnode->Beliefs().AddRewardSample(rewardTemplate);
 	}
