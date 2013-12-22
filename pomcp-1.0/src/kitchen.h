@@ -12,7 +12,7 @@ enum LocationType {CUPBOARD = 9, DISHWASHER, FRIDGE, SIDEBOARD, STOVE, NO_LOCATI
 enum GripperType {LEFT = 15, RIGHT, NO_GRIPPER};
 
 enum ActionType {CLOSE = 18, GRASP, GRASP_FROM_EDGE, MOVE_ROBOT, NUDGE, OPEN, OPEN_PARTIAL, OPEN_COMPLETE,
-    PASS_OBJECT, PLACE_UPRIGHT, PUT_DOWN, PUT_IN, REMOVE_FROM, GRASP_JOINT, PUT_DOWN_JOINT};
+    PASS_OBJECT, PLACE_UPRIGHT, PUT_DOWN, PUT_IN, REMOVE_FROM, STAY_PUT, GRASP_JOINT, PUT_DOWN_JOINT};
 
 //typedef std::tr1::unordered_map< ObjectClass, int, std::tr1::hash<int> >  hashmap;
     
@@ -30,7 +30,7 @@ struct KitchenAction
 struct KitchenObservation
 {
     std::vector<bool> objectvisible;
-    LocationType location;
+    std::vector<bool> agentvisible;
 };
 
 class KITCHEN_STATE : public STATE
@@ -46,8 +46,6 @@ public:
     std::vector<bool> LocationPartiallyOpen;
     std::vector<bool> IsToppled;
 };
-
-
 
 
 class KITCHEN : public SIMULATOR

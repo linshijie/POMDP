@@ -72,8 +72,8 @@ KITCHEN::KITCHEN(int nplates, int ncups):
 	index++;
     }
     
-    NumAgentActions = NumObjects*(NumLocations*18+4) + 8*NumLocations + NumLocations*NumLocations;
-    NumAgentObservations = pow(2,NumObjects)*(NumLocations+1);
+    NumAgentActions = NumObjects*(NumLocations*18+4) + 8*NumLocations + NumLocations*NumLocations + 1;
+    NumAgentObservations = pow(2,NumObjects)*pow(2,NumAgents);
     
     NumActions = pow(NumAgentActions, NumAgents);
     NumObservations = pow(NumAgentObservations, NumAgents);
@@ -652,6 +652,9 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action,
 	    else
 		reward = -5.0;
 	    break;
+	case(STAY_PUT):
+	    reward = -0.1;
+	    break;
 	//for joint actions, if we've reached this point, it means that the preconditions were not met
 	//i.e. only one agent was trying to execute the action
 	case(GRASP_JOINT):
@@ -677,6 +680,8 @@ bool KITCHEN::LocalMove(STATE& state, const HISTORY& history, int stepObs, const
     for (int i = 0; i < NumLocations; i++)
 	UnexploredLocations.insert(i+LOCATION_OFFSET);
     
+    int index = status.perspindex;
+    
     for (int i = 0; i < history.Size(); i++)
     {
 	KitchenObservation ko = IntToObservation(history[i].Observation);
@@ -684,8 +689,8 @@ bool KITCHEN::LocalMove(STATE& state, const HISTORY& history, int stepObs, const
 	    if (ko.objectvisible[j])
 		UnseenObjects.erase(j);
 	     
-	if (ko.location == SIDEBOARD || ko.location == STOVE)
-	    UnexploredLocations.erase(static_cast<int>(ko.location));
+	if (kitchenstate.RobotLocations[index] == SIDEBOARD || kitchenstate.RobotLocations[index] == STOVE)
+	    UnexploredLocations.erase(static_cast<int>(kitchenstate.RobotLocations[index]));
 	else
 	{
 	    bool removefromunseen = false;
@@ -700,8 +705,8 @@ bool KITCHEN::LocalMove(STATE& state, const HISTORY& history, int stepObs, const
 		    break;
 		}
 	    }
-	    if (ko.location != NO_LOCATION && removefromunseen)
-		UnexploredLocations.erase(static_cast<int>(ko.location));
+	    if (kitchenstate.RobotLocations[index] != NO_LOCATION && removefromunseen)
+		UnexploredLocations.erase(static_cast<int>(kitchenstate.RobotLocations[index]));
 	}
 	
 	if (UnexploredLocations.empty() || UnseenObjects.empty())
@@ -723,6 +728,7 @@ int KITCHEN::MakeObservation(const KITCHEN_STATE& state, const int& index) const
 {
     KitchenObservation ko;
     ko.objectvisible.clear();
+    ko.agentvisible.clear();
     
     for (int i = 0 ; i < NumObjects ; i++)
     {
@@ -734,14 +740,14 @@ int KITCHEN::MakeObservation(const KITCHEN_STATE& state, const int& index) const
 	else
 	    ko.objectvisible.push_back(false);
     }
-    ko.location = state.RobotLocations[index];
-    /*for (int i = 0 ; i < NumAgents ; i++)
+    
+    for (int i = 0 ; i < NumAgents ; i++)
     {
 	if (index == i || state.RobotLocations[i] == state.RobotLocations[index])
-	    ko.robotlocations.push_back(state.RobotLocations[i]);
+	    ko.agentvisible.push_back(true);
 	else
-	    ko.robotlocations.push_back(NO_LOCATION);
-    }*/
+	    ko.agentvisible.push_back(false);
+    }
     
     return ObservatonToInt(ko);
 }
@@ -756,9 +762,12 @@ int KITCHEN::ObservatonToInt(const KitchenObservation& ko) const
 	    observation += pow(2,i);
     }
     
-    //for (int i = 0 ; i < NumAgents ; i++)
-	//observation += pow(2,NumObjects)*pow(NumLocations+1,i)*(ko.robotlocations[i]-LOCATION_OFFSET);
-    observation += pow(2,NumObjects)*(ko.location-LOCATION_OFFSET);
+    int agentcount = 0;
+    for (int i = 0 ; i < NumAgents ; i++)
+	if (ko.agentvisible[i])
+	    agentcount += pow(2,i);
+	
+    observation += agentcount*pow(2,NumObjects);
   
     return observation;
 }
@@ -767,16 +776,19 @@ KitchenObservation KITCHEN::IntToObservation(int observation) const
 {
     KitchenObservation ko;
     ko.objectvisible.clear();
-
-    /*for (int i = NumAgents-1 ; i >= 0 ; i--)
-    {
-	ko.robotlocations.push_front(static_cast<LocationType>(
-	    observation/((int) (pow(2,NumObjects)*pow(NumLocations+1,i)))+LOCATION_OFFSET)
-	);
-	observation = observation%((int) (pow(2,NumObjects)*pow(NumLocations+1,i)));
-    }*/
+    ko.agentvisible.clear();
     
-    ko.location = static_cast<LocationType>(observation/((int) pow(2,NumObjects))+LOCATION_OFFSET);
+    int agentcount = observation/((int) pow(2,NumObjects));
+    
+    for (int i = 0 ; i < NumAgents ; i++)
+    {
+	if (agentcount%2 == 1)
+	    ko.agentvisible.push_back(true);
+	else
+	    ko.agentvisible.push_back(false);
+	agentcount = agentcount >> 1;
+    }
+
     observation = observation%((int) pow(2,NumObjects));
     
     for (int i = 0 ; i < NumObjects ; i++)
@@ -882,6 +894,10 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     LocationType location = kitchenstate.RobotLocations[index];
     
     std::vector<bool> ObjectHere;
+    std::vector<bool> AgentHere;
+    ObjectHere.clear();
+    AgentHere.clear();
+    
     KitchenObservation ko;
     if (history.Size() > 0 && NumObservations > 1)
     {
@@ -890,18 +906,21 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
 	else
 	    ko = IntToObservation(history.Back().Observation);
     }
-    for (int i = 0 ; i < NumObjects ; i++)
+    for (int i = 0; i < NumObjects; i++)
     {
-	
-	/*if (history.Size() > 0 && NumObservations > 1)
-	{
-	    if (index == status.perspindex) //planning for myself
-		ObjectHere.push_back(ko.objectvisible[i]);
-	    else*/
-		ObjectHere.push_back(kitchenstate.ObjectLocations[i] == location);
-	/*}
+	if (history.Size() > 0 && NumObservations > 1 && index == status.perspindex)
+	    ObjectHere.push_back(ko.objectvisible[i]);
 	else
-	    ObjectHere.push_back(UTILS::RandomDouble(0.0,1.0) < 0.5 ? true : false);*/
+	    ObjectHere.push_back(UTILS::RandomDouble(0.0,1.0) < 0.5 ? true : false);
+    }
+    for (int i = 0; i < NumAgents; i++)
+    {
+	if (history.Size() > 0 && NumObservations > 1 && index == status.perspindex)
+	    AgentHere.push_back(ko.agentvisible[i]);
+	else if (i == status.perspindex)
+	    AgentHere.push_back(true);
+	else
+	    AgentHere.push_back(UTILS::RandomDouble(0.0,1.0) < 0.5 ? true : false);
     }
     
     //Close actions
@@ -1142,10 +1161,15 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
 			legal.push_back(ActionToInt(ka));
 		    }
 		    
+    //Stay actions (always possible)
+    KitchenAction ka;
+    ka.type = STAY_PUT;
+    legal.push_back(ActionToInt(ka));
+		    
     //Grasp joint actions
     if (location == SIDEBOARD || location == STOVE)
 	for (int i = 0; i < NumAgents; i++)
-	   if (i != index && kitchenstate.RobotLocations[i] == location) 
+	   if (i != index && AgentHere[i]) 
 		for (int h = 0 ; h < 2 ; h++)
 		    if (kitchenstate.GripperEmpty.at(index*2+h))
 			for (int o = 0 ; o < NumObjects ; o++)
@@ -1163,7 +1187,7 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     //Put down joint actions
     if (location == SIDEBOARD || location == STOVE)
 	for (int i = 0; i < NumAgents; i++)
-	   if (i != index && kitchenstate.RobotLocations[i] == location) 
+	   if (i != index && AgentHere[i]) 
 		for (int h = 0 ; h < 2 ; h++)
 		    for (int o = 0 ; o < NumObjects ; o++)
 			if (ObjectTypes.at(o) == TRAY && ((kitchenstate.InWhichGripper.at(o).first  == index && 
@@ -1264,12 +1288,15 @@ int KITCHEN::ActionToInt(const KitchenAction& ka) const
 	    action += NumLocations*2*4 + NumObjects*NumLocations*2*6 + NumLocations*NumLocations + NumObjects*4;
 	    action += object*NumLocations*2 + location*2 + gripper; 
 	    break;
-	case(GRASP_JOINT):
+	case(STAY_PUT):
 	    action += NumLocations*2*4 + NumObjects*NumLocations*2*7 + NumLocations*NumLocations + NumObjects*4;
+	    break;
+	case(GRASP_JOINT):
+	    action += NumLocations*2*4 + NumObjects*NumLocations*2*7 + NumLocations*NumLocations + NumObjects*4 + 1;
 	    action += object*NumLocations*2 + location*2 + gripper; 
 	    break;
 	case(PUT_DOWN_JOINT):
-	    action += NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4;
+	    action += NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4 + 1;
 	    action += object*NumLocations*2 + location*2 + gripper; 
 	    break;
 	default:
@@ -1398,8 +1425,13 @@ KitchenAction KITCHEN::IntToAction(int action) const
     }
     else if (action < NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4)
     {
-	ka.type = GRASP_JOINT;
+	ka.type = STAY_PUT;
 	action -= (NumLocations*2*4 + NumObjects*NumLocations*2*7 + NumLocations*NumLocations + NumObjects*4);
+    }
+    else if (action < NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4 + 1)
+    {
+	ka.type = GRASP_JOINT;
+	action -= (NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4);
 	ka.objectclass = ObjectTypes[action/(NumLocations*2)];
 	ka.objectindex = action/(NumLocations*2);
 	ka.location = IntToLocation((action%(NumLocations*2))/2);
@@ -1408,7 +1440,7 @@ KitchenAction KITCHEN::IntToAction(int action) const
     else
     {
 	ka.type = PUT_DOWN_JOINT;
-	action -= (NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4);
+	action -= (NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4 + 1);
 	ka.objectclass = ObjectTypes[action/(NumLocations*2)];
 	ka.objectindex = action/(NumLocations*2);
 	ka.location = IntToLocation((action%(NumLocations*2))/2);
@@ -1500,6 +1532,8 @@ void KITCHEN::DisplayActionAgent(int action, std::ostream& ostr) const
 	    ostr << ActionToString(ka.type) << "("  << ObjectToString(ka.objectclass) << ","
 		    << GripperToString(ka.gripper) << "," << GripperToString(ka.gripper2) << ")\n";
 	    break;
+	case(STAY_PUT):
+	    ostr << ActionToString(ka.type) << "\n";
 	default:
 	    break;
     }
@@ -1606,6 +1640,8 @@ std::string KITCHEN::ActionToString(const ActionType& t) const
 	    return "PUT_IN";
 	case(REMOVE_FROM):
 	    return "REMOVE_FROM";
+	case(STAY_PUT):
+	    return "STAY_PUT";
 	case(GRASP_JOINT):
 	    return "GRASP_JOINT";
 	case(PUT_DOWN_JOINT):

@@ -291,17 +291,21 @@ void MCTS::UCTSearch(const int& index)
 		//VNODE* tempRoot = ExpandNode(tempState, index, index);
 		
 		//*tempRoot = *Roots[index == 0 ? index : index-1];
-		
-		REWARD_TEMPLATE* tempRewardTemplate = Simulator.CreateInitialReward(0.0, rewardTemplate->RewardIndex);
+		//std::cout << "before\n";
+		REWARD_TEMPLATE* tempRewardTemplate = Roots[index == 0 ? index : index-1]->Beliefs().CreateRewardSample(Simulator);
+		//std::cout << "after\n";
 		tempRewardTemplate->RewardParams = std::make_pair(UTILS::Normal(rewardTemplate->RewardParams.first, 1.0),
 								    UTILS::Normal(rewardTemplate->RewardParams.second, 1.0));
+		tempRewardTemplate->RewardIndex = rewardTemplate->RewardIndex;
 		if (tempRewardTemplate->RewardParams.first <= 0.0 || tempRewardTemplate->RewardParams.second <= 0.0)
 		    tempRewardTemplate->RewardParams = Simulator.InitialiseRewardParams();
 		Statuses[index == 0 ? index : index-1].RewardParams = tempRewardTemplate->RewardParams;
 		TreeDepth = 0;
 		PeakTreeDepth = 0;
 		double tempOtherTotalReward = 0.0;
-		double tempTotalReward = SimulateV(*tempState, Roots[index == 0 ? index : index-1], index, tempOtherTotalReward);
+		
+		double tempTotalReward = Rollout(*tempState, Roots[index == 0 ? index : index-1], index, tempOtherTotalReward);
+		
 		tempRewardTemplate->RewardWeight = tempTotalReward + Params.RewardOffset;
 		double probRatio = exp(tempTotalReward)/exp(totalReward);
 		if (RandomDouble(0.0, 1.0) < min(1.0, probRatio))
@@ -309,7 +313,7 @@ void MCTS::UCTSearch(const int& index)
 		    //update weight
 		    //std::cout << "update" << index <<  "\n";
 		    //*Roots[index == 0 ? index : index-1] = *tempRoot;
-		    rewardTemplate = tempRewardTemplate;
+		    *rewardTemplate = *tempRewardTemplate;
 		    totalReward = tempTotalReward;
 		    MainPeakTreeDepth = PeakTreeDepth;
 		}
@@ -324,6 +328,8 @@ void MCTS::UCTSearch(const int& index)
 	    Roots[index == 0 ? index : index-1]->Beliefs().SetRewardSample(rewardTemplate, rewardTemplate->RewardIndex);
 	    
 	}
+	
+	Statuses[index == 0 ? index : index-1].RewardParams = rewardTemplate->RewardParams;
 	
 	
         StatTotalRewards[index == 0 ? index : index-1].Add(totalReward);
@@ -504,6 +510,7 @@ VNODE* MCTS::ExpandNode(const STATE* state, const int& perspindex, const int& ag
     
     //Reward samples
     double RewardTemplateWeight = (double) (1.0/Params.NumStartRewards);
+
     if (Params.RewardAdaptive[perspindex == 0 ? perspindex : perspindex-1])
     {
 	for (int j = 0; j < Params.NumStartRewards; j++)

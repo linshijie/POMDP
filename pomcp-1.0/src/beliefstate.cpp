@@ -47,7 +47,8 @@ REWARD_TEMPLATE* BELIEF_STATE::CreateRewardSample(const SIMULATOR& simulator) co
 	    break;
 	index++;
     } while(index < (int) RewardSamples.size() && currRew < TotalRewardWeight);
-    assert(index < (int) RewardSamples.size());
+    if (index == (int) RewardSamples.size())
+	index--; 
     return simulator.Copy(*RewardSamples[index]);
 }
 
@@ -66,7 +67,7 @@ void BELIEF_STATE::AddRewardSample(REWARD_TEMPLATE* reward)
 void BELIEF_STATE::SetRewardSample(REWARD_TEMPLATE* rewardTemplate, const int& index)
 {
     TotalRewardWeight = TotalRewardWeight - RewardSamples[index]->RewardWeight + rewardTemplate->RewardWeight;
-    RewardSamples[index] = rewardTemplate;
+    *RewardSamples[index] = *rewardTemplate;
 }
 
 
