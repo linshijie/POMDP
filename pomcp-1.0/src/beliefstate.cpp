@@ -5,7 +5,7 @@
 using namespace UTILS;
 
 BELIEF_STATE::BELIEF_STATE()
-: 	TotalRewardWeight(0.0)
+//: 	TotalRewardWeight(0.0)
 {
     Samples.clear();
     RewardSamples.clear();
@@ -26,7 +26,7 @@ void BELIEF_STATE::Free(const SIMULATOR& simulator)
 	simulator.FreeReward(*r_temp);
     }
     RewardSamples.clear();
-    TotalRewardWeight = 0.0;
+    //TotalRewardWeight = 0.0;
 }
 
 STATE* BELIEF_STATE::CreateSample(const SIMULATOR& simulator) const
@@ -37,7 +37,7 @@ STATE* BELIEF_STATE::CreateSample(const SIMULATOR& simulator) const
 
 REWARD_TEMPLATE* BELIEF_STATE::CreateRewardSample(const SIMULATOR& simulator) const
 {
-    int index = 0;
+    /*int index = 0;
     double randRew = RandomDouble(0.0, TotalRewardWeight);
     double currRew = 0.0;
     do
@@ -49,6 +49,8 @@ REWARD_TEMPLATE* BELIEF_STATE::CreateRewardSample(const SIMULATOR& simulator) co
     } while(index < (int) RewardSamples.size() && currRew < TotalRewardWeight);
     if (index == (int) RewardSamples.size())
 	index--; 
+    return simulator.Copy(*RewardSamples[index]);*/
+    int index = Random(RewardSamples.size());
     return simulator.Copy(*RewardSamples[index]);
 }
 
@@ -61,12 +63,12 @@ void BELIEF_STATE::AddSample(STATE* state)
 void BELIEF_STATE::AddRewardSample(REWARD_TEMPLATE* reward)
 {
     RewardSamples.push_back(reward);
-    TotalRewardWeight += reward->RewardWeight;
+    //TotalRewardWeight += reward->RewardWeight;
 }
 
 void BELIEF_STATE::SetRewardSample(REWARD_TEMPLATE* rewardTemplate, const int& index)
 {
-    TotalRewardWeight = TotalRewardWeight - RewardSamples[index]->RewardWeight + rewardTemplate->RewardWeight;
+    //TotalRewardWeight = TotalRewardWeight - RewardSamples[index]->RewardWeight + rewardTemplate->RewardWeight;
     *RewardSamples[index] = *rewardTemplate;
 }
 
@@ -99,5 +101,5 @@ void BELIEF_STATE::Move(BELIEF_STATE& beliefs)
 	AddRewardSample(*r_temp);
     }
     beliefs.RewardSamples.clear();
-    beliefs.TotalRewardWeight = 0.0;
+    //beliefs.TotalRewardWeight = 0.0;
 }

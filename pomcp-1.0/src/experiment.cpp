@@ -11,7 +11,7 @@ EXPERIMENT::PARAMS::PARAMS()
     MinDoubles(5),
     MaxDoubles(12),
     MinRewardDoubles(0),
-    MaxRewardDoubles(4),
+    MaxRewardDoubles(1),
     EnableRewardIterations(true),
     TransformDoubles(-4),
     TransformAttempts(1000),

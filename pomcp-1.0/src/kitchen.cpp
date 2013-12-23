@@ -390,7 +390,10 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
     
     //other agent reward
     if (status.RewardAdaptive)
-	status.CurrOtherReward = UTILS::Beta(status.RewardParams.first, status.RewardParams.second)*RewardRange+MinReward;
+	status.CurrOtherReward = UTILS::Normal(status.SampledRewardValue, 1.0);
+    
+    //if (reachedGoal)
+	//std::cout << "terminal" << status.perspindex << "\n";
     
     return reachedGoal;
 }
@@ -878,6 +881,7 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
 		}
 	}
     }
+
 }
 
 void KITCHEN::GenerateLegalAgent(const STATE& state, const HISTORY& history, std::vector< int >& actions, 
@@ -908,17 +912,32 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
     }
     for (int i = 0; i < NumObjects; i++)
     {
-	if (history.Size() > 0 && NumObservations > 1 && index == status.perspindex)
-	    ObjectHere.push_back(ko.objectvisible[i]);
+	if (history.Size() > 0 && NumObservations > 1)
+	{
+	    if (index == status.perspindex || ko.agentvisible[index])
+		ObjectHere.push_back(ko.objectvisible[i]);
+	    else
+		ObjectHere.push_back(UTILS::RandomDouble(0.0,1.0) < 0.5 ? true : false);
+	}
+	else if (history.Size() == 0)
+	    ObjectHere.push_back((kitchenstate.ObjectLocations[i] == kitchenstate.RobotLocations[index] &&
+	    (kitchenstate.RobotLocations[index] == SIDEBOARD || kitchenstate.RobotLocations[index] == STOVE ||
+	    kitchenstate.LocationOpen[kitchenstate.RobotLocations[index]-LOCATION_OFFSET])));
 	else
 	    ObjectHere.push_back(UTILS::RandomDouble(0.0,1.0) < 0.5 ? true : false);
     }
     for (int i = 0; i < NumAgents; i++)
     {
-	if (history.Size() > 0 && NumObservations > 1 && index == status.perspindex)
-	    AgentHere.push_back(ko.agentvisible[i]);
-	else if (i == status.perspindex)
-	    AgentHere.push_back(true);
+	if (history.Size() > 0 && NumObservations > 1)
+	{
+	    //if (index == status.perspindex) //planning for myself
+		AgentHere.push_back(ko.agentvisible[i]);
+	    //else if (i == status.perspindex || ko.agentvisible[i])
+		//AgentHere.push_back(true);
+	}
+	else if (history.Size() == 0)
+	    AgentHere.push_back(index == i || 
+		    kitchenstate.RobotLocations[i] == kitchenstate.RobotLocations[index]);
 	else
 	    AgentHere.push_back(UTILS::RandomDouble(0.0,1.0) < 0.5 ? true : false);
     }
@@ -1162,9 +1181,9 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
 		    }
 		    
     //Stay actions (always possible)
-    KitchenAction ka;
-    ka.type = STAY_PUT;
-    legal.push_back(ActionToInt(ka));
+    KitchenAction stay;
+    stay.type = STAY_PUT;
+    legal.push_back(ActionToInt(stay));
 		    
     //Grasp joint actions
     if (location == SIDEBOARD || location == STOVE)
@@ -1175,6 +1194,7 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
 			for (int o = 0 ; o < NumObjects ; o++)
 			    if (ObjectTypes.at(o) == TRAY && ObjectHere.at(o))
 			    {
+				//legal.clear();
 				KitchenAction ka;
 				ka.type = GRASP_JOINT;
 				ka.location = location;
@@ -1423,7 +1443,7 @@ KitchenAction KITCHEN::IntToAction(int action) const
 	ka.location = IntToLocation((action%(NumLocations*2))/2);
 	ka.gripper = IntToGripper(action%2);
     }
-    else if (action < NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4)
+    else if (action < NumLocations*2*4 + NumObjects*NumLocations*2*7 + NumLocations*NumLocations + NumObjects*4 + 1)
     {
 	ka.type = STAY_PUT;
 	action -= (NumLocations*2*4 + NumObjects*NumLocations*2*7 + NumLocations*NumLocations + NumObjects*4);
@@ -1431,7 +1451,7 @@ KitchenAction KITCHEN::IntToAction(int action) const
     else if (action < NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4 + 1)
     {
 	ka.type = GRASP_JOINT;
-	action -= (NumLocations*2*4 + NumObjects*NumLocations*2*8 + NumLocations*NumLocations + NumObjects*4);
+	action -= (NumLocations*2*4 + NumObjects*NumLocations*2*7 + NumLocations*NumLocations + NumObjects*4 + 1);
 	ka.objectclass = ObjectTypes[action/(NumLocations*2)];
 	ka.objectindex = action/(NumLocations*2);
 	ka.location = IntToLocation((action%(NumLocations*2))/2);
@@ -1534,6 +1554,7 @@ void KITCHEN::DisplayActionAgent(int action, std::ostream& ostr) const
 	    break;
 	case(STAY_PUT):
 	    ostr << ActionToString(ka.type) << "\n";
+	    break;
 	default:
 	    break;
     }
@@ -1599,6 +1620,14 @@ void KITCHEN::DisplayObservation(const STATE& state, int observation, std::ostre
 	{
 	    ostr << ObjectToString(ObjectTypes[j]) << ":" << ko.objectvisible[j];
 	    if (j < NumObjects-1)
+		ostr << ",";
+	    else
+		ostr << "/";
+	}
+	for (int j = 0 ; j < NumAgents ; j++)
+	{
+	    ostr << "Agent " << j << ":" << ko.agentvisible[j];
+	    if (j < NumAgents-1)
 		ostr << ",";
 	}
 	ostr << "\n";    

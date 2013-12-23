@@ -48,7 +48,7 @@ private:
 
     std::vector<STATE*> Samples;
     std::vector<REWARD_TEMPLATE*> RewardSamples;
-    double TotalRewardWeight;
+    //double TotalRewardWeight;
 };
 
 #endif // BELIEF_STATE_H

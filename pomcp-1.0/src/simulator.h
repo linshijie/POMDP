@@ -17,8 +17,8 @@ class REWARD_TEMPLATE : public MEMORY_OBJECT
 {
 public:
     int RewardIndex;
-    std::pair<double,double> RewardParams;
-    double RewardWeight;
+    //std::pair<double,double> RewardParams;
+    double RewardValue;
 };
 
 class SIMULATOR
@@ -79,17 +79,19 @@ public:
 	bool jointhistory;
 	
 	bool RewardAdaptive;
-	std::pair<double,double> RewardParams;
+	
+	//std::pair<double,double> RewardParams;
+	double SampledRewardValue;
 	double CurrOtherReward;
     };
     
-    struct INITIAL_REWARD_PARAMS
+    /*struct INITIAL_REWARD_PARAMS
     {
 	INITIAL_REWARD_PARAMS();
 	
 	double Alpha;
 	double Beta;
-    };
+    };*/
 
     SIMULATOR();
     SIMULATOR(int numActions, int numObservations, double discount = 1.0);    
@@ -120,8 +122,8 @@ public:
         int stepObs, const STATUS& status) const;
 	
     //Create initial reward template
-    std::pair<double, double> InitialiseRewardParams() const;
-    REWARD_TEMPLATE* CreateInitialReward(const double& weight, const int& index) const;
+    //std::pair<double, double> InitialiseRewardParams() const;
+    REWARD_TEMPLATE* CreateInitialReward(const double& value, const int& index) const;
 	
     // Free memory for reward samples
     void FreeReward(REWARD_TEMPLATE* reward) const;
@@ -185,7 +187,7 @@ protected:
     double Discount, RewardRange;
     KNOWLEDGE Knowledge;
     mutable MEMORY_POOL<REWARD_TEMPLATE> RewardMemoryPool;
-    INITIAL_REWARD_PARAMS InitialRewardParams;
+    //INITIAL_REWARD_PARAMS InitialRewardParams;
 };
 
 #endif // SIMULATOR_H
