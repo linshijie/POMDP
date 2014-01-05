@@ -34,8 +34,8 @@ MCTS::PARAMS::PARAMS()
     MinMax.clear();
     RewardAdaptive.clear();
     
-    JointQActions.push_back(true);
-    JointQActions.push_back(true);
+    JointQActions.push_back(false);
+    JointQActions.push_back(false);
     
     MinMax.push_back(false);
     MinMax.push_back(false);
@@ -313,10 +313,10 @@ void MCTS::UCTSearch(const int& index)
 		//if (exp(tempTotalReward) > exp(totalReward))
 		{
 		    MainPeakTreeDepth = PeakTreeDepth;
-		    *rewardTemplate = *tempRewardTemplate;
+		    rewardTemplate->RewardValue = tempRewardTemplate->RewardValue;
 		    totalReward = tempTotalReward;
 		    
-		    VNODE*& vnode = Roots[index == 0 ? index : index-1];
+		    /*VNODE*& vnode = Roots[index == 0 ? index : index-1];
 		    for (int j = 0; j < (int) Statuses[index == 0 ? index : index-1].CurrSequence.size(); j += 2)
 		    {
 			QNODE& qnode = vnode->Child(Statuses[index == 0 ? index : index-1].CurrSequence[j]);
@@ -327,7 +327,7 @@ void MCTS::UCTSearch(const int& index)
 			    if (j/2 < (int) Statuses[index == 0 ? index : index-1].CurrRewardValueSequence.size())
 				vnode->Beliefs().SetRewardSample(Statuses[index == 0 ? index : index-1].CurrRewardValueSequence[j/2], 0);
 			}
-		    }
+		    }*/
 		}
 		Simulator.FreeState(tempState);
 		Simulator.FreeReward(tempRewardTemplate);
@@ -367,7 +367,7 @@ double MCTS::SimulateV(STATE& state, VNODE* vnode, const int& index, double othe
     if (TreeDepth >= Params.MaxDepth) // search horizon reached
         return 0;
 
-    if (TreeDepth == 1 || Statuses[index == 0 ? index : index-1].LearningPhase)
+    if (TreeDepth == 1)// || Statuses[index == 0 ? index : index-1].LearningPhase)
         AddSample(vnode, state);
 
     int ownaction = 0, otheraction = 0;
@@ -673,8 +673,6 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 		
 		q += otherq;
 		
-		//if (ucb)
-		//    q += FastUCB(N, othern, logN);
 	    }
 
 	    

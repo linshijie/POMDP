@@ -8,7 +8,7 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(100),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(5),
+    MinDoubles(0),
     MaxDoubles(12),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
@@ -89,6 +89,7 @@ void EXPERIMENT::Run()
             Real.DisplayState(*state, cout);
             Real.DisplayObservation(*state, observation, cout);
             Real.DisplayReward(reward, cout);
+	    sleep(1);
         }
 
         if (terminal)
@@ -182,7 +183,6 @@ void EXPERIMENT::Run()
                 Real.DisplayState(*state, cout);
                 Real.DisplayObservation(*state, observation, cout);
                 Real.DisplayReward(reward, cout);
-		sleep(1);
             }
 
             if (terminal)

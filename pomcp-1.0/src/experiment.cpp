@@ -89,6 +89,7 @@ void EXPERIMENT::Run()
             Real.DisplayState(*state, cout);
             Real.DisplayObservation(*state, observation, cout);
             Real.DisplayReward(reward, cout);
+	    sleep(1);
         }
 
         if (terminal)
@@ -182,7 +183,6 @@ void EXPERIMENT::Run()
                 Real.DisplayState(*state, cout);
                 Real.DisplayObservation(*state, observation, cout);
                 Real.DisplayReward(reward, cout);
-		sleep(1000);
             }
 
             if (terminal)
