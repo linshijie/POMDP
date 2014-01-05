@@ -262,11 +262,13 @@ void MCTS::UCTSearch(const int& index)
     for (int n = 0; n < Params.NumSimulations; n++)
     {
         STATE* state = Roots[index == 0 ? index : index-1]->Beliefs().CreateSample(Simulator);
+	STATE* initState;
 	REWARD_TEMPLATE* rewardTemplate;
 	if (Params.RewardAdaptive[index == 0 ? index : index-1])
 	{
 	    rewardTemplate = Roots[index == 0 ? index : index-1]->Beliefs().CreateRewardSample(Simulator);
 	    Statuses[index == 0 ? index : index-1].SampledRewardValue = rewardTemplate->RewardValue;
+	    initState = Simulator.Copy(*state);
 	}
         Simulator.Validate(*state);
 	Statuses[index == 0 ? index : index-1].Phase = SIMULATOR::STATUS::TREE;
@@ -293,7 +295,7 @@ void MCTS::UCTSearch(const int& index)
 	{
 	    for (int i = 0; i < Params.NumLearnSimulations; i++)
 	    {
-		STATE* tempState = Roots[index == 0 ? index : index-1]->Beliefs().CreateSample(Simulator);
+		STATE* tempState = Simulator.Copy(*initState);//Roots[index == 0 ? index : index-1]->Beliefs().CreateSample(Simulator);
 		REWARD_TEMPLATE* tempRewardTemplate = Simulator.CreateInitialReward(UTILS::Normal(rewardTemplate->RewardValue, 1.0), 
 										    rewardTemplate->RewardIndex);
 		Statuses[index == 0 ? index : index-1].SampledRewardValue = tempRewardTemplate->RewardValue;
@@ -316,7 +318,7 @@ void MCTS::UCTSearch(const int& index)
 		    rewardTemplate->RewardValue = tempRewardTemplate->RewardValue;
 		    totalReward = tempTotalReward;
 		    
-		    /*VNODE*& vnode = Roots[index == 0 ? index : index-1];
+		    VNODE* vnode = Roots[index == 0 ? index : index-1];
 		    for (int j = 0; j < (int) Statuses[index == 0 ? index : index-1].CurrSequence.size(); j += 2)
 		    {
 			QNODE& qnode = vnode->Child(Statuses[index == 0 ? index : index-1].CurrSequence[j]);
@@ -327,7 +329,7 @@ void MCTS::UCTSearch(const int& index)
 			    if (j/2 < (int) Statuses[index == 0 ? index : index-1].CurrRewardValueSequence.size())
 				vnode->Beliefs().SetRewardSample(Statuses[index == 0 ? index : index-1].CurrRewardValueSequence[j/2], 0);
 			}
-		    }*/
+		    }
 		}
 		Simulator.FreeState(tempState);
 		Simulator.FreeReward(tempRewardTemplate);
@@ -350,7 +352,10 @@ void MCTS::UCTSearch(const int& index)
 
         Simulator.FreeState(state);
 	if (Params.RewardAdaptive[index == 0 ? index : index-1])
+	{
 	    Simulator.FreeReward(rewardTemplate);
+	    Simulator.FreeState(initState);
+	}
 	Histories[index == 0 ? index : index-1].Truncate(historyDepth);
     }
 

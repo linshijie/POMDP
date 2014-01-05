@@ -366,7 +366,7 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
 	    }
 	    
 	if (executedjointactions[0] && executedjointactions[1])
-	    additionalRew = 1000.0;
+	    additionalRew = 100.0;
     }
     
     observation = 0;
@@ -395,7 +395,7 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
     
     //other agent reward
     if (status.RewardAdaptive)
-	status.CurrOtherReward = UTILS::Normal(status.SampledRewardValue, 1.0) + additionalRew;
+	status.CurrOtherReward = UTILS::Normal(status.SampledRewardValue, 1.0);
     
     //if (reachedGoal)
 	//std::cout << "terminal" << status.perspindex << "\n";

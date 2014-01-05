@@ -8,7 +8,7 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(100),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(0),
+    MinDoubles(5),
     MaxDoubles(12),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
@@ -50,7 +50,7 @@ void EXPERIMENT::Run()
     double discountedReturn = 0.0;
     double discount = 1.0;
     bool terminal = false;
-    bool outOfParticles = false, outOfParticles2 = false;
+    bool outOfParticles = true, outOfParticles2 = true;
     int t;
     
     STATE* state = Real.CreateStartState();
