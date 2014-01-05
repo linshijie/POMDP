@@ -311,9 +311,10 @@ void MCTS::UCTSearch(const int& index)
 		
 		tempRewardTemplate->RewardValue = tempTotalReward;
 		double probRatio = exp(tempTotalReward)/exp(totalReward);
-		if (RandomDouble(0.0, 1.0) < min(1.0, probRatio))
-		//if (exp(tempTotalReward) > exp(totalReward))
+		//if (RandomDouble(0.0, 1.0) < min(1.0, probRatio))
+		if (tempTotalReward > totalReward)
 		{
+		    //std::cout << totalReward << " " << tempTotalReward << "\n";
 		    MainPeakTreeDepth = PeakTreeDepth;
 		    rewardTemplate->RewardValue = tempRewardTemplate->RewardValue;
 		    totalReward = tempTotalReward;

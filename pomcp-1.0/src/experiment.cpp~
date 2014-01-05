@@ -8,15 +8,15 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(100),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(5),
-    MaxDoubles(12),
+    MinDoubles(9),
+    MaxDoubles(10),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(true),
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
-    UndiscountedHorizon(100),
+    UndiscountedHorizon(40),
     AutoExploration(true)
 {
 }
@@ -50,7 +50,7 @@ void EXPERIMENT::Run()
     double discountedReturn = 0.0;
     double discount = 1.0;
     bool terminal = false;
-    bool outOfParticles = true, outOfParticles2 = true;
+    bool outOfParticles = false, outOfParticles2 = false;
     int t;
     
     STATE* state = Real.CreateStartState();

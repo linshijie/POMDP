@@ -69,10 +69,10 @@ public:
         std::vector<int>& actions, const STATUS& status) const;
     virtual void GenerateLegalAgent(const STATE& state, const HISTORY& history, 
 	std::vector<int>& actions, const STATUS& status, const int& index) const;
-    void GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTORY& history,
-        std::vector<int>& legal, const STATUS& status, const int& index) const;
-    void GeneratePreferredAgent(const KITCHEN_STATE& kitchenstate, const HISTORY& history,
+    virtual void GeneratePreferredAgent(const STATE& state, const HISTORY& history,
         std::vector<int>& actions, const STATUS& status, const int& index) const;
+    void GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HISTORY& history,
+        std::vector<int>& legal, const STATUS& status, const int& index, const bool& preferred) const;
 	
     virtual void DisplayState(const STATE& state, std::ostream& ostr) const;
     virtual void DisplayAction(int action, std::ostream& ostr) const;

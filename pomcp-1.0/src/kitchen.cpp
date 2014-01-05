@@ -869,12 +869,12 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
     for (int i = 0; i < NumAgents; i++)
     {
 	if (i == 0)
-	    GenerateLegalAgent(kitchenstate, history, legal, status, i);	  
+	    GenerateAgentActions(kitchenstate, history, legal, status, i, false);	  
 	else
 	{
 	    std::vector<int> currlegal;
 	    currlegal.clear();
-	    GenerateLegalAgent(kitchenstate, history, currlegal, status, i);
+	    GenerateAgentActions(kitchenstate, history, currlegal, status, i, false);
 	    int s = legal.size();
 	    for (int k = (int)currlegal.size()-1 ; k >= 0; k--)
 		for (int j = 0 ; j < s ; j++)
@@ -894,11 +894,11 @@ void KITCHEN::GenerateLegalAgent(const STATE& state, const HISTORY& history, std
 {
     const KITCHEN_STATE& kitchenstate = safe_cast<const KITCHEN_STATE&>(state);
 
-    GenerateLegalAgent(kitchenstate, history, actions, status, index-1);
+    GenerateAgentActions(kitchenstate, history, actions, status, index-1, false);
 }
 
-void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTORY& history, 
-				 std::vector< int >& legal, const SIMULATOR::STATUS& status, const int& index) const
+void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HISTORY& history, 
+			std::vector< int >& legal, const SIMULATOR::STATUS& status, const int& index, const bool& preferred) const
 {
     LocationType location = kitchenstate.RobotLocations[index];
     
@@ -1199,7 +1199,8 @@ void KITCHEN::GenerateLegalAgent(const KITCHEN_STATE& kitchenstate, const HISTOR
 			for (int o = 0 ; o < NumObjects ; o++)
 			    if (ObjectTypes.at(o) == TRAY && ObjectHere.at(o))
 			    {
-				//legal.clear();
+				//if (preferred)
+				    legal.clear();
 				KitchenAction ka;
 				ka.type = GRASP_JOINT;
 				ka.location = location;
@@ -1236,14 +1237,35 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history,
 {
     const KITCHEN_STATE& kitchenstate = safe_cast<const KITCHEN_STATE&>(state);
     
+    
     for (int i = 0; i < NumAgents; i++)
-	GeneratePreferredAgent(kitchenstate, history, actions, status, i);
+    {
+	if (i == 0)
+	    GenerateAgentActions(kitchenstate, history, actions, status, i, true);	  
+	else
+	{
+	    std::vector<int> currlegal;
+	    currlegal.clear();
+	    GenerateAgentActions(kitchenstate, history, currlegal, status, i, true);
+	    int s = actions.size();
+	    for (int k = (int)currlegal.size()-1 ; k >= 0; k--)
+		for (int j = 0 ; j < s ; j++)
+		{
+		    if (k == 0)
+			actions[j] += pow(NumAgentActions,i)*currlegal.at(k);
+		    else
+			actions.push_back(actions.at(j) + pow(NumAgentActions,i)*currlegal.at(k));
+		}
+	}
+    }
 }
 
-void KITCHEN::GeneratePreferredAgent(const KITCHEN_STATE& kitchenstate, const HISTORY& history, 
+void KITCHEN::GeneratePreferredAgent(const STATE& state, const HISTORY& history, 
 				     std::vector< int >& actions, const SIMULATOR::STATUS& status, const int& index) const
 {
-    
+    const KITCHEN_STATE& kitchenstate = safe_cast<const KITCHEN_STATE&>(state);
+
+    GenerateAgentActions(kitchenstate, history, actions, status, index-1, true);
 }
 
 

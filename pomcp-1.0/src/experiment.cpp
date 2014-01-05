@@ -8,15 +8,15 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(100),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(5),
-    MaxDoubles(12),
+    MinDoubles(0),
+    MaxDoubles(7),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(true),
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
-    UndiscountedHorizon(100),
+    UndiscountedHorizon(40),
     AutoExploration(true)
 {
 }

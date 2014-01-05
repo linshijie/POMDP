@@ -37,8 +37,8 @@ MCTS::PARAMS::PARAMS()
     JointQActions.push_back(false);
     JointQActions.push_back(false);
     
-    MinMax.push_back(false);
-    MinMax.push_back(false);
+    MinMax.push_back(true);
+    MinMax.push_back(true);
     
     RewardAdaptive.push_back(true);
     RewardAdaptive.push_back(true);
@@ -311,14 +311,15 @@ void MCTS::UCTSearch(const int& index)
 		
 		tempRewardTemplate->RewardValue = tempTotalReward;
 		double probRatio = exp(tempTotalReward)/exp(totalReward);
-		if (RandomDouble(0.0, 1.0) < min(1.0, probRatio))
-		//if (exp(tempTotalReward) > exp(totalReward))
+		//if (RandomDouble(0.0, 1.0) < min(1.0, probRatio))
+		if (tempTotalReward > totalReward)
 		{
+		    //std::cout << totalReward << " " << tempTotalReward << "\n";
 		    MainPeakTreeDepth = PeakTreeDepth;
 		    rewardTemplate->RewardValue = tempRewardTemplate->RewardValue;
 		    totalReward = tempTotalReward;
 		    
-		    VNODE*& vnode = Roots[index == 0 ? index : index-1];
+		    VNODE* vnode = Roots[index == 0 ? index : index-1];
 		    for (int j = 0; j < (int) Statuses[index == 0 ? index : index-1].CurrSequence.size(); j += 2)
 		    {
 			QNODE& qnode = vnode->Child(Statuses[index == 0 ? index : index-1].CurrSequence[j]);
