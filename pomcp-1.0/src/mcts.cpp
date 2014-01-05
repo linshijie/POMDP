@@ -67,6 +67,8 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	status.perspindex = i;
 	status.jointhistory = Params.MultiAgent ? true : false;
 	status.RewardAdaptive = Params.RewardAdaptive[i];
+	status.UpdateValues = true;
+	status.LearningPhase = false;
 	Statuses.push_back(status);
 	//histories
 	HISTORY history;
@@ -85,9 +87,9 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	if (Params.RewardAdaptive[i])
 	{
 	    if (Params.JointQActions[i])
-		QNODE::NumOtherValues = 1;
+		QNODE::NumOtherAgentValues = 1;
 	    else
-		QNODE::NumOtherValues = Simulator.GetNumAgentActions();
+		QNODE::NumOtherAgentValues = Simulator.GetNumAgentActions();
 	}
 	STATE* state = Simulator.CreateStartState();
 	root = ExpandNode(state, Params.MultiAgent ? i+1 : i, Params.MultiAgent ? i+1 : i);
@@ -113,13 +115,13 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
 	Histories[index == 0 ? index : index-1].Add(action, observation);
     else
     {
-	if (index == 1 && (Params.JointQActions[index == 0 ? index : index-1] || Params.RewardAdaptive[index == 0 ? index : index-1]))
+	if (index == 1 && Params.JointQActions[index == 0 ? index : index-1])
 	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,1), observation);
-	else if (index == 1 && !Params.JointQActions[index == 0 ? index : index-1])
+	else if (index == 1)
 	    Histories[index == 0 ? index : index-1].Add(action, observation);
-	else if (index == 2 && (Params.JointQActions[index == 0 ? index : index-1] || Params.RewardAdaptive[index == 0 ? index : index-1]))
+	else if (index == 2 && Params.JointQActions[index == 0 ? index : index-1])
 	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,2), observation);
-	else if (index == 2 && !Params.JointQActions[index == 0 ? index : index-1])
+	else if (index == 2)
 	    Histories[index == 0 ? index : index-1].Add(action, observation);
     }
     BELIEF_STATE beliefs;
@@ -241,9 +243,9 @@ void MCTS::RolloutSearch(const int& index)
 		double otherTotalReward = Statuses[index == 0 ? index : index-1].CurrOtherReward + 
 		    Simulator.GetDiscount()*otherDelayedReward;
 		if (Params.JointQActions[index == 0 ? index : index-1])
-		    Roots[index == 0 ? index : index-1]->Child(treeaction).OtherValues[0].Add(otherTotalReward);
+		    Roots[index == 0 ? index : index-1]->Child(treeaction).OtherAgentValues[0].Add(otherTotalReward);
 		else
-		    Roots[index == 0 ? index : index-1]->Child(treeaction).OtherValues[othertreeaction].Add(otherTotalReward);
+		    Roots[index == 0 ? index : index-1]->Child(treeaction).OtherAgentValues[othertreeaction].Add(otherTotalReward);
 		Simulator.FreeReward(rewardTemplate);
 	    }
 
@@ -268,6 +270,8 @@ void MCTS::UCTSearch(const int& index)
 	}
         Simulator.Validate(*state);
 	Statuses[index == 0 ? index : index-1].Phase = SIMULATOR::STATUS::TREE;
+	Statuses[index == 0 ? index : index-1].CurrSequence.clear();
+	Statuses[index == 0 ? index : index-1].CurrRewardValueSequence.clear();
 	
         if (Params.Verbose >= 2)
         {
@@ -278,50 +282,58 @@ void MCTS::UCTSearch(const int& index)
         TreeDepth = 0;
         PeakTreeDepth = 0;
 	double otherTotalReward = 0.0;
+	Statuses[index == 0 ? index : index-1].UpdateValues = true;
+	Statuses[index == 0 ? index : index-1].LearningPhase = false;
         double totalReward = SimulateV(*state, Roots[index == 0 ? index : index-1], index, 
 					otherTotalReward);
-	
 	int MainPeakTreeDepth = PeakTreeDepth;
 	
+	Statuses[index == 0 ? index : index-1].UpdateValues = false;
 	if (Params.RewardAdaptive[index == 0 ? index : index-1])
 	{
 	    for (int i = 0; i < Params.NumLearnSimulations; i++)
 	    {
 		STATE* tempState = Roots[index == 0 ? index : index-1]->Beliefs().CreateSample(Simulator);
-		//VNODE* tempRoot = ExpandNode(tempState, index, index);
-		
-		//*tempRoot = *Roots[index == 0 ? index : index-1];
-		REWARD_TEMPLATE* tempRewardTemplate = Simulator.CreateInitialReward(UTILS::Normal(rewardTemplate->RewardValue, 1.0), rewardTemplate->RewardIndex);
-		//if (tempRewardTemplate->RewardParams.first <= 0.0 || tempRewardTemplate->RewardParams.second <= 0.0)
-		//    tempRewardTemplate->RewardParams = Simulator.InitialiseRewardParams();
+		REWARD_TEMPLATE* tempRewardTemplate = Simulator.CreateInitialReward(UTILS::Normal(rewardTemplate->RewardValue, 1.0), 
+										    rewardTemplate->RewardIndex);
 		Statuses[index == 0 ? index : index-1].SampledRewardValue = tempRewardTemplate->RewardValue;
 		TreeDepth = 0;
 		PeakTreeDepth = 0;
 		double tempOtherTotalReward = 0.0;
 		
+		Statuses[index == 0 ? index : index-1].CurrSequence.clear();
+		Statuses[index == 0 ? index : index-1].CurrRewardValueSequence.clear();
+		Statuses[index == 0 ? index : index-1].LearningPhase = true;
+		
 		double tempTotalReward = SimulateV(*tempState, Roots[index == 0 ? index : index-1], index, tempOtherTotalReward);
 		
 		tempRewardTemplate->RewardValue = tempTotalReward;
-		//double probRatio = exp(tempTotalReward)/exp(totalReward);
-		//if (RandomDouble(0.0, 1.0) < min(1.0, probRatio))
-		if (exp(tempTotalReward) > exp(totalReward))
+		double probRatio = exp(tempTotalReward)/exp(totalReward);
+		if (RandomDouble(0.0, 1.0) < min(1.0, probRatio))
+		//if (exp(tempTotalReward) > exp(totalReward))
 		{
-		    //update weight
-		    //std::cout << "update" << index <<  "\n";
-		    //*Roots[index == 0 ? index : index-1] = *tempRoot;
+		    MainPeakTreeDepth = PeakTreeDepth;
 		    *rewardTemplate = *tempRewardTemplate;
 		    totalReward = tempTotalReward;
-		    MainPeakTreeDepth = PeakTreeDepth;
+		    
+		    VNODE*& vnode = Roots[index == 0 ? index : index-1];
+		    for (int j = 0; j < (int) Statuses[index == 0 ? index : index-1].CurrSequence.size(); j += 2)
+		    {
+			QNODE& qnode = vnode->Child(Statuses[index == 0 ? index : index-1].CurrSequence[j]);
+			if (j+1 < (int) Statuses[index == 0 ? index : index-1].CurrSequence.size())
+			{
+			    vnode = qnode.Child(Statuses[index == 0 ? index : index-1].CurrSequence[j+1]);
+			    //std::cout << vnode->Beliefs().GetNumSamples() << " " << index << "\n";
+			    if (j/2 < (int) Statuses[index == 0 ? index : index-1].CurrRewardValueSequence.size())
+				vnode->Beliefs().SetRewardSample(Statuses[index == 0 ? index : index-1].CurrRewardValueSequence[j/2], 0);
+			}
+		    }
 		}
-		//std::cout << Roots[index == 0 ? index : index-1]->Beliefs().GetNumSamples() << "\n";
-		//std::cout << tempRoot->Beliefs().GetNumSamples() << "\n";
-		//VNODE::Free(tempRoot, Simulator);
-		//std::cout << Roots[index == 0 ? index : index-1]->Beliefs().GetNumSamples() << "\n";
-		//std::cout << tempRoot->Beliefs().GetNumSamples() << "\n";
 		Simulator.FreeState(tempState);
 		Simulator.FreeReward(tempRewardTemplate);
 	    }
-	    Roots[index == 0 ? index : index-1]->Beliefs().SetRewardSample(rewardTemplate, rewardTemplate->RewardIndex);
+	    Roots[index == 0 ? index : index-1]->Beliefs().SetRewardSample(rewardTemplate->RewardValue, rewardTemplate->RewardIndex);
+	    //Roots[index == 0 ? index : index-1]->Beliefs().AddRewardSample(rewardTemplate);
 	    
 	    Statuses[index == 0 ? index : index-1].SampledRewardValue = rewardTemplate->RewardValue;
 	    
@@ -332,11 +344,7 @@ void MCTS::UCTSearch(const int& index)
         StatTreeDepths[index == 0 ? index : index-1].Add(MainPeakTreeDepth);
 
         if (Params.Verbose >= 2)
-	{
             cout << "Total reward = " << totalReward << endl;
-	    if (Params.RewardAdaptive[index == 0 ? index : index-1])
-		cout << "Total other reward = " << otherTotalReward << endl;
-	}
         if (Params.Verbose >= 3)
             DisplayValue(4, index, cout);
 
@@ -353,11 +361,13 @@ double MCTS::SimulateV(STATE& state, VNODE* vnode, const int& index, double othe
 {
     int action = GreedyUCB(vnode, Params.DoFastUCB, index); //for reward adaptive, should return joint action!
     
+    
+    
     PeakTreeDepth = TreeDepth;
     if (TreeDepth >= Params.MaxDepth) // search horizon reached
         return 0;
 
-    if (TreeDepth == 1)
+    if (TreeDepth == 1 || Statuses[index == 0 ? index : index-1].LearningPhase)
         AddSample(vnode, state);
 
     int ownaction = 0, otheraction = 0;
@@ -365,25 +375,22 @@ double MCTS::SimulateV(STATE& state, VNODE* vnode, const int& index, double othe
     if (Params.RewardAdaptive[index == 0 ? index : index-1] && !Params.JointQActions[index == 0 ? index : index-1])
     {
 	if (index == 1)
-	{
-	    ownaction = Simulator.GetAgentAction(action, 1);
-	    otheraction = Simulator.GetAgentAction(action, 2);
-	}
+	   action = Simulator.GetAgentAction(action, 1);
 	else
-	{
-	    ownaction = Simulator.GetAgentAction(action, 2);
-	    otheraction = Simulator.GetAgentAction(action, 1);
-	}
-	QNODE& qnode = vnode->Child(ownaction);
-	totalReward = SimulateQ(state, qnode, action, index, otherTotalReward);
+	   action = Simulator.GetAgentAction(action, 2);
     }
-    else
+	
+    QNODE& qnode = vnode->Child(action);
+    
+    Statuses[index == 0 ? index : index-1].CurrSequence.push_back(action);
+    
+    totalReward = SimulateQ(state, qnode, action, index, otherTotalReward);
+    
+    if (Statuses[index == 0 ? index : index-1].UpdateValues)
     {
-	QNODE& qnode = vnode->Child(action);
-	totalReward = SimulateQ(state, qnode, action, index, otherTotalReward);
+	vnode->Value.Add(totalReward);
+	AddRave(vnode, totalReward, state, index);
     }
-    vnode->Value.Add(totalReward);
-    AddRave(vnode, totalReward, state, index);
     
     /*if (Params.RewardAdaptive[index == 0 ? index : index-1])
     {
@@ -434,6 +441,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     
     VNODE*& vnode = index == 0 ? qnode.Child(observation) : 
 		qnode.Child(Simulator.GetAgentObservation(observation, index));
+	
 		
     if (!vnode && !terminal && qnode.Value.GetCount() >= Params.ExpandCount)
 	  vnode = ExpandNode(&state, index, index);
@@ -442,7 +450,17 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     
     if (Params.RewardAdaptive[index == 0 ? index : index-1] && vnode)
     {
+	if (!terminal)
+	    Statuses[index == 0 ? index : index-1].CurrSequence.push_back(index == 0 ? observation : 
+		Simulator.GetAgentObservation(observation, index));
 	rewardTemplate = vnode->Beliefs().CreateRewardSample(Simulator);
+	    
+	if (Statuses[index == 0 ? index : index-1].LearningPhase)
+	{
+	    rewardTemplate->RewardValue = UTILS::Normal(rewardTemplate->RewardValue, 1.0);
+	    if (!terminal)
+		Statuses[index == 0 ? index : index-1].CurrRewardValueSequence.push_back(rewardTemplate->RewardValue);
+	}
 	Statuses[index == 0 ? index : index-1].SampledRewardValue = rewardTemplate->RewardValue;
     }
     else
@@ -459,20 +477,23 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     }
     
     double totalReward = immediateReward + Simulator.GetDiscount() * delayedReward;
-    qnode.Value.Add(totalReward);
-    if (Params.RewardAdaptive[index == 0 ? index : index-1])
+    if (Statuses[index == 0 ? index : index-1].UpdateValues)
     {
-	if (vnode)
-	    otherTotalReward = otherImmediateReward + Simulator.GetDiscount() * otherDelayedReward;
-	else
-	    otherTotalReward = otherImmediateReward + Simulator.GetDiscount() * delayedReward;
-	
-	if (Params.JointQActions[index == 0 ? index : index-1])
-	    qnode.OtherValues[0].Add(otherTotalReward);
-	else
+	qnode.Value.Add(totalReward);
+	if (Params.RewardAdaptive[index == 0 ? index : index-1])
 	{
-	    int otheraction = index == 1 ? Simulator.GetAgentAction(action, 2) : Simulator.GetAgentAction(action, 1);
-	    qnode.OtherValues[otheraction].Add(otherTotalReward);
+	    if (vnode)
+		otherTotalReward = otherImmediateReward + Simulator.GetDiscount() * otherDelayedReward;
+	    else
+		otherTotalReward = otherImmediateReward + Simulator.GetDiscount() * delayedReward;
+	    
+	    if (Params.JointQActions[index == 0 ? index : index-1])
+		qnode.OtherAgentValues[0].Add(otherTotalReward);
+	    else
+	    {
+		int otheraction = index == 1 ? Simulator.GetAgentAction(action, 2) : Simulator.GetAgentAction(action, 1);
+		qnode.OtherAgentValues[otheraction].Add(otherTotalReward);
+	    }
 	}
     }
  
@@ -647,13 +668,13 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 	    
 	    if (Params.RewardAdaptive[index == 0 ? index : index-1]) 
 	    {
-		otherq = qnode.OtherValues[i].GetValue();
-		othern = qnode.OtherValues[i].GetCount();
+		otherq = qnode.OtherAgentValues[i].GetValue();
+		othern = qnode.OtherAgentValues[i].GetCount();
 		
 		q += otherq;
 		
-		if (ucb)
-		    q += FastUCB(N, othern, logN);
+		//if (ucb)
+		//    q += FastUCB(N, othern, logN);
 	    }
 
 	    
@@ -777,6 +798,19 @@ void MCTS::AddTransforms(VNODE* root, BELIEF_STATE& beliefs, const int& index)
         {
             beliefs.AddSample(transform);
             added++;
+	    if (Params.RewardAdaptive[index == 0 ? index : index-1])
+	    {
+		Statuses[index == 0 ? index : index-1].SampledRewardValue = 0.0;
+		if (beliefs.GetNumRewardSamples() < Params.NumStartRewards)
+		{
+		    double otherReward = 0.0;
+		    STATE* st = Simulator.Copy(*transform);
+		    double initReward = Rollout(*st, index, otherReward);
+		    REWARD_TEMPLATE* rewardTemplate = Simulator.CreateInitialReward(initReward,beliefs.GetNumRewardSamples());
+		    beliefs.AddRewardSample(rewardTemplate);
+		    Simulator.FreeState(st);
+		}
+	    }
         }
         attempts++;
     }

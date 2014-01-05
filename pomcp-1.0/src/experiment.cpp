@@ -69,9 +69,9 @@ void EXPERIMENT::Run()
 	{
 	    action0 = mcts.SelectAction(1);
 	    action1 = mcts.SelectAction(2);
-	    if (SearchParams.JointQActions[0] || SearchParams.RewardAdaptive[0])
+	    if (SearchParams.RewardAdaptive[0] && !SearchParams.JointQActions[0])
 		action0 = Simulator.GetAgentAction(action0,1);
-	    if (SearchParams.JointQActions[1] || SearchParams.RewardAdaptive[1])
+	    if (SearchParams.RewardAdaptive[1] && !SearchParams.JointQActions[1])
 		action1 = Simulator.GetAgentAction(action1,2);
 	    action = action0 + Simulator.GetNumAgentActions()*action1;
 	}
@@ -119,9 +119,9 @@ void EXPERIMENT::Run()
     if (outOfParticles || outOfParticles2)
     {
 	if (outOfParticles)
-	    cout << "Out of particles, finishing episode with SelectRandom" << endl;
+	    cout << "Out of particles, finishing episode with SelectRandom " << endl;
 	if (outOfParticles2)
-	    cout << "Out of particles 2, finishing episode with SelectRandom" << endl;
+	    cout << "Out of particles 2, finishing episode with SelectRandom " << endl;
         HISTORY history = mcts.GetHistory(0);
 	HISTORY history2;
 	if (SearchParams.MultiAgent)
@@ -161,10 +161,11 @@ void EXPERIMENT::Run()
 		else
 		    action1 = mcts.SelectAction(2);
 		
-		if (SearchParams.JointQActions[0] || (SearchParams.RewardAdaptive[0] && !outOfParticles))
+		if (SearchParams.RewardAdaptive[0] && !SearchParams.JointQActions[0] && !outOfParticles)
 		    action0 = Simulator.GetAgentAction(action0,1);
-		if (SearchParams.JointQActions[1] || (SearchParams.RewardAdaptive[1] && !outOfParticles2))
+		if (SearchParams.RewardAdaptive[1] && !SearchParams.JointQActions[1] && !outOfParticles2)
 		    action1 = Simulator.GetAgentAction(action1,2);
+		
 		action = action0 + Simulator.GetNumAgentActions()*action1;
 	    }
 	    SIMULATOR::STATUS status = mcts.GetStatus(0);
@@ -181,6 +182,7 @@ void EXPERIMENT::Run()
                 Real.DisplayState(*state, cout);
                 Real.DisplayObservation(*state, observation, cout);
                 Real.DisplayReward(reward, cout);
+		sleep(1000);
             }
 
             if (terminal)

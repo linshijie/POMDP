@@ -83,6 +83,11 @@ public:
 	//std::pair<double,double> RewardParams;
 	double SampledRewardValue;
 	double CurrOtherReward;
+	std::vector<int> CurrSequence;
+	std::vector<double> CurrRewardValueSequence;
+	bool LearningPhase;
+	
+	bool UpdateValues;
     };
     
     /*struct INITIAL_REWARD_PARAMS

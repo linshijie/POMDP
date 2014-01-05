@@ -13,7 +13,8 @@ SIMULATOR::KNOWLEDGE::KNOWLEDGE()
 
 SIMULATOR::STATUS::STATUS()
 :   Phase(TREE),
-    Particles(CONSISTENT)
+    Particles(CONSISTENT),
+    UpdateValues(true)
 {
 }
 
@@ -171,8 +172,8 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
             QNODE& qnode = vnode->Child(a);
             qnode.Value.Set(0, 0);
             qnode.AMAF.Set(0, 0);
-	    for (int i = 0; i < (int) qnode.OtherValues.size(); i++)
-		qnode.OtherValues[i].Set(0, 0);
+	    for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
+		qnode.OtherAgentValues[i].Set(0, 0);
         }
     }
     
@@ -190,8 +191,8 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
             QNODE& qnode = vnode->Child(a);
             qnode.Value.Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
             qnode.AMAF.Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
-	    for (int i = 0; i < (int) qnode.OtherValues.size(); i++)
-		qnode.OtherValues[i].Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
+	    for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
+		qnode.OtherAgentValues[i].Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
         }    
     }
 }

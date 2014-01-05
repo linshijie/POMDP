@@ -66,10 +66,10 @@ void BELIEF_STATE::AddRewardSample(REWARD_TEMPLATE* reward)
     //TotalRewardWeight += reward->RewardWeight;
 }
 
-void BELIEF_STATE::SetRewardSample(REWARD_TEMPLATE* rewardTemplate, const int& index)
+void BELIEF_STATE::SetRewardSample(double value, const int& index)
 {
     //TotalRewardWeight = TotalRewardWeight - RewardSamples[index]->RewardWeight + rewardTemplate->RewardWeight;
-    *RewardSamples[index] = *rewardTemplate;
+    RewardSamples[index]->RewardValue = value;
 }
 
 

@@ -69,7 +69,7 @@ public:
     VALUE<int> Value;
     VALUE<double> AMAF;
     
-    std::vector<VALUE<int> > OtherValues;
+    std::vector<VALUE<int> > OtherAgentValues;
 
     void Initialise();
 
@@ -83,7 +83,7 @@ public:
 
     static int NumChildren;
     
-    static int NumOtherValues;
+    static int NumOtherAgentValues;
 
 private:
 

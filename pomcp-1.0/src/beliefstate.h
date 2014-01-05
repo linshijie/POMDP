@@ -40,7 +40,7 @@ public:
     int GetNumRewardSamples() const { return RewardSamples.size(); }
     const STATE* GetSample(int index) const { return Samples[index]; }
     const REWARD_TEMPLATE* GetRewardSample(int index) const { return RewardSamples[index]; }
-    void SetRewardSample(REWARD_TEMPLATE* rewardTemplate, const int& index);
+    void SetRewardSample(double value, const int& index);
     
     //Rewards
     

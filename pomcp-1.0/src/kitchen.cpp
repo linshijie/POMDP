@@ -138,10 +138,10 @@ STATE* KITCHEN::CreateStartState() const
     //first robot location
     kitchenstate->RobotLocations.push_back(SIDEBOARD);
     //kitchenstate->RobotLocations.push_back(static_cast<LocationType>(UTILS::Random(0,NumLocations)+LOCATION_OFFSET));
-    //for (int i = 1; i < NumAgents; i++)
-	//kitchenstate->RobotLocations.push_back(SIDEBOARD);
-	//kitchenstate->RobotLocations.push_back(static_cast<LocationType>(UTILS::Random(0,NumLocations)+LOCATION_OFFSET));
     for (int i = 1; i < NumAgents; i++)
+	kitchenstate->RobotLocations.push_back(SIDEBOARD);
+	//kitchenstate->RobotLocations.push_back(static_cast<LocationType>(UTILS::Random(0,NumLocations)+LOCATION_OFFSET));
+    /*for (int i = 1; i < NumAgents; i++)
     {
 	LocationType agentlocation;
 	do
@@ -149,7 +149,7 @@ STATE* KITCHEN::CreateStartState() const
 	    agentlocation = static_cast<LocationType>(UTILS::Random(0,NumLocations)+LOCATION_OFFSET);
 	}while(Collision(*kitchenstate,agentlocation,i));
 	kitchenstate->RobotLocations.push_back(agentlocation);
-    }
+    }*/
     
     for (int i = 0; i < NumObjects; i++)
     {
@@ -202,6 +202,8 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
     KITCHEN_STATE& kitchenstate = safe_cast<KITCHEN_STATE&>(state);
     
     std::vector< std::pair< int, int > > agentactions;
+    
+    double additionalRew = 0.0;
     
     if (NumAgents == 1)
     {
@@ -362,6 +364,9 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
 		StepAgent(kitchenstate, agentactions.at(i).second, observation, tempreward, agentactions.at(i).first);
 		reward += tempreward;
 	    }
+	    
+	if (executedjointactions[0] && executedjointactions[1])
+	    additionalRew = 1000.0;
     }
     
     observation = 0;
@@ -390,7 +395,7 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
     
     //other agent reward
     if (status.RewardAdaptive)
-	status.CurrOtherReward = UTILS::Normal(status.SampledRewardValue, 1.0);
+	status.CurrOtherReward = UTILS::Normal(status.SampledRewardValue, 1.0) + additionalRew;
     
     //if (reachedGoal)
 	//std::cout << "terminal" << status.perspindex << "\n";
@@ -673,7 +678,7 @@ bool KITCHEN::StepAgent(KITCHEN_STATE& kitchenstate, int action,
 
 bool KITCHEN::LocalMove(STATE& state, const HISTORY& history, int stepObs, const SIMULATOR::STATUS& status) const
 {
-    KITCHEN_STATE& kitchenstate = safe_cast<KITCHEN_STATE&>(state);
+    /*KITCHEN_STATE& kitchenstate = safe_cast<KITCHEN_STATE&>(state);
     
     std::tr1::unordered_set<int> UnseenObjects;
     std::tr1::unordered_set<int> UnexploredLocations;
@@ -722,7 +727,7 @@ bool KITCHEN::LocalMove(STATE& state, const HISTORY& history, int stepObs, const
 	for (int i = 0; i < UTILS::Random(0,(int)UnexploredLocations.size()); i++)
 	    ++it2;
 	kitchenstate.ObjectLocations[*it] = static_cast<LocationType>(*it2);
-    }
+    }*/
     
     return true;
 }
