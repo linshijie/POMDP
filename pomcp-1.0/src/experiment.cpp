@@ -9,14 +9,14 @@ EXPERIMENT::PARAMS::PARAMS()
     SimSteps(100),
     TimeOut(3600),
     MinDoubles(0),
-    MaxDoubles(7),
+    MaxDoubles(1),
     MinRewardDoubles(0),
-    MaxRewardDoubles(1),
+    MaxRewardDoubles(7),
     EnableRewardIterations(true),
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
-    UndiscountedHorizon(40),
+    UndiscountedHorizon(100),
     AutoExploration(true)
 {
 }
@@ -69,10 +69,10 @@ void EXPERIMENT::Run()
 	{
 	    action0 = mcts.SelectAction(1);
 	    action1 = mcts.SelectAction(2);
-	    if (SearchParams.RewardAdaptive[0] && !SearchParams.JointQActions[0])
+	    /*if (SearchParams.RewardAdaptive[0] && !SearchParams.JointQActions[0])
 		action0 = Simulator.GetAgentAction(action0,1);
 	    if (SearchParams.RewardAdaptive[1] && !SearchParams.JointQActions[1])
-		action1 = Simulator.GetAgentAction(action1,2);
+		action1 = Simulator.GetAgentAction(action1,2);*/
 	    action = action0 + Simulator.GetNumAgentActions()*action1;
 	}
 	SIMULATOR::STATUS status = mcts.GetStatus(0);
@@ -162,10 +162,10 @@ void EXPERIMENT::Run()
 		else
 		    action1 = mcts.SelectAction(2);
 		
-		if (SearchParams.RewardAdaptive[0] && !SearchParams.JointQActions[0] && !outOfParticles)
+		/*if (SearchParams.RewardAdaptive[0] && !SearchParams.JointQActions[0] && !outOfParticles)
 		    action0 = Simulator.GetAgentAction(action0,1);
 		if (SearchParams.RewardAdaptive[1] && !SearchParams.JointQActions[1] && !outOfParticles2)
-		    action1 = Simulator.GetAgentAction(action1,2);
+		    action1 = Simulator.GetAgentAction(action1,2);*/
 		
 		action = action0 + Simulator.GetNumAgentActions()*action1;
 	    }

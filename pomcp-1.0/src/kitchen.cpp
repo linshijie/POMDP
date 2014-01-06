@@ -138,10 +138,10 @@ STATE* KITCHEN::CreateStartState() const
     //first robot location
     kitchenstate->RobotLocations.push_back(SIDEBOARD);
     //kitchenstate->RobotLocations.push_back(static_cast<LocationType>(UTILS::Random(0,NumLocations)+LOCATION_OFFSET));
-    //for (int i = 1; i < NumAgents; i++)
-	//kitchenstate->RobotLocations.push_back(SIDEBOARD);
-	//kitchenstate->RobotLocations.push_back(static_cast<LocationType>(UTILS::Random(0,NumLocations)+LOCATION_OFFSET));
     for (int i = 1; i < NumAgents; i++)
+	kitchenstate->RobotLocations.push_back(SIDEBOARD);
+	//kitchenstate->RobotLocations.push_back(static_cast<LocationType>(UTILS::Random(0,NumLocations)+LOCATION_OFFSET));
+    /*for (int i = 1; i < NumAgents; i++)
     {
 	LocationType agentlocation;
 	do
@@ -149,7 +149,7 @@ STATE* KITCHEN::CreateStartState() const
 	    agentlocation = static_cast<LocationType>(UTILS::Random(0,NumLocations)+LOCATION_OFFSET);
 	}while(Collision(*kitchenstate,agentlocation,i));
 	kitchenstate->RobotLocations.push_back(agentlocation);
-    }
+    }*/
     
     for (int i = 0; i < NumObjects; i++)
     {
@@ -1199,7 +1199,7 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
 			for (int o = 0 ; o < NumObjects ; o++)
 			    if (ObjectTypes.at(o) == TRAY && ObjectHere.at(o))
 			    {
-				//if (preferred)
+				if (preferred)
 				    legal.clear();
 				KitchenAction ka;
 				ka.type = GRASP_JOINT;

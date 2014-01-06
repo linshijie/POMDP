@@ -83,9 +83,20 @@ public:
 	//std::pair<double,double> RewardParams;
 	double SampledRewardValue;
 	double CurrOtherReward;
-	std::vector<int> CurrSequence;
-	std::vector<double> CurrRewardValueSequence;
+	
+	std::vector<int> MainSequence;
+	std::vector<double> MainQValueSequence;
+	std::vector<double> MainVValueSequence;
+	std::vector<double> MainOtherQValueSequence;
+	
+	std::vector<int> LearnSequence;
+	std::vector<double> LearnRewardValueSequence;
+	std::vector<double> LearnQValueSequence;
+	std::vector<double> LearnVValueSequence;
+	std::vector<double> LearnOtherQValueSequence;
 	bool LearningPhase;
+	
+	int RolloutLevel;
 	
 	bool UpdateValues;
     };
@@ -172,6 +183,7 @@ public:
 
     // Accessors
     void SetKnowledge(const KNOWLEDGE& knowledge) { Knowledge = knowledge; }
+    int GetRolloutLevel() const { return Knowledge.RolloutLevel; }
     int GetNumActions() const { return NumActions; }
     int GetNumObservations() const { return NumObservations; }
     int GetNumAgents() const { return NumAgents; }

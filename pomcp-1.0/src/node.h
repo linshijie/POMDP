@@ -37,6 +37,12 @@ public:
         Count += 1.0;
         Total += totalReward;
     }
+    
+    void Subtract(double totalReward)
+    {
+	Count -= 1.0;
+	Total -= totalReward;
+    }
 
     void Add(double totalReward, COUNT weight)
     {
