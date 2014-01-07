@@ -85,11 +85,13 @@ public:
 	double CurrOtherReward;
 	
 	std::vector<int> MainSequence;
+	std::vector<int> MainFullSequence;
 	std::vector<double> MainQValueSequence;
 	std::vector<double> MainVValueSequence;
 	std::vector<double> MainOtherQValueSequence;
 	
 	std::vector<int> LearnSequence;
+	std::vector<int> LearnFullSequence;
 	std::vector<double> LearnRewardValueSequence;
 	std::vector<double> LearnQValueSequence;
 	std::vector<double> LearnVValueSequence;
@@ -97,8 +99,11 @@ public:
 	bool LearningPhase;
 	
 	int RolloutLevel;
-	
 	bool UpdateValues;
+	
+	int SuccessfulPlanCount;
+	double PlanSequenceReward;
+	int PlanSequenceLength;
     };
     
     /*struct INITIAL_REWARD_PARAMS

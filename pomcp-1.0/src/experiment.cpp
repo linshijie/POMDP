@@ -28,8 +28,21 @@ EXPERIMENT::EXPERIMENT(const SIMULATOR& real,
     Simulator(simulator),
     OutputFile(outputFile.c_str()),
     ExpParams(expParams),
-    SearchParams(searchParams)
+    SearchParams(searchParams),
+    UpdatePlanStatistics(true)
 {
+    Results.SuccessfulPlanCount.clear();
+    Results.PlanSequenceReward.clear();
+    Results.PlanSequenceLength.clear();
+    for (int i = 0; i < real.GetNumAgents(); i++)
+    {
+	STATISTIC s1;
+	Results.SuccessfulPlanCount.push_back(s1);
+	STATISTIC s2;
+	Results.PlanSequenceReward.push_back(s2);
+	STATISTIC s3;
+	Results.PlanSequenceLength.push_back(s3);
+    }
     if (ExpParams.AutoExploration)
     {
         if (SearchParams.UseRave)
@@ -56,7 +69,23 @@ void EXPERIMENT::Run()
     STATE* state = Real.CreateStartState();
     if (SearchParams.Verbose >= 1)
         Real.DisplayState(*state, cout);
-
+    
+    
+    std::vector<int> planCounts;
+    std::vector<STATISTIC> planRewards;
+    std::vector<STATISTIC> planLengths;
+    if (UpdatePlanStatistics)
+    {
+	for (int i = 0; i < Real.GetNumAgents(); i++)
+	{
+	    planCounts.push_back(0);
+	    STATISTIC s1;
+	    planRewards.push_back(s1);
+	    STATISTIC s2;
+	    planLengths.push_back(s2);
+	}
+    }
+	
     for (t = 0; t < ExpParams.NumSteps; t++)
     {
         int observation;
@@ -82,7 +111,35 @@ void EXPERIMENT::Run()
         undiscountedReturn += reward;
         discountedReturn += reward * discount;
         discount *= Real.GetDiscount();
-
+	
+	if (UpdatePlanStatistics)
+	{
+	    if (!SearchParams.MultiAgent)
+	    {
+		planCounts[0] += mcts.GetStatus(0).SuccessfulPlanCount;
+		if (mcts.GetStatus(0).SuccessfulPlanCount > 0)
+		{
+		    planRewards[0].Add(mcts.GetStatus(0).PlanSequenceReward/mcts.GetStatus(0).SuccessfulPlanCount);
+		    planLengths[0].Add(mcts.GetStatus(0).PlanSequenceLength*1.0/mcts.GetStatus(0).SuccessfulPlanCount);
+		}
+	    }
+	    else
+	    {
+		planCounts[0] += mcts.GetStatus(1).SuccessfulPlanCount;
+		if (mcts.GetStatus(1).SuccessfulPlanCount > 0)
+		{
+		    planRewards[0].Add(mcts.GetStatus(1).PlanSequenceReward/mcts.GetStatus(1).SuccessfulPlanCount);
+		    planLengths[0].Add(mcts.GetStatus(1).PlanSequenceLength*1.0/mcts.GetStatus(1).SuccessfulPlanCount);
+		}
+		planCounts[1] += mcts.GetStatus(2).SuccessfulPlanCount;
+		if (mcts.GetStatus(2).SuccessfulPlanCount > 0)
+		{
+		    planRewards[1].Add(mcts.GetStatus(2).PlanSequenceReward/mcts.GetStatus(2).SuccessfulPlanCount);
+		    planLengths[1].Add(mcts.GetStatus(2).PlanSequenceLength*1.0/mcts.GetStatus(2).SuccessfulPlanCount);
+		}
+	    }
+	}
+	
         if (SearchParams.Verbose >= 1)
         {
             Real.DisplayAction(action, cout);
@@ -176,6 +233,31 @@ void EXPERIMENT::Run()
             undiscountedReturn += reward;
             discountedReturn += reward * discount;
             discount *= Real.GetDiscount();
+	    
+	    if (UpdatePlanStatistics)
+	    {
+		if (SearchParams.MultiAgent)
+		{
+		    if (!outOfParticles)
+		    {
+			planCounts[0] += mcts.GetStatus(1).SuccessfulPlanCount;
+			if (mcts.GetStatus(1).SuccessfulPlanCount > 0)
+			{
+			    planRewards[0].Add(mcts.GetStatus(1).PlanSequenceReward/mcts.GetStatus(1).SuccessfulPlanCount);
+			    planLengths[0].Add(mcts.GetStatus(1).PlanSequenceLength*1.0/mcts.GetStatus(1).SuccessfulPlanCount);
+			}
+		    }
+		    if (!outOfParticles2)
+		    {
+			planCounts[1] += mcts.GetStatus(2).SuccessfulPlanCount;
+			if (mcts.GetStatus(2).SuccessfulPlanCount > 0)
+			{
+			    planRewards[1].Add(mcts.GetStatus(2).PlanSequenceReward/mcts.GetStatus(2).SuccessfulPlanCount);
+			    planLengths[1].Add(mcts.GetStatus(2).PlanSequenceLength*1.0/mcts.GetStatus(2).SuccessfulPlanCount);
+			}
+		    }
+		}
+	    }
 
             if (SearchParams.Verbose >= 1)
             {
@@ -224,6 +306,22 @@ void EXPERIMENT::Run()
         << ", average = " << Results.DiscountedReturn.GetMean() << endl;
     cout << "Undiscounted return = " << undiscountedReturn
         << ", average = " << Results.UndiscountedReturn.GetMean() << endl;
+	
+    if (UpdatePlanStatistics)
+    {
+	for (int i = 0; i < Real.GetNumAgents(); i++)
+	{
+	    Results.SuccessfulPlanCount[i].Add((double) planCounts[i]);
+	    Results.PlanSequenceReward[i].Add(planRewards[i].GetMean());
+	    Results.PlanSequenceLength[i].Add((double) planLengths[i].GetMean());
+	    cout << "Successful Plan Count = " << planCounts[i]
+		<< ", average = " << Results.SuccessfulPlanCount[i].GetMean() << endl;
+	    cout << "Mean Plan Sequence Reward = " << planRewards[i].GetMean()
+		<< ", average = " << Results.PlanSequenceReward[i].GetMean() << endl;
+	    cout << "Mean Plan Sequence Length = " << planLengths[i].GetMean() 
+		<< ", average = " << Results.PlanSequenceLength[i].GetMean() << endl;
+	}
+    }
 }
 
 void EXPERIMENT::MultiRun()
@@ -249,10 +347,18 @@ void EXPERIMENT::DiscountedReturn()
 {
     cout << "Main runs" << endl;
     if (!ExpParams.EnableRewardIterations)
-	OutputFile << "Simulations\tRuns\tUndiscounted return\tUndiscounted error\tDiscounted return\tDiscounted error\tTime\n";
+	OutputFile << "Simulations\tRuns\tUndiscounted return\tUndiscounted error\tDiscounted return\tDiscounted error\tTime\t";
     else
-	OutputFile << "Simulations\tReward Simulations\tRuns\tUndiscounted return\tUndiscounted error\tDiscounted return\tDiscounted error\tTime\n";
-
+	OutputFile << "Simulations\tReward Simulations\tRuns\tUndiscounted return\tUndiscounted error\tDiscounted return\tDiscounted error\tTime\t";
+    
+    if (UpdatePlanStatistics)
+    {
+	for (int k = 0; k < Real.GetNumAgents(); k++)
+	    OutputFile << "Plan Count " << k << "\tError\tPlan Reward " << k << "\tError\tPlan Length " << k << "Error\t"; 
+    }
+    
+    OutputFile << "\n";
+    
     SearchParams.MaxDepth = Simulator.GetHorizon(ExpParams.Accuracy, ExpParams.UndiscountedHorizon);
     ExpParams.SimSteps = Simulator.GetHorizon(ExpParams.Accuracy, ExpParams.UndiscountedHorizon);
     ExpParams.NumSteps = Real.GetHorizon(ExpParams.Accuracy, ExpParams.UndiscountedHorizon);
@@ -296,6 +402,18 @@ void EXPERIMENT::DiscountedReturn()
 		<< "Discounted return = " << Results.DiscountedReturn.GetMean()
 		<< " +- " << Results.DiscountedReturn.GetStdErr() << endl
 		<< "Time = " << Results.Time.GetMean() << endl;
+	    if (UpdatePlanStatistics)
+	    {
+		for (int k = 0; k < Real.GetNumAgents(); k++)
+		{
+		    cout << "Mean Successful Plan Count = " << Results.SuccessfulPlanCount[k].GetMean() 
+			<< " +- " << Results.SuccessfulPlanCount[k].GetStdErr() << endl;
+		    cout << "Mean Plan Sequence Reward = " << Results.PlanSequenceReward[k].GetMean() 
+			<< " +- " << Results.PlanSequenceReward[k].GetStdErr() << endl;
+		    cout << "Mean Plan Sequence Length = " << Results.PlanSequenceLength[k].GetMean() 
+			<< " +- " << Results.PlanSequenceLength[k].GetStdErr() << endl;
+		}
+	    }
 	    OutputFile << SearchParams.NumSimulations << "\t";
 	    if (ExpParams.EnableRewardIterations)
 		OutputFile << SearchParams.NumLearnSimulations << "\t";
@@ -304,7 +422,20 @@ void EXPERIMENT::DiscountedReturn()
 		<< Results.UndiscountedReturn.GetStdErr() << "\t"
 		<< Results.DiscountedReturn.GetMean() << "\t"
 		<< Results.DiscountedReturn.GetStdErr() << "\t"
-		<< Results.Time.GetMean() << endl;
+		<< Results.Time.GetMean() << "\t";
+	    if (UpdatePlanStatistics)
+	    {
+		for (int k = 0; k < Real.GetNumAgents(); k++)
+		{
+		    OutputFile << Results.SuccessfulPlanCount[k].GetMean() << "\t"
+			<< Results.SuccessfulPlanCount[k].GetStdErr() << "\t"
+			<< Results.PlanSequenceReward[k].GetMean() << "\t"
+			<< Results.PlanSequenceReward[k].GetStdErr() << "\t"
+			<< Results.PlanSequenceLength[k].GetMean() << "\t"
+			<< Results.PlanSequenceLength[k].GetStdErr() << "\t";
+		}
+	    }
+	    OutputFile << endl;
 	}
     }
 }

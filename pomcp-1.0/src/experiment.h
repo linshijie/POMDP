@@ -16,6 +16,9 @@ struct RESULTS
     STATISTIC Reward;
     STATISTIC DiscountedReturn;
     STATISTIC UndiscountedReturn;
+    std::vector<STATISTIC> SuccessfulPlanCount;
+    std::vector<STATISTIC> PlanSequenceReward;
+    std::vector<STATISTIC> PlanSequenceLength;
 };
 
 inline void RESULTS::Clear()
@@ -24,6 +27,12 @@ inline void RESULTS::Clear()
     Reward.Clear();
     DiscountedReturn.Clear();
     UndiscountedReturn.Clear();
+    for (int i = 0; i < (int) SuccessfulPlanCount.size(); i++)
+    {
+	SuccessfulPlanCount[i].Clear();
+	PlanSequenceReward[i].Clear();
+	PlanSequenceLength[i].Clear();
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -68,6 +77,7 @@ private:
     RESULTS Results;
 
     std::ofstream OutputFile;
+    bool UpdatePlanStatistics;
 };
 
 //----------------------------------------------------------------------------
