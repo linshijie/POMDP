@@ -180,6 +180,9 @@ public:
     virtual void DisplayAction(int action, std::ostream& ostr) const;
     virtual void DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const;
     virtual void DisplayReward(double reward, std::ostream& ostr) const;
+    
+    virtual void DisplayAgentAction(int action, std::ostream& ostr) const;
+    virtual void DisplayAgentObservation(int observation, std::ostream& ostr) const;
 
     // Accessors
     void SetKnowledge(const KNOWLEDGE& knowledge) { Knowledge = knowledge; }

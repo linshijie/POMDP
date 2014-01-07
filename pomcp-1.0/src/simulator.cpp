@@ -229,6 +229,17 @@ void SIMULATOR::DisplayObservation(const STATE& state, int observation, ostream&
     ostr << "Observation " << observation << endl;
 }
 
+void SIMULATOR::DisplayAgentAction(int action, ostream& ostr) const
+{
+    ostr << "Action " << action << endl;
+}
+
+void SIMULATOR::DisplayAgentObservation(int observation, ostream& ostr) const
+{
+    ostr << "Observation " << observation << endl;
+}
+
+
 void SIMULATOR::DisplayReward(double reward, std::ostream& ostr) const
 {
     ostr << "Reward " << reward << endl;

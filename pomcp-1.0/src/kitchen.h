@@ -5,13 +5,13 @@
 #include <deque>
 
 
-enum ObjectClass {APPLEJUICE = 0, CALGONIT, GRANINI, MEASURINGCUP, RICEBOX, CEREAL, PLATE, CUP, TRAY};
+enum ObjectClass {APPLEJUICE = 0, CALGONIT, GRANINI, MEASURINGCUP, RICEBOX, CEREAL, PLATE, CUP, TRAY, NO_OBJECT};
 
-enum LocationType {CUPBOARD = 9, DISHWASHER, FRIDGE, SIDEBOARD, STOVE, NO_LOCATION};
+enum LocationType {CUPBOARD = 10, DISHWASHER, FRIDGE, SIDEBOARD, STOVE, NO_LOCATION};
 
-enum GripperType {LEFT = 15, RIGHT, NO_GRIPPER};
+enum GripperType {LEFT = 16, RIGHT, NO_GRIPPER};
 
-enum ActionType {CLOSE = 18, GRASP, GRASP_FROM_EDGE, MOVE_ROBOT, NUDGE, OPEN, OPEN_PARTIAL, OPEN_COMPLETE,
+enum ActionType {CLOSE = 19, GRASP, GRASP_FROM_EDGE, MOVE_ROBOT, NUDGE, OPEN, OPEN_PARTIAL, OPEN_COMPLETE,
     PASS_OBJECT, PLACE_UPRIGHT, PUT_DOWN, PUT_IN, REMOVE_FROM, STAY_PUT, GRASP_JOINT, PUT_DOWN_JOINT};
 
 //typedef std::tr1::unordered_map< ObjectClass, int, std::tr1::hash<int> >  hashmap;
@@ -31,6 +31,14 @@ struct KitchenObservation
 {
     std::vector<bool> objectvisible;
     std::vector<bool> agentvisible;
+    
+    LocationType OwnLocation;
+    bool LocationOpen;
+    bool LocationPartiallyOpen;
+    std::vector<bool> AtEdge;
+    std::vector<bool> IsToppled;
+    std::vector<ObjectClass> OwnGripperContents;
+    
 };
 
 class KITCHEN_STATE : public STATE
@@ -78,6 +86,9 @@ public:
     virtual void DisplayAction(int action, std::ostream& ostr) const;
     virtual void DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const;
     
+    virtual void DisplayAgentAction(int action, std::ostream& ostr) const;
+    virtual void DisplayAgentObservation(int observation, std::ostream& ostr) const;
+    
 protected:
     
     int NumPlates;
@@ -94,7 +105,6 @@ protected:
     bool Collision(const KITCHEN_STATE& state, const LocationType& location, const int& index) const;
     bool StepAgent(KITCHEN_STATE& kitchenstate, int action, 
         int& observation, double& reward, const int& index) const;
-    void DisplayActionAgent(int action, std::ostream& ostr) const;
     
     int CerealIndex, Plate1Index, AppleJuiceIndex, TrayIndex;
     //std::tr1::unordered_map< int, int > ObjectIndexMap;

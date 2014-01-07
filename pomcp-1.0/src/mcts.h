@@ -56,6 +56,8 @@ public:
     void DisplayStatistics(std::ostream& ostr, const int& index) const;
     void DisplayValue(int depth, const int& index, std::ostream& ostr) const;
     void DisplayPolicy(int depth, const int& index, std::ostream& ostr) const;
+    
+    void DisplaySequence(std::vector<int> sequence, const int& index) const;
 
     static void UnitTest(const int& index);
     static void InitFastUCB(double exploration);

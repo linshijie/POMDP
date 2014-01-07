@@ -1534,19 +1534,19 @@ void KITCHEN::DisplayAction(int action, std::ostream& ostr) const
 {
     ostr << "Action(s)\n";
     if (NumAgents == 1)
-	DisplayActionAgent(action, ostr);
+	DisplayAgentAction(action, ostr);
     else
     {
 	for (int i = NumAgents-1 ; i >= 0 ; i--)
 	{
 	    ostr << "Robot " << i << ":";
-	    DisplayActionAgent(action/((int) pow(NumAgentActions, i)), ostr);
+	    DisplayAgentAction(action/((int) pow(NumAgentActions, i)), ostr);
 	    action = action%((int) pow(NumAgentActions, i));
 	}
     }
 }
 
-void KITCHEN::DisplayActionAgent(int action, std::ostream& ostr) const
+void KITCHEN::DisplayAgentAction(int action, std::ostream& ostr) const
 {
     KitchenAction ka = IntToAction(action);
     
@@ -1641,27 +1641,35 @@ void KITCHEN::DisplayObservation(const STATE& state, int observation, std::ostre
     {
     
 	ostr << "Robot " << i << ": ";
-	KitchenObservation ko = IntToObservation(observation/((int) pow(NumAgentObservations, i)));
+	int currObservation = observation/((int) pow(NumAgentObservations, i));
 	
-	for (int j = 0 ; j < NumObjects ; j++)
-	{
-	    ostr << ObjectToString(ObjectTypes[j]) << ":" << ko.objectvisible[j];
-	    if (j < NumObjects-1)
-		ostr << ",";
-	    else
-		ostr << "/";
-	}
-	for (int j = 0 ; j < NumAgents ; j++)
-	{
-	    ostr << "Agent " << j << ":" << ko.agentvisible[j];
-	    if (j < NumAgents-1)
-		ostr << ",";
-	}
-	ostr << "\n";    
+	DisplayAgentObservation(observation, ostr);
+	
 	observation = observation%((int) pow(NumAgentObservations, i));
     }
     
     ostr << "\n";
+}
+
+void KITCHEN::DisplayAgentObservation(int observation, std::ostream& ostr) const
+{
+    KitchenObservation ko = IntToObservation(observation);
+	
+    for (int j = 0 ; j < NumObjects ; j++)
+    {
+	ostr << ObjectToString(ObjectTypes[j]) << ":" << ko.objectvisible[j];
+	if (j < NumObjects-1)
+	    ostr << ",";
+	else
+	    ostr << "/";
+    }
+    for (int j = 0 ; j < NumAgents ; j++)
+    {
+	ostr << "Agent " << j << ":" << ko.agentvisible[j];
+	if (j < NumAgents-1)
+	    ostr << ",";
+    }
+    ostr << "\n";    
 }
 
 
@@ -1765,6 +1773,8 @@ std::string KITCHEN::ObjectToString(const ObjectClass& t) const
 	    return "CUP";
 	case(TRAY):
 	    return "TRAY";
+	case(NO_OBJECT):
+	    return "NO_OBJECT";
 	default:
 	    return "INVALID_OBJECT";
     }
