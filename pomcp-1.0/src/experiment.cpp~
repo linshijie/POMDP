@@ -9,7 +9,7 @@ EXPERIMENT::PARAMS::PARAMS()
     SimSteps(100),
     TimeOut(3600),
     MinDoubles(0),
-    MaxDoubles(7),
+    MaxDoubles(6),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(true),
@@ -241,14 +241,20 @@ void EXPERIMENT::Run()
 		    if (!outOfParticles)
 		    {
 			planCounts[0] += mcts.GetStatus(1).SuccessfulPlanCount;
-			planRewards[0].Add(mcts.GetStatus(1).PlanSequenceReward);
-			planLengths[0].Add((double) mcts.GetStatus(1).PlanSequenceLength);
+			if (mcts.GetStatus(1).SuccessfulPlanCount > 0)
+			{
+			    planRewards[0].Add(mcts.GetStatus(1).PlanSequenceReward/mcts.GetStatus(1).SuccessfulPlanCount);
+			    planLengths[0].Add(mcts.GetStatus(1).PlanSequenceLength*1.0/mcts.GetStatus(1).SuccessfulPlanCount);
+			}
 		    }
 		    if (!outOfParticles2)
 		    {
 			planCounts[1] += mcts.GetStatus(2).SuccessfulPlanCount;
-			planRewards[1].Add(mcts.GetStatus(2).PlanSequenceReward);
-			planLengths[1].Add((double) mcts.GetStatus(2).PlanSequenceLength);
+			if (mcts.GetStatus(2).SuccessfulPlanCount > 0)
+			{
+			    planRewards[1].Add(mcts.GetStatus(2).PlanSequenceReward/mcts.GetStatus(2).SuccessfulPlanCount);
+			    planLengths[1].Add(mcts.GetStatus(2).PlanSequenceLength*1.0/mcts.GetStatus(2).SuccessfulPlanCount);
+			}
 		    }
 		}
 	    }

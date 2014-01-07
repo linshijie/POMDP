@@ -322,6 +322,15 @@ void MCTS::UCTSearch(const int& index)
 	Simulator.FreeState(state);
 	Histories[index == 0 ? index : index-1].Truncate(historyDepth);
 	
+	n++;
+	
+	if (Params.RewardAdaptive[index == 0 ? index : index-1])
+	{
+	    //Simulator.FreeReward(rewardTemplate);
+	    Simulator.FreeState(initState);
+	}
+	
+	
 	//if (totalReward > 0)
 	//    DisplaySequence(Statuses[index == 0 ? index : index-1].MainFullSequence, index);
 	
@@ -336,9 +345,13 @@ void MCTS::UCTSearch(const int& index)
 		STATE* tempState = Roots[index == 0 ? index : index-1]->Beliefs().CreateSample(Simulator);
 		double tempRewardTemplateValue = UTILS::Normal(rewardTemplateValue, 1.0);
 		Statuses[index == 0 ? index : index-1].SampledRewardValue = tempRewardTemplateValue;
+		
+		double tempOtherTotalReward = 0.0;
 		TreeDepth = 0;
 		PeakTreeDepth = 0;
-		double tempOtherTotalReward = 0.0;
+		
+		Simulator.Validate(*tempState);
+		
 		
 		Statuses[index == 0 ? index : index-1].LearnSequence.clear();
 		Statuses[index == 0 ? index : index-1].LearnFullSequence.clear();
@@ -350,7 +363,10 @@ void MCTS::UCTSearch(const int& index)
 		
 		Statuses[index == 0 ? index : index-1].Phase = SIMULATOR::STATUS::TREE;
 		
-		double tempTotalReward = SimulateV(*tempState, Roots[index == 0 ? index : index-1], index, tempOtherTotalReward);
+		double tempTotalReward = SimulateV(*tempState, Roots[index == 0 ? index : index-1], index, 
+						   tempOtherTotalReward);
+		
+		n++;
 		
 		StatTotalRewards[index == 0 ? index : index-1].Add(tempTotalReward);
 		StatTreeDepths[index == 0 ? index : index-1].Add(PeakTreeDepth);
@@ -379,7 +395,7 @@ void MCTS::UCTSearch(const int& index)
 		    //std::cout << totalReward << " " << tempTotalReward << " " << index << "\n";
 		    //DisplaySequence(Statuses[index == 0 ? index : index-1].LearnFullSequence, index);
 		    
-		    /**rewardTemplateValue = tempRewardTemplateValue;
+		    rewardTemplateValue = tempRewardTemplateValue;
 		    totalReward = tempTotalReward;
 		    
 		    
@@ -455,25 +471,16 @@ void MCTS::UCTSearch(const int& index)
 		    Statuses[index == 0 ? index : index-1].MainVValueSequence = 
 			    Statuses[index == 0 ? index : index-1].LearnVValueSequence;
 		    Statuses[index == 0 ? index : index-1].MainOtherQValueSequence = 
-			    Statuses[index == 0 ? index : index-1].LearnOtherQValueSequence;*/
+			    Statuses[index == 0 ? index : index-1].LearnOtherQValueSequence;
 		}
 		else
 		    doLearn = false;
-
-		n++;
 	    }
 	    Roots[index == 0 ? index : index-1]->Beliefs().SetRewardSample(rewardTemplateValue, 0);
 	    //Roots[index == 0 ? index : index-1]->Beliefs().AddRewardSample(rewardTemplate);
 	    
 	    Statuses[index == 0 ? index : index-1].SampledRewardValue = rewardTemplateValue;
 	}
-	
-	if (Params.RewardAdaptive[index == 0 ? index : index-1])
-	{
-	    //Simulator.FreeReward(rewardTemplate);
-	    Simulator.FreeState(initState);
-	}
-	n++;
     }
 
     DisplayStatistics(cout, index);
