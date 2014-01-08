@@ -29,15 +29,16 @@ struct KitchenAction
 
 struct KitchenObservation
 {
-    std::vector<bool> objectvisible;
-    std::vector<bool> agentvisible;
+    std::vector<bool> ObjectVisible;
+    std::vector<bool> AgentVisible;
     
     LocationType OwnLocation;
-    bool LocationOpen;
-    bool LocationPartiallyOpen;
+    bool OwnLocationOpen;
+    bool OwnLocationPartiallyOpen;
     std::vector<bool> AtEdge;
     std::vector<bool> IsToppled;
-    std::vector<ObjectClass> OwnGripperContents;
+    int LeftGripperContent;
+    int RightGripperContent;
     
 };
 
@@ -118,7 +119,7 @@ protected:
     std::string ObjectToString(const ObjectClass& t) const;
     std::string GripperToString(const GripperType& t) const;
     int MakeObservation(const KITCHEN_STATE& state, const int& index) const;
-    int ObservatonToInt(const KitchenObservation& ko) const;
+    int ObservationToInt(const KitchenObservation& ko) const;
     KitchenObservation IntToObservation(int observation) const;
     
     bool NonDeterministicActions;

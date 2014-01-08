@@ -26,7 +26,7 @@ MCTS::PARAMS::PARAMS()
     RaveConstant(0.01),
     DoFastUCB(true),
     DisableTree(false),
-    MultiAgent(true),
+    MultiAgent(false),
     RewardOffset(100.0),
     InitialRewardWeight(20.0)
 {
@@ -40,8 +40,8 @@ MCTS::PARAMS::PARAMS()
     MinMax.push_back(false);
     MinMax.push_back(false);
     
-    RewardAdaptive.push_back(true);
-    RewardAdaptive.push_back(true);
+    RewardAdaptive.push_back(false);
+    RewardAdaptive.push_back(false);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
@@ -335,7 +335,7 @@ void MCTS::UCTSearch(const int& index)
 	//    DisplaySequence(Statuses[index == 0 ? index : index-1].MainFullSequence, index);
 	
 	//Statuses[index == 0 ? index : index-1].UpdateValues = false;
-	if (Params.RewardAdaptive[index == 0 ? index : index-1] && totalReward > 0)
+	if (Params.RewardAdaptive[index == 0 ? index : index-1])
 	{
 	    bool doLearn = true;
 	    //for (int i = 0; i < Params.NumLearnSimulations; i++)

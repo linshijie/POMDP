@@ -4,19 +4,19 @@
 using namespace std;
 
 EXPERIMENT::PARAMS::PARAMS()
-:   NumRuns(20),
+:   NumRuns(100),
     NumSteps(100),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(8),
-    MaxDoubles(8),
+    MinDoubles(0),
+    MaxDoubles(1),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(true),
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
-    UndiscountedHorizon(100),
+    UndiscountedHorizon(20),
     AutoExploration(true)
 {
 }
@@ -345,16 +345,17 @@ void EXPERIMENT::MultiRun()
 
 void EXPERIMENT::DiscountedReturn()
 {
+    OutputFile.precision(4);
     cout << "Main runs" << endl;
     if (!ExpParams.EnableRewardIterations)
-	OutputFile << "Simulations\tRuns\tUndiscounted return\tUndiscounted error\tDiscounted return\tDiscounted error\tTime\t";
+	OutputFile << "Simulations,Runs,Undiscounted return,Undiscounted error,Discounted return,Discounted error,Time,";
     else
-	OutputFile << "Simulations\tReward Simulations\tRuns\tUndiscounted return\tUndiscounted error\tDiscounted return\tDiscounted error\tTime\t";
+	OutputFile << "Simulations,Reward Simulations,Runs,Undiscounted return,Undiscounted error,Discounted return,Discounted error,Time,";
     
     if (UpdatePlanStatistics)
     {
 	for (int k = 0; k < Real.GetNumAgents(); k++)
-	    OutputFile << "Plan Count " << k << "\tError\tPlan Reward " << k << "\tError\tPlan Length " << k << "Error\t"; 
+	    OutputFile << "Plan Count " << k << ",Error,Plan Reward " << k << ",Error,Plan Length " << k << ",Error,"; 
     }
     
     OutputFile << "\n";
@@ -414,25 +415,25 @@ void EXPERIMENT::DiscountedReturn()
 			<< " +- " << Results.PlanSequenceLength[k].GetStdErr() << endl;
 		}
 	    }
-	    OutputFile << SearchParams.NumSimulations << "\t";
+	    OutputFile << SearchParams.NumSimulations << ",";
 	    if (ExpParams.EnableRewardIterations)
-		OutputFile << SearchParams.NumLearnSimulations << "\t";
-	    OutputFile << Results.Time.GetCount() << "\t"
-		<< Results.UndiscountedReturn.GetMean() << "\t"
-		<< Results.UndiscountedReturn.GetStdErr() << "\t"
-		<< Results.DiscountedReturn.GetMean() << "\t"
-		<< Results.DiscountedReturn.GetStdErr() << "\t"
-		<< Results.Time.GetMean() << "\t";
+		OutputFile << SearchParams.NumLearnSimulations << ",";
+	    OutputFile << Results.Time.GetCount() << ","
+		<< Results.UndiscountedReturn.GetMean() << ","
+		<< Results.UndiscountedReturn.GetStdErr() << ","
+		<< Results.DiscountedReturn.GetMean() << ","
+		<< Results.DiscountedReturn.GetStdErr() << ","
+		<< Results.Time.GetMean() << ",";
 	    if (UpdatePlanStatistics)
 	    {
 		for (int k = 0; k < Real.GetNumAgents(); k++)
 		{
-		    OutputFile << Results.SuccessfulPlanCount[k].GetMean() << "\t"
-			<< Results.SuccessfulPlanCount[k].GetStdErr() << "\t"
-			<< Results.PlanSequenceReward[k].GetMean() << "\t"
-			<< Results.PlanSequenceReward[k].GetStdErr() << "\t"
-			<< Results.PlanSequenceLength[k].GetMean() << "\t"
-			<< Results.PlanSequenceLength[k].GetStdErr() << "\t";
+		    OutputFile << Results.SuccessfulPlanCount[k].GetMean() << ","
+			<< Results.SuccessfulPlanCount[k].GetStdErr() << ","
+			<< Results.PlanSequenceReward[k].GetMean() << ","
+			<< Results.PlanSequenceReward[k].GetStdErr() << ","
+			<< Results.PlanSequenceLength[k].GetMean() << ","
+			<< Results.PlanSequenceLength[k].GetStdErr() << ",";
 		}
 	    }
 	    OutputFile << endl;

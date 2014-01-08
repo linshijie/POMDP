@@ -4,8 +4,8 @@
 
 KITCHEN::KITCHEN(int nplates, int ncups): 
   NumPlates(nplates), NumCups(ncups), NumLocations(5),
-  LOCATION_OFFSET(static_cast<int>(CUPBOARD)), GRIPPER_OFFSET(static_cast<int>(LEFT)),
-  ACTION_OFFSET(static_cast<int>(CLOSE)),
+  LOCATION_OFFSET(static_cast<int>(CUPBOARD)), 
+  GRIPPER_OFFSET(static_cast<int>(LEFT)), ACTION_OFFSET(static_cast<int>(CLOSE)),
   HaveAppleJuice(false), HaveCalgonit(false), HaveGranini(false),
   HaveMeasuringCup(false), HaveRiceBox(false), HaveCereal(false),
   HaveTray(true),
@@ -74,6 +74,7 @@ KITCHEN::KITCHEN(int nplates, int ncups):
     
     NumAgentActions = NumObjects*(NumLocations*18+4) + 8*NumLocations + NumLocations*NumLocations + 1;
     NumAgentObservations = pow(2,NumObjects)*pow(2,NumAgents);
+	//*NumLocations*2*2*pow(2,NumObjects)*pow(2,NumObjects)*(NumObjects+1)*(NumObjects+1);
     
     NumActions = pow(NumAgentActions, NumAgents);
     NumObservations = pow(NumAgentObservations, NumAgents);
@@ -138,10 +139,10 @@ STATE* KITCHEN::CreateStartState() const
     //first robot location
     kitchenstate->RobotLocations.push_back(SIDEBOARD);
     //kitchenstate->RobotLocations.push_back(static_cast<LocationType>(UTILS::Random(0,NumLocations)+LOCATION_OFFSET));
-    for (int i = 1; i < NumAgents; i++)
-	kitchenstate->RobotLocations.push_back(SIDEBOARD);
+    //for (int i = 1; i < NumAgents; i++)
+	//kitchenstate->RobotLocations.push_back(SIDEBOARD);
 	//kitchenstate->RobotLocations.push_back(static_cast<LocationType>(UTILS::Random(0,NumLocations)+LOCATION_OFFSET));
-    /*for (int i = 1; i < NumAgents; i++)
+    for (int i = 1; i < NumAgents; i++)
     {
 	LocationType agentlocation;
 	do
@@ -149,7 +150,7 @@ STATE* KITCHEN::CreateStartState() const
 	    agentlocation = static_cast<LocationType>(UTILS::Random(0,NumLocations)+LOCATION_OFFSET);
 	}while(Collision(*kitchenstate,agentlocation,i));
 	kitchenstate->RobotLocations.push_back(agentlocation);
-    }*/
+    }
     
     for (int i = 0; i < NumObjects; i++)
     {
@@ -694,7 +695,7 @@ bool KITCHEN::LocalMove(STATE& state, const HISTORY& history, int stepObs, const
     {
 	KitchenObservation ko = IntToObservation(history[i].Observation);
 	for (int j = 0; j < NumObjects; j++)
-	    if (ko.objectvisible[j])
+	    if (ko.ObjectVisible[j])
 		UnseenObjects.erase(j);
 	     
 	if (kitchenstate.RobotLocations[index] == SIDEBOARD || kitchenstate.RobotLocations[index] == STOVE)
@@ -735,8 +736,13 @@ bool KITCHEN::LocalMove(STATE& state, const HISTORY& history, int stepObs, const
 int KITCHEN::MakeObservation(const KITCHEN_STATE& state, const int& index) const
 {
     KitchenObservation ko;
-    ko.objectvisible.clear();
-    ko.agentvisible.clear();
+    ko.ObjectVisible.clear();
+    ko.AgentVisible.clear();
+    ko.AtEdge.clear();
+    ko.IsToppled.clear();
+    
+    ko.LeftGripperContent = NumObjects;
+    ko.RightGripperContent = NumObjects;
     
     for (int i = 0 ; i < NumObjects ; i++)
     {
@@ -744,56 +750,154 @@ int KITCHEN::MakeObservation(const KITCHEN_STATE& state, const int& index) const
 	    (state.RobotLocations[index] == SIDEBOARD || state.RobotLocations[index] == STOVE ||
 	    state.LocationOpen[state.RobotLocations[index]-LOCATION_OFFSET]))
 	    )
-	    ko.objectvisible.push_back(true);
+	    ko.ObjectVisible.push_back(true);
 	else
-	    ko.objectvisible.push_back(false);
+	    ko.ObjectVisible.push_back(false);
+	
+	ko.AtEdge.push_back(state.AtEdge[i]);
+	ko.IsToppled.push_back(state.IsToppled[i]);
+	
+	if (state.InWhichGripper[i].first == index)
+	{
+	    if (state.InWhichGripper[i].second == LEFT)
+		ko.LeftGripperContent = i;
+	    else if (state.InWhichGripper[i].second == RIGHT)
+		ko.RightGripperContent = i;
+	}
+	    
+	if (ObjectTypes[i] == TRAY && state.TraySecondGripper.first == index)
+	{
+	    if (state.InWhichGripper[i].second == LEFT)
+		ko.LeftGripperContent = i;
+	    else if (state.InWhichGripper[i].second == RIGHT)
+		ko.RightGripperContent = i;
+	}
     }
     
     for (int i = 0 ; i < NumAgents ; i++)
     {
 	if (index == i || state.RobotLocations[i] == state.RobotLocations[index])
-	    ko.agentvisible.push_back(true);
+	    ko.AgentVisible.push_back(true);
 	else
-	    ko.agentvisible.push_back(false);
+	    ko.AgentVisible.push_back(false);
     }
     
-    return ObservatonToInt(ko);
+    ko.OwnLocation = state.RobotLocations[index];
+    ko.OwnLocationOpen = state.LocationOpen[state.RobotLocations[index]-LOCATION_OFFSET];
+    ko.OwnLocationPartiallyOpen = state.LocationPartiallyOpen[state.RobotLocations[index]-LOCATION_OFFSET];
+    
+    
+    
+    
+    return ObservationToInt(ko);
 }
 
-int KITCHEN::ObservatonToInt(const KitchenObservation& ko) const
+int KITCHEN::ObservationToInt(const KitchenObservation& ko) const
 {
     int observation = 0;
     
+    //int atEdgeCount = 0, toppledCount = 0;
+    
     for (int i = 0 ; i < NumObjects ; i++)
     {
-	if (ko.objectvisible[i])
+	if (ko.ObjectVisible[i])
 	    observation += pow(2,i);
+	/*if (ko.IsToppled[i])
+	    toppledCount += pow(2,i);
+	if (ko.AtEdge[i])
+	    atEdgeCount += pow(2,i);*/
     }
     
     int agentcount = 0;
     for (int i = 0 ; i < NumAgents ; i++)
-	if (ko.agentvisible[i])
+	if (ko.AgentVisible[i])
 	    agentcount += pow(2,i);
 	
     observation += agentcount*pow(2,NumObjects);
-  
+    
+    /*observation += (ko.OwnLocation-LOCATION_OFFSET)*pow(2,NumObjects)*pow(2,NumAgents);
+    
+    observation += ((int) ko.OwnLocationOpen)*pow(2,NumObjects)*pow(2,NumAgents)*NumLocations;
+    observation += ((int) ko.OwnLocationPartiallyOpen)*pow(2,NumObjects)*pow(2,NumAgents)*NumLocations*2;
+    
+    observation += atEdgeCount*pow(2,NumObjects)*pow(2,NumAgents)*NumLocations*2*2;
+    observation += toppledCount*pow(2,NumObjects)*pow(2,NumAgents)*NumLocations*2*2*pow(2,NumObjects);
+    
+    observation += ko.LeftGripperContent
+		*pow(2,NumObjects)*pow(2,NumAgents)*NumLocations*2*2*pow(2,NumObjects)*pow(2,NumObjects);
+		
+    observation += ko.RightGripperContent
+	    *pow(2,NumObjects)*pow(2,NumAgents)*NumLocations*2*2*pow(2,NumObjects)*pow(2,NumObjects)*(NumObjects+1);*/
+	    
     return observation;
 }
 
 KitchenObservation KITCHEN::IntToObservation(int observation) const
 {
     KitchenObservation ko;
-    ko.objectvisible.clear();
-    ko.agentvisible.clear();
+    ko.ObjectVisible.clear();
+    ko.AgentVisible.clear();
+    ko.AtEdge.clear();
+    ko.IsToppled.clear();
+    
+    /*ko.RightGripperContent = observation/((int) (pow(2,NumObjects)*pow(2,NumAgents)*
+	    NumLocations*2*2*pow(2,NumObjects)*pow(2,NumObjects)*(NumObjects+1)));
+    
+    observation = observation%((int) (pow(2,NumObjects)*pow(2,NumAgents)*
+	    NumLocations*2*2*pow(2,NumObjects)*pow(2,NumObjects)*(NumObjects+1)));
+    
+    ko.LeftGripperContent = observation/((int) (pow(2,NumObjects)*pow(2,NumAgents)*
+	    NumLocations*2*2*pow(2,NumObjects)*pow(2,NumObjects)));
+    
+    observation = observation%((int) (pow(2,NumObjects)*pow(2,NumAgents)*
+	    NumLocations*2*2*pow(2,NumObjects)*pow(2,NumObjects)));
+    
+    int toppledCount = observation/((int) (pow(2,NumObjects)*pow(2,NumAgents)*
+	    NumLocations*2*2*pow(2,NumObjects))); 
+    for (int i = 0 ; i < NumAgents ; i++)
+    {
+	if (toppledCount%2 == 1)
+	    ko.IsToppled.push_back(true);
+	else
+	    ko.IsToppled.push_back(false);
+	toppledCount = toppledCount >> 1;
+    }
+    
+    observation = observation%((int) (pow(2,NumObjects)*pow(2,NumAgents)*
+	    NumLocations*2*2*pow(2,NumObjects)));
+    
+    int atEdgeCount = observation/((int) (pow(2,NumObjects)*pow(2,NumAgents)*
+	    NumLocations*2*2));
+    for (int i = 0 ; i < NumAgents ; i++)
+    {
+	if (atEdgeCount%2 == 1)
+	    ko.AtEdge.push_back(true);
+	else
+	    ko.AtEdge.push_back(false);
+	atEdgeCount = atEdgeCount >> 1;
+    }
+    
+    observation = observation%((int) (pow(2,NumObjects)*pow(2,NumAgents)*NumLocations*2*2));
+    
+    ko.OwnLocationPartiallyOpen = (bool) observation/((int) (pow(2,NumObjects)*pow(2,NumAgents)*NumLocations*2));
+    
+    observation = observation%((int) (pow(2,NumObjects)*pow(2,NumAgents)*NumLocations*2));
+    
+    ko.OwnLocationOpen = (bool) observation/((int) (pow(2,NumObjects)*pow(2,NumAgents)*NumLocations));
+    
+    observation = observation%((int) (pow(2,NumObjects)*pow(2,NumAgents)*NumLocations));
+    
+    ko.OwnLocation = IntToLocation(observation/((int) (pow(2,NumObjects)*pow(2,NumAgents))));
+    
+    observation = observation%((int) (pow(2,NumObjects)*pow(2,NumAgents)));*/
     
     int agentcount = observation/((int) pow(2,NumObjects));
-    
     for (int i = 0 ; i < NumAgents ; i++)
     {
 	if (agentcount%2 == 1)
-	    ko.agentvisible.push_back(true);
+	    ko.AgentVisible.push_back(true);
 	else
-	    ko.agentvisible.push_back(false);
+	    ko.AgentVisible.push_back(false);
 	agentcount = agentcount >> 1;
     }
 
@@ -802,9 +906,9 @@ KitchenObservation KITCHEN::IntToObservation(int observation) const
     for (int i = 0 ; i < NumObjects ; i++)
     {
 	if (observation%2 == 1)
-	    ko.objectvisible.push_back(true);
+	    ko.ObjectVisible.push_back(true);
 	else
-	    ko.objectvisible.push_back(false);
+	    ko.ObjectVisible.push_back(false);
 	observation = observation >> 1;
     }
     
@@ -919,8 +1023,8 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
     {
 	if (history.Size() > 0 && NumObservations > 1)
 	{
-	    if (index == status.perspindex || ko.agentvisible[index])
-		ObjectHere.push_back(ko.objectvisible[i]);
+	    if (index == status.perspindex || ko.AgentVisible[index])
+		ObjectHere.push_back(ko.ObjectVisible[i]);
 	    else
 		ObjectHere.push_back(UTILS::RandomDouble(0.0,1.0) < 0.5 ? true : false);
 	}
@@ -936,8 +1040,8 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
 	if (history.Size() > 0 && NumObservations > 1)
 	{
 	    //if (index == status.perspindex) //planning for myself
-		AgentHere.push_back(ko.agentvisible[i]);
-	    //else if (i == status.perspindex || ko.agentvisible[i])
+		AgentHere.push_back(ko.AgentVisible[i]);
+	    //else if (i == status.perspindex || ko.AgentVisible[i])
 		//AgentHere.push_back(true);
 	}
 	else if (history.Size() == 0)
@@ -1657,7 +1761,7 @@ void KITCHEN::DisplayAgentObservation(int observation, std::ostream& ostr) const
 	
     for (int j = 0 ; j < NumObjects ; j++)
     {
-	ostr << ObjectToString(ObjectTypes[j]) << ":" << ko.objectvisible[j];
+	ostr << ObjectToString(ObjectTypes[j]) << ":" << ko.ObjectVisible[j];
 	if (j < NumObjects-1)
 	    ostr << ",";
 	else
@@ -1665,7 +1769,7 @@ void KITCHEN::DisplayAgentObservation(int observation, std::ostream& ostr) const
     }
     for (int j = 0 ; j < NumAgents ; j++)
     {
-	ostr << "Agent " << j << ":" << ko.agentvisible[j];
+	ostr << "Agent " << j << ":" << ko.AgentVisible[j];
 	if (j < NumAgents-1)
 	    ostr << ",";
     }
