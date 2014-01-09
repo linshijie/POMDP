@@ -40,8 +40,8 @@ MCTS::PARAMS::PARAMS()
     MinMax.push_back(false);
     MinMax.push_back(false);
     
-    RewardAdaptive.push_back(false);
-    RewardAdaptive.push_back(false);
+    RewardAdaptive.push_back(true);
+    RewardAdaptive.push_back(true);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
@@ -833,7 +833,8 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 	    if (ucb)
 		q += FastUCB(N, n, logN);
 	    
-	    if (Params.RewardAdaptive[index == 0 ? index : index-1] && Statuses[index == 0 ? index : index-1].LearningPhase) 
+	    if (Params.MultiAgent && 
+		Params.RewardAdaptive[index == 0 ? index : index-1] && Statuses[index == 0 ? index : index-1].LearningPhase) 
 	    {
 		otherq = qnode.OtherAgentValues[0].GetValue();
 		othern = qnode.OtherAgentValues[0].GetCount();

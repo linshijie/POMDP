@@ -8,8 +8,9 @@ KITCHEN::KITCHEN(int nplates, int ncups):
   GRIPPER_OFFSET(static_cast<int>(LEFT)), ACTION_OFFSET(static_cast<int>(CLOSE)),
   HaveAppleJuice(false), HaveCalgonit(false), HaveGranini(false),
   HaveMeasuringCup(false), HaveRiceBox(false), HaveCereal(false),
-  HaveTray(true),
+  HaveTray(false),
   TestCerealInCupboard(false), TestPlate1InDishwasher(false), TestAppleJuiceInFridge(false),
+  TestCerealAndAppleJuice(false), TestTrayAndPlate(false),
   TestTrayOnStove(true),
   NonDeterministicActions(true),
   ProbClose(0.95), ProbGrasp(0.95), ProbGrapsFromEdge(0.95), ProbMove(0.95), ProbNudge(0.95), ProbOpen(0.95),
@@ -20,10 +21,19 @@ KITCHEN::KITCHEN(int nplates, int ncups):
 {
     NumObjects = NumPlates+NumCups;
     
-    if (TestTrayOnStove)
+    if (TestTrayOnStove || TestCerealAndAppleJuice || TestTrayAndPlate)
 	NumAgents = 2;
     else
 	NumAgents = 1;
+    
+    if (TestTrayOnStove || TestTrayAndPlate)
+	HaveTray = true;
+    
+    if (TestCerealInCupboard || TestCerealAndAppleJuice)
+	HaveCereal = true;
+    
+    if (TestAppleJuiceInFridge || TestCerealAndAppleJuice)
+	HaveAppleJuice = true;
     
     ObjectTypes.clear();
     int index = 0;
@@ -406,6 +416,8 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
 	reachedGoal = reachedGoal || IsPlate1InDishwasher(kitchenstate, reward);
     if (TestAppleJuiceInFridge)
 	reachedGoal = reachedGoal || IsAppleJuiceInFridge(kitchenstate, reward);
+    if (TestCerealAndAppleJuice)
+	reachedGoal = reachedGoal || IsCerealAndAppleJuice(kitchenstate, reward);
     if (TestTrayOnStove)
 	reachedGoal = reachedGoal || IsTrayOnStove(kitchenstate, reward);
     
@@ -415,8 +427,8 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
 	reward = -0.1;
     
     //other agent reward
-    if (status.RewardAdaptive)
-	status.CurrOtherReward = UTILS::Normal(status.SampledRewardValue, 1.0);
+    //if (status.RewardAdaptive)
+	//status.CurrOtherReward = UTILS::Normal(status.SampledRewardValue, 1.0);
     
     //if (reachedGoal)
 	//std::cout << "terminal" << status.perspindex << "\n";
@@ -1078,6 +1090,22 @@ bool KITCHEN::IsTrayOnStove(const KITCHEN_STATE& state, double& reward) const
     return false;
 }
 
+bool KITCHEN::IsCerealAndAppleJuice(const KITCHEN_STATE& state, double& reward) const
+{
+    if (IsAppleJuiceInFridge(state, reward) && IsCerealInCupboard(state, reward))
+	return true;
+    reward = -0.1;
+    return false;
+}
+
+bool KITCHEN::IsTrayAndPlate(const KITCHEN_STATE& state, double& reward) const
+{
+    if (IsTrayOnStove(state, reward) && IsPlate1InDishwasher(state, reward))
+	return true;
+    reward = -0.1;
+    return false;
+}
+
 
 void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vector< int >& legal, 
 			    const SIMULATOR::STATUS& status) const
@@ -1231,15 +1259,18 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
     bool doIndividualMoveActions = true;
     
     //Should not do a single-agent move if tray in one of the hands
-    for (int h = 0 ; h < 2 ; h++)
-	if ((kitchenstate.InWhichGripper.at(TrayIndex).first  == index && 
-	    kitchenstate.InWhichGripper.at(TrayIndex).second == h+GRIPPER_OFFSET) || 
-	    (kitchenstate.TraySecondGripper.first  == index && 
-	    kitchenstate.TraySecondGripper.second == h+GRIPPER_OFFSET))
-	{
-	    doIndividualMoveActions = false;
-	    break;
-	}
+    if (NumAgents > 1)
+    {
+	for (int h = 0 ; h < 2 ; h++)
+	    if ((kitchenstate.InWhichGripper.at(TrayIndex).first  == index && 
+		kitchenstate.InWhichGripper.at(TrayIndex).second == h+GRIPPER_OFFSET) || 
+		(kitchenstate.TraySecondGripper.first  == index && 
+		kitchenstate.TraySecondGripper.second == h+GRIPPER_OFFSET))
+	    {
+		doIndividualMoveActions = false;
+		break;
+	    }
+    }
    
     if (doIndividualMoveActions)
 	for (int i = LOCATION_OFFSET ; i < LOCATION_OFFSET + NumLocations ; i++)
@@ -1432,7 +1463,7 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
     legal.push_back(ActionToInt(stay));
 		    
     //Grasp joint actions
-    if (location == SIDEBOARD || location == STOVE)
+    if (NumAgents > 1 && (location == SIDEBOARD || location == STOVE))
 	for (int i = 0; i < NumAgents; i++)
 	   if (i != index && AgentHere[i]) 
 		for (int h = 0 ; h < 2 ; h++)
@@ -1452,7 +1483,7 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
 			    }
 
     //Put down joint actions
-    if (location == SIDEBOARD || location == STOVE)
+    if (NumAgents > 1 && (location == SIDEBOARD || location == STOVE))
 	for (int i = 0; i < NumAgents; i++)
 	   if (i != index && AgentHere[i]) 
 		for (int h = 0 ; h < 2 ; h++)
@@ -1472,7 +1503,7 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
 			}
 			
     //Move joint actions
-    if (location == SIDEBOARD || location == STOVE)
+    if (NumAgents > 1 && (location == SIDEBOARD || location == STOVE))
 	for (int h = 0 ; h < 2 ; h++)
 	    if ((kitchenstate.InWhichGripper.at(TrayIndex).first  == index && 
 		kitchenstate.InWhichGripper.at(TrayIndex).second == h+GRIPPER_OFFSET) || 

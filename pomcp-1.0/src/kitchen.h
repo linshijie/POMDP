@@ -133,12 +133,15 @@ protected:
     
     //GOALS
     bool TestCerealInCupboard, TestPlate1InDishwasher, TestAppleJuiceInFridge;
+    bool TestCerealAndAppleJuice, TestTrayAndPlate;
     bool TestTrayOnStove;
     
     bool IsCerealInCupboard(const KITCHEN_STATE& state, double& reward) const;
     bool IsPlate1InDishwasher(const KITCHEN_STATE& state, double& reward) const;
     bool IsAppleJuiceInFridge(const KITCHEN_STATE& state, double& reward) const;
     bool IsTrayOnStove(const KITCHEN_STATE& state, double& reward) const;
+    bool IsCerealAndAppleJuice(const KITCHEN_STATE& state, double& reward) const;
+    bool IsTrayAndPlate(const KITCHEN_STATE& state, double& reward) const;
     
     double MinReward, MaxReward;
     
