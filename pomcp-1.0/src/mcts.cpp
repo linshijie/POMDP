@@ -24,7 +24,7 @@ MCTS::PARAMS::PARAMS()
     UseRave(false),
     RaveDiscount(1.0),
     RaveConstant(0.01),
-    DoFastUCB(true),
+    DoFastUCB(false),
     DisableTree(false),
     MultiAgent(true),
     RewardOffset(100.0),
@@ -40,8 +40,8 @@ MCTS::PARAMS::PARAMS()
     MinMax.push_back(false);
     MinMax.push_back(false);
     
-    RewardAdaptive.push_back(false);
-    RewardAdaptive.push_back(false);
+    RewardAdaptive.push_back(true);
+    RewardAdaptive.push_back(true);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
@@ -481,7 +481,10 @@ void MCTS::UCTSearch(const int& index)
 	    
 	    Statuses[index == 0 ? index : index-1].SampledRewardValue = rewardTemplateValue;
 	}
+	Statuses[index == 0 ? index : index-1].LearningPhase = false;
     }
+    
+    
 
     DisplayStatistics(cout, index);
 }
