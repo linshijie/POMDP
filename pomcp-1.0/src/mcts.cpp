@@ -40,8 +40,8 @@ MCTS::PARAMS::PARAMS()
     MinMax.push_back(false);
     MinMax.push_back(false);
     
-    RewardAdaptive.push_back(true);
-    RewardAdaptive.push_back(true);
+    RewardAdaptive.push_back(false);
+    RewardAdaptive.push_back(false);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
@@ -335,7 +335,7 @@ void MCTS::UCTSearch(const int& index)
 	//    DisplaySequence(Statuses[index == 0 ? index : index-1].MainFullSequence, index);
 	
 	//Statuses[index == 0 ? index : index-1].UpdateValues = false;
-	if (Params.RewardAdaptive[index == 0 ? index : index-1])
+	if (Params.RewardAdaptive[index == 0 ? index : index-1] && totalReward < 0)
 	{
 	    bool doLearn = true;
 	    //for (int i = 0; i < Params.NumLearnSimulations; i++)
@@ -398,7 +398,7 @@ void MCTS::UCTSearch(const int& index)
 		    rewardTemplateValue = tempRewardTemplateValue;
 		    totalReward = tempTotalReward;
 		    
-		    
+		    /**
 		    //Subtract old values
 		    VNODE* vnode = Roots[index == 0 ? index : index-1];
 		    int indV = (int) Statuses[index == 0 ? index : index-1].MainVValueSequence.size() - 1;
@@ -471,7 +471,7 @@ void MCTS::UCTSearch(const int& index)
 		    Statuses[index == 0 ? index : index-1].MainVValueSequence = 
 			    Statuses[index == 0 ? index : index-1].LearnVValueSequence;
 		    Statuses[index == 0 ? index : index-1].MainOtherQValueSequence = 
-			    Statuses[index == 0 ? index : index-1].LearnOtherQValueSequence;
+			    Statuses[index == 0 ? index : index-1].LearnOtherQValueSequence;*/
 		}
 		else
 		    doLearn = false;
@@ -550,7 +550,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
 {
     int observation;
     double immediateReward, delayedReward = 0;
-    double otherImmediateReward, otherDelayedReward = 0;
+    double otherImmediateReward = 0, otherDelayedReward = 0;
     
     
     if (Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1])
@@ -572,8 +572,8 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     
     bool terminal = Simulator.Step(state, action, observation, immediateReward, Statuses[index == 0 ? index : index-1]);
     
-    if (Params.RewardAdaptive[index == 0 ? index : index-1])
-	otherImmediateReward = Statuses[index == 0 ? index : index-1].CurrOtherReward;
+    if (Params.RewardAdaptive[index == 0 ? index : index-1] && Statuses[index == 0 ? index : index-1].LearningPhase)
+	otherImmediateReward = immediateReward;//Statuses[index == 0 ? index : index-1].CurrOtherReward;
     
     assert(observation >= 0 && observation < Simulator.GetNumObservations());
     Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
@@ -833,14 +833,14 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 	    if (ucb)
 		q += FastUCB(N, n, logN);
 	    
-	    /**if (Params.RewardAdaptive[index == 0 ? index : index-1]) 
+	    if (Params.RewardAdaptive[index == 0 ? index : index-1] && Statuses[index == 0 ? index : index-1].LearningPhase) 
 	    {
 		otherq = qnode.OtherAgentValues[0].GetValue();
 		othern = qnode.OtherAgentValues[0].GetCount();
 		
 		q += otherq;
 		
-	    }*/
+	    }
 
 	    
 	    

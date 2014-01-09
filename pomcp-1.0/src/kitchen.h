@@ -12,7 +12,7 @@ enum LocationType {CUPBOARD = 10, DISHWASHER, FRIDGE, SIDEBOARD, STOVE, NO_LOCAT
 enum GripperType {LEFT = 16, RIGHT, NO_GRIPPER};
 
 enum ActionType {CLOSE = 19, GRASP, GRASP_FROM_EDGE, MOVE_ROBOT, NUDGE, OPEN, OPEN_PARTIAL, OPEN_COMPLETE,
-    PASS_OBJECT, PLACE_UPRIGHT, PUT_DOWN, PUT_IN, REMOVE_FROM, STAY_PUT, GRASP_JOINT, PUT_DOWN_JOINT};
+    PASS_OBJECT, PLACE_UPRIGHT, PUT_DOWN, PUT_IN, REMOVE_FROM, STAY_PUT, GRASP_JOINT, PUT_DOWN_JOINT, MOVE_ROBOT_JOINT};
 
 //typedef std::tr1::unordered_map< ObjectClass, int, std::tr1::hash<int> >  hashmap;
     
@@ -80,6 +80,7 @@ public:
 	std::vector<int>& actions, const STATUS& status, const int& index) const;
     virtual void GeneratePreferredAgent(const STATE& state, const HISTORY& history,
         std::vector<int>& actions, const STATUS& status, const int& index) const;
+	
     void GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HISTORY& history,
         std::vector<int>& legal, const STATUS& status, const int& index, const bool& preferred) const;
 	
@@ -90,12 +91,15 @@ public:
     virtual void DisplayAgentAction(int action, std::ostream& ostr) const;
     virtual void DisplayAgentObservation(int observation, std::ostream& ostr) const;
     
+    virtual bool IsActionMultiagent(const int& action) const;
+    
 protected:
     
     int NumPlates;
     int NumCups;
     int NumLocations;
     std::vector<ObjectClass> ObjectTypes;
+    std::vector<bool> MultiAgentLabels;
     bool IsLocation(const int& l) const { return l >= CUPBOARD && l <= STOVE; }
     bool IsObject(const int& o) const { return o >= APPLEJUICE && o <= CUP; }
     bool IsFlat(const int& o) const { return o == PLATE; }
@@ -125,7 +129,7 @@ protected:
     bool NonDeterministicActions;
     double ProbClose, ProbGrasp, ProbGrapsFromEdge, ProbMove, ProbNudge, ProbOpen, ProbOpenPartial,
 	ProbOpenComplete, ProbPassObject, ProbPlaceUpright, ProbPutDown, ProbPutIn, ProbRemoveFrom,
-	ProbGraspJoint, ProbPutDownJoint, ProbMoveJoint;
+	ProbGraspJoint, ProbPutDownJoint, ProbMoveJoint, ProbToppleOnFailPutDown, ProbToppleOnFailMove;
     
     //GOALS
     bool TestCerealInCupboard, TestPlate1InDishwasher, TestAppleJuiceInFridge;

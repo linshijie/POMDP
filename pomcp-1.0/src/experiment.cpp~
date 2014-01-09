@@ -8,8 +8,8 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(100),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(0),
-    MaxDoubles(6),
+    MinDoubles(8),
+    MaxDoubles(8),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(true),
@@ -29,7 +29,7 @@ EXPERIMENT::EXPERIMENT(const SIMULATOR& real,
     OutputFile(outputFile.c_str()),
     ExpParams(expParams),
     SearchParams(searchParams),
-    UpdatePlanStatistics(true)
+    UpdatePlanStatistics(false)
 {
     Results.SuccessfulPlanCount.clear();
     Results.PlanSequenceReward.clear();

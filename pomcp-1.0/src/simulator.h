@@ -188,6 +188,8 @@ public:
     
     virtual void DisplayAgentAction(int action, std::ostream& ostr) const;
     virtual void DisplayAgentObservation(int observation, std::ostream& ostr) const;
+    
+    virtual bool IsActionMultiagent(const int& action) const;
 
     // Accessors
     void SetKnowledge(const KNOWLEDGE& knowledge) { Knowledge = knowledge; }

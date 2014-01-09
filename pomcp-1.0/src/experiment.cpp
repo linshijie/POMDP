@@ -29,7 +29,7 @@ EXPERIMENT::EXPERIMENT(const SIMULATOR& real,
     OutputFile(outputFile.c_str()),
     ExpParams(expParams),
     SearchParams(searchParams),
-    UpdatePlanStatistics(true)
+    UpdatePlanStatistics(false)
 {
     Results.SuccessfulPlanCount.clear();
     Results.PlanSequenceReward.clear();
