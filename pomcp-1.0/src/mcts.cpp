@@ -70,6 +70,10 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	status.UpdateValues = true;
 	status.LearningPhase = false;
 	status.RolloutLevel = Simulator.GetRolloutLevel();
+	
+	status.MultiAgentPriorValue = Simulator.GetRewardRange();
+	status.MultiAgentPriorCount = 1;//(int) (ceil(sqrt(Params.NumSimulations)));
+	
 	Statuses.push_back(status);
 	//histories
 	HISTORY history;

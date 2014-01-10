@@ -70,6 +70,10 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	status.UpdateValues = true;
 	status.LearningPhase = false;
 	status.RolloutLevel = Simulator.GetRolloutLevel();
+	
+	status.MultiAgentPriorValue = Simulator.GetRewardRange();
+	status.MultiAgentPriorCount = (int) (ceil(sqrt(Params.NumSimulations)));
+	
 	Statuses.push_back(status);
 	//histories
 	HISTORY history;
@@ -272,7 +276,7 @@ void MCTS::UCTSearch(const int& index)
 	STATE* initState;
 	//REWARD_TEMPLATE* rewardTemplate;
 	double rewardTemplateValue;
-	if (Params.RewardAdaptive[index == 0 ? index : index-1])
+	if (Params.MultiAgent && Params.RewardAdaptive[index == 0 ? index : index-1])
 	{
 	    //rewardTemplate = Roots[index == 0 ? index : index-1]->Beliefs().CreateRewardSample(Simulator);
 	    rewardTemplateValue = Roots[index == 0 ? index : index-1]->Beliefs().GetRewardSample(0)->RewardValue;

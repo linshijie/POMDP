@@ -8,8 +8,8 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(100),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(7),
-    MaxDoubles(7),
+    MinDoubles(10),
+    MaxDoubles(10),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(true),
@@ -366,7 +366,6 @@ void EXPERIMENT::DiscountedReturn()
 
     for (int i = ExpParams.MinDoubles; i <= ExpParams.MaxDoubles; i++)
     {
-	
         SearchParams.NumSimulations = 1 << i;
         SearchParams.NumStartStates = 1 << i;
         if (i + ExpParams.TransformDoubles >= 0)

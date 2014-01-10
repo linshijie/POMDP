@@ -14,7 +14,9 @@ SIMULATOR::KNOWLEDGE::KNOWLEDGE()
 SIMULATOR::STATUS::STATUS()
 :   Phase(TREE),
     Particles(CONSISTENT),
-    UpdateValues(true)
+    UpdateValues(true),
+    MultiAgentPriorCount(10),
+    MultiAgentPriorValue(100.0)
 {
 }
 
@@ -180,7 +182,7 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
             qnode.AMAF.Set(0, 0);
 	    if (status.RewardAdaptive && IsActionMultiagent(a))
 		for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
-		    qnode.OtherAgentValues[i].Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
+		    qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
         }
     }
     
@@ -200,7 +202,7 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
             qnode.AMAF.Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
 	    if (status.RewardAdaptive && IsActionMultiagent(a))
 		for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
-		    qnode.OtherAgentValues[i].Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
+		    qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
 	    //for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
 		//qnode.OtherAgentValues[i].Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
         }    

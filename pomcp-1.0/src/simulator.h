@@ -98,6 +98,9 @@ public:
 	std::vector<double> LearnOtherQValueSequence;
 	bool LearningPhase;
 	
+	int MultiAgentPriorCount;
+	double MultiAgentPriorValue;
+	
 	int RolloutLevel;
 	bool UpdateValues;
 	
