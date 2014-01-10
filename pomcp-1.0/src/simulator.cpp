@@ -15,6 +15,7 @@ SIMULATOR::STATUS::STATUS()
 :   Phase(TREE),
     Particles(CONSISTENT),
     UpdateValues(true),
+    TerminalReached(false),
     MultiAgentPriorCount(10),
     MultiAgentPriorValue(100.0)
 {
@@ -125,7 +126,7 @@ int SIMULATOR::SelectRandom(const STATE& state, const HISTORY& history,
 {
     static vector<int> actions;
 
-    if (Knowledge.RolloutLevel >= KNOWLEDGE::SMART || status.RolloutLevel >= KNOWLEDGE::SMART)
+    if (Knowledge.RolloutLevel >= KNOWLEDGE::SMART || status.GeneratePreferred)
     {
         actions.clear();
 	if (index == 0)

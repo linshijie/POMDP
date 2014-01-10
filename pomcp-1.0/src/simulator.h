@@ -97,11 +97,12 @@ public:
 	std::vector<double> LearnVValueSequence;
 	std::vector<double> LearnOtherQValueSequence;
 	bool LearningPhase;
+	bool TerminalReached;
 	
 	int MultiAgentPriorCount;
 	double MultiAgentPriorValue;
 	
-	int RolloutLevel;
+	bool GeneratePreferred;
 	bool UpdateValues;
 	
 	int SuccessfulPlanCount;

@@ -69,10 +69,14 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	status.RewardAdaptive = Params.RewardAdaptive[i];
 	status.UpdateValues = true;
 	status.LearningPhase = false;
-	status.RolloutLevel = Simulator.GetRolloutLevel();
 	
 	status.MultiAgentPriorValue = Simulator.GetRewardRange();
-	status.MultiAgentPriorCount = (int) (ceil(sqrt(Params.NumSimulations)));
+	status.MultiAgentPriorCount = 1;//(int) (ceil(sqrt(Params.NumSimulations)));
+	
+	if (i == 0)
+	    status.GeneratePreferred = false;
+	else
+	    status.GeneratePreferred = false;
 	
 	Statuses.push_back(status);
 	//histories
@@ -273,7 +277,6 @@ void MCTS::UCTSearch(const int& index)
     while (n < Params.NumSimulations)
     {
         STATE* state = Roots[index == 0 ? index : index-1]->Beliefs().CreateSample(Simulator);
-	STATE* initState;
 	//REWARD_TEMPLATE* rewardTemplate;
 	double rewardTemplateValue;
 	if (Params.MultiAgent && Params.RewardAdaptive[index == 0 ? index : index-1])
@@ -281,7 +284,6 @@ void MCTS::UCTSearch(const int& index)
 	    //rewardTemplate = Roots[index == 0 ? index : index-1]->Beliefs().CreateRewardSample(Simulator);
 	    rewardTemplateValue = Roots[index == 0 ? index : index-1]->Beliefs().GetRewardSample(0)->RewardValue;
 	    Statuses[index == 0 ? index : index-1].SampledRewardValue = rewardTemplateValue;
-	    initState = Simulator.Copy(*state);
 	}
         Simulator.Validate(*state);
 	
@@ -304,10 +306,11 @@ void MCTS::UCTSearch(const int& index)
 	double otherTotalReward = 0.0;
 	Statuses[index == 0 ? index : index-1].UpdateValues = true;
 	Statuses[index == 0 ? index : index-1].LearningPhase = false;
+	Statuses[index == 0 ? index : index-1].TerminalReached = false;
         double totalReward = SimulateV(*state, Roots[index == 0 ? index : index-1], index, 
 					otherTotalReward);
 	
-	if (totalReward > 0)
+	if (Statuses[index == 0 ? index : index-1].TerminalReached)
 	{
 	    Statuses[index == 0 ? index : index-1].SuccessfulPlanCount++;
 	    Statuses[index == 0 ? index : index-1].PlanSequenceReward += totalReward;
@@ -328,18 +331,13 @@ void MCTS::UCTSearch(const int& index)
 	
 	n++;
 	
-	if (Params.MultiAgent && Params.RewardAdaptive[index == 0 ? index : index-1])
-	{
-	    //Simulator.FreeReward(rewardTemplate);
-	    Simulator.FreeState(initState);
-	}
-	
 	
 	//if (totalReward > 0)
 	//    DisplaySequence(Statuses[index == 0 ? index : index-1].MainFullSequence, index);
 	
 	//Statuses[index == 0 ? index : index-1].UpdateValues = false;
-	if (Params.MultiAgent && Params.RewardAdaptive[index == 0 ? index : index-1] && totalReward < 0)
+	if (Params.MultiAgent && Params.RewardAdaptive[index == 0 ? index : index-1] && 
+	    !Statuses[index == 0 ? index : index-1].TerminalReached)
 	{
 	    bool doLearn = true;
 	    //for (int i = 0; i < Params.NumLearnSimulations; i++)
@@ -367,6 +365,7 @@ void MCTS::UCTSearch(const int& index)
 		
 		Statuses[index == 0 ? index : index-1].Phase = SIMULATOR::STATUS::TREE;
 		
+		Statuses[index == 0 ? index : index-1].TerminalReached = false;
 		double tempTotalReward = SimulateV(*tempState, Roots[index == 0 ? index : index-1], index, 
 						   tempOtherTotalReward);
 		
@@ -383,7 +382,7 @@ void MCTS::UCTSearch(const int& index)
 		Simulator.FreeState(tempState);
 		Histories[index == 0 ? index : index-1].Truncate(historyDepth);
 		
-		if (tempTotalReward > 0)
+		if (Statuses[index == 0 ? index : index-1].TerminalReached)
 		{
 		    Statuses[index == 0 ? index : index-1].SuccessfulPlanCount++;
 		    Statuses[index == 0 ? index : index-1].PlanSequenceReward += tempTotalReward;
@@ -393,7 +392,7 @@ void MCTS::UCTSearch(const int& index)
 		
 		tempRewardTemplateValue = tempTotalReward;
 		double probRatio = exp(tempTotalReward)/exp(totalReward);
-		if (RandomDouble(0.0, 1.0) < min(1.0, probRatio) && tempTotalReward > 0)
+		if (RandomDouble(0.0, 1.0) < min(1.0, probRatio) && Statuses[index == 0 ? index : index-1].TerminalReached)
 		//if (tempTotalReward > totalReward && tempTotalReward > 0)
 		{
 		    //std::cout << totalReward << " " << tempTotalReward << " " << index << "\n";
@@ -559,7 +558,6 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     
     if (Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1])
     {
-	//Statuses[index == 0 ? index : index-1].RolloutLevel = SIMULATOR::KNOWLEDGE::SMART;
 	if (index == 1)
 	    action = action + 
 		Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 2);
@@ -568,13 +566,14 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
 	    action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),1) + 
 		Simulator.GetNumAgentActions()*action;
 		//Random(Simulator.GetNumAgentActions()) + Simulator.GetNumAgentActions()*action;
-	//Statuses[index == 0 ? index : index-1].RolloutLevel = SIMULATOR::KNOWLEDGE::LEGAL;
     }
 
     if (Simulator.HasAlpha())
         Simulator.UpdateAlpha(qnode, state);
     
     bool terminal = Simulator.Step(state, action, observation, immediateReward, Statuses[index == 0 ? index : index-1]);
+    
+    Statuses[index == 0 ? index : index-1].TerminalReached = terminal;
     
     if (Params.RewardAdaptive[index == 0 ? index : index-1] && Statuses[index == 0 ? index : index-1].LearningPhase)
 	otherImmediateReward = immediateReward;//Statuses[index == 0 ? index : index-1].CurrOtherReward;
@@ -929,6 +928,8 @@ double MCTS::Rollout(STATE& state, const int& index, double otherReward)
 
         int action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 0);
         terminal = Simulator.Step(state, action, observation, reward, Statuses[index == 0 ? index : index-1]);
+	
+	Statuses[index == 0 ? index : index-1].TerminalReached = terminal;
 	    
 	Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
 			      index == 0 ? observation : Simulator.GetAgentObservation(observation, index));
