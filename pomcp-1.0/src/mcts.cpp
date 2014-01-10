@@ -272,7 +272,7 @@ void MCTS::UCTSearch(const int& index)
 	STATE* initState;
 	//REWARD_TEMPLATE* rewardTemplate;
 	double rewardTemplateValue;
-	if (Params.RewardAdaptive[index == 0 ? index : index-1])
+	if (Params.MultiAgent && Params.RewardAdaptive[index == 0 ? index : index-1])
 	{
 	    //rewardTemplate = Roots[index == 0 ? index : index-1]->Beliefs().CreateRewardSample(Simulator);
 	    rewardTemplateValue = Roots[index == 0 ? index : index-1]->Beliefs().GetRewardSample(0)->RewardValue;
@@ -324,7 +324,7 @@ void MCTS::UCTSearch(const int& index)
 	
 	n++;
 	
-	if (Params.RewardAdaptive[index == 0 ? index : index-1])
+	if (Params.MultiAgent && Params.RewardAdaptive[index == 0 ? index : index-1])
 	{
 	    //Simulator.FreeReward(rewardTemplate);
 	    Simulator.FreeState(initState);
@@ -335,7 +335,7 @@ void MCTS::UCTSearch(const int& index)
 	//    DisplaySequence(Statuses[index == 0 ? index : index-1].MainFullSequence, index);
 	
 	//Statuses[index == 0 ? index : index-1].UpdateValues = false;
-	if (Params.RewardAdaptive[index == 0 ? index : index-1] && totalReward < 0)
+	if (Params.MultiAgent && Params.RewardAdaptive[index == 0 ? index : index-1] && totalReward < 0)
 	{
 	    bool doLearn = true;
 	    //for (int i = 0; i < Params.NumLearnSimulations; i++)

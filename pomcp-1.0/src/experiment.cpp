@@ -366,6 +366,7 @@ void EXPERIMENT::DiscountedReturn()
 
     for (int i = ExpParams.MinDoubles; i <= ExpParams.MaxDoubles; i++)
     {
+	
         SearchParams.NumSimulations = 1 << i;
         SearchParams.NumStartStates = 1 << i;
         if (i + ExpParams.TransformDoubles >= 0)
