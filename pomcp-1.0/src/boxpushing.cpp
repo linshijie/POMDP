@@ -13,10 +13,29 @@ BOXPUSHING::BOXPUSHING(int xsize, int ysize, int numsmallboxes, int numlargeboxe
     //NumSmallBoxes = 0;
     NumAgentActions = 4;
     NumAgentObservations = 5;
-    NumActions = NumAgentActions*NumAgentActions;
-    NumObservations = NumAgentObservations*NumAgentObservations;
-    RewardRange = 99.8;
+    
+    NumAgents = 2;
+    
+    NumActions = pow(NumAgentActions, NumAgents);
+    NumObservations = pow(NumAgentObservations, NumAgents);
+    
+    RewardRange = 99.9;
     Discount = 1.0;
+    
+    MultiAgentLabels.clear();
+    for (int i = 0; i < NumAgentActions; i++)
+    {
+	std::vector<bool> labels;
+	labels.clear();
+	for (int j = 0; j < NumAgentObservations; j++)
+	{
+	    if (i == MOVE && j == LARGE_BOX_OBS)
+		labels.push_back(true);
+	    else
+		labels.push_back(false);
+	}
+	MultiAgentLabels.push_back(labels);
+    }
 }
 
 STATE* BOXPUSHING::Copy(const STATE& state) const
@@ -30,7 +49,7 @@ STATE* BOXPUSHING::Copy(const STATE& state) const
 void BOXPUSHING::Validate(const STATE& state) const
 {
     const BOXPUSHING_STATE& bpstate = safe_cast<const BOXPUSHING_STATE&>(state);
-    for (int i=0; i<(int)bpstate.Agents.size(); i++)
+    for (int i = 0; i < (int) bpstate.Agents.size(); i++)
 	assert(Inside(bpstate.Agents[i].Position));
 }
 
@@ -109,7 +128,7 @@ bool BOXPUSHING::Step(STATE& state, int action,
 {
     BOXPUSHING_STATE& bpstate = safe_cast<BOXPUSHING_STATE&>(state);
     
-    int actions[] = {action/NumAgentActions, action%NumAgentActions};
+    int actions[] = {action%NumAgentActions, action/NumAgentActions};
     
     COORD next0 = bpstate.Agents[0].Position + COORD::Compass[bpstate.Agents[0].Direction];
     COORD next1 = bpstate.Agents[1].Position + COORD::Compass[bpstate.Agents[1].Direction];
@@ -149,6 +168,7 @@ bool BOXPUSHING::Step(STATE& state, int action,
 	    MarkCell(bpstate, after1, LARGE_BOX);
 	    bpstate.LargeBoxes[i].Position += COORD::Compass[bpstate.Agents[0].Direction];
 	    if (after0.Y == YSize-1){
+		//std::cout << "large box goal\n";
 		reward = 99.8;
 		bpstate.NumBoxesRemaining--;
 	    }
@@ -161,17 +181,17 @@ bool BOXPUSHING::Step(STATE& state, int action,
     else
     {
 	if (RandomDouble(0.0,1.0) < 0.5)
-	    reward = MoveAgent(bpstate, 0, actions[0]) + MoveAgent(bpstate, 1, actions[1]);
+	    reward = StepAgent(bpstate, 0, actions[0]) + StepAgent(bpstate, 1, actions[1]);
 	else
-	    reward = MoveAgent(bpstate, 1, actions[1]) + MoveAgent(bpstate, 0, actions[0]);
+	    reward = StepAgent(bpstate, 1, actions[1]) + StepAgent(bpstate, 0, actions[0]);
     }
     
-    observation = NumAgentObservations*GetAgentObservation(bpstate, 0) + GetAgentObservation(bpstate, 1);
+    observation = GetAgentObservation(bpstate, 0) + NumAgentObservations*GetAgentObservation(bpstate, 1);
     
     return bpstate.NumBoxesRemaining < NumLargeBoxes+NumSmallBoxes;
 }
 
-double BOXPUSHING::MoveAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agentaction) const
+double BOXPUSHING::StepAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agentaction) const
 {
     switch(agentaction){
 	case(STAY):
@@ -326,6 +346,14 @@ bool BOXPUSHING::LocalMove(STATE& state, const HISTORY& history,
     
 }
 
+bool BOXPUSHING::IsActionMultiagent(const int& action, const int& observation) const
+{
+    if (action >= (int)MultiAgentLabels.size() || action < 0 || observation < 0)
+	return false;
+    return MultiAgentLabels[action][observation];
+}
+
+
 void BOXPUSHING::GenerateLegal(const STATE& state, const HISTORY& history,
         std::vector<int>& legal, const STATUS& status) const
 {
@@ -358,7 +386,7 @@ void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
 }
 
 void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history, 
-    std::vector<int>& actions, const STATUS& status) const
+    std::vector<int>& actions, const STATUS& status, const int& index) const
 {
     for (int a = 0; a < NumAgentActions; a++)
         actions.push_back(a);
@@ -398,7 +426,7 @@ void BOXPUSHING::GeneratePreferredAgentAction(const int& lastObs, std::vector<in
 }
 
 void BOXPUSHING::GeneratePreferredAgent(const STATE& state, const HISTORY& history, 
-    std::vector<int>& actions, const STATUS& status) const
+    std::vector<int>& actions, const STATUS& status, const int& index) const
 {
     if (history.Size() == 0)
         return;
@@ -508,8 +536,8 @@ void BOXPUSHING::DisplayObservation(const STATE& state, int observation, ostream
 {
     string observationNames[5] = {"EMPTY_OBS", "WALL_OBS", "AGENT_OBS", "SMALL_BOX_OBS", "LARGE_BOX_OBS"};
     
-    int observation0 = observation/NumAgentObservations;
-    int observation1 = observation%NumAgentObservations;
+    int observation0 = observation%NumAgentObservations;
+    int observation1 = observation/NumAgentObservations;
     
     ostr << observationNames[observation0] << ", " << observationNames[observation1] << "\n";
 }
@@ -518,8 +546,8 @@ void BOXPUSHING::DisplayAction(int action, std::ostream& ostr) const
 {
     string actionNames[4] = {"STAY", "TURN_CW", "TURN_CCW", "MOVE"};
     
-    int action0 = action/NumAgentActions;
-    int action1 = action%NumAgentActions;
+    int action0 = action%NumAgentActions;
+    int action1 = action/NumAgentActions;
     
     ostr << actionNames[action0] << ", " << actionNames[action1] << "\n";
 }

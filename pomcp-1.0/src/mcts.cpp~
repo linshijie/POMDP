@@ -305,7 +305,7 @@ void MCTS::UCTSearch(const int& index)
         PeakTreeDepth = 0;
 	double otherTotalReward = 0.0;
 	Statuses[index == 0 ? index : index-1].UpdateValues = true;
-	Statuses[index == 0 ? index : index-1].LearningPhase = false;
+	Statuses[index == 0 ? index : index-1].LearningPhase = true;
 	Statuses[index == 0 ? index : index-1].TerminalReached = false;
         double totalReward = SimulateV(*state, Roots[index == 0 ? index : index-1], index, 
 					otherTotalReward);

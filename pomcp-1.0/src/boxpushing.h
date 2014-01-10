@@ -50,14 +50,14 @@ public:
     virtual bool Step(STATE& state, int action, 
         int& observation, double& reward, STATUS& status) const;
         
-    void GeneratePreferred(const STATE& state, const HISTORY& history,
+    virtual void GeneratePreferred(const STATE& state, const HISTORY& history,
         std::vector<int>& actions, const STATUS& status) const;
-    void GeneratePreferredAgent(const STATE& state, const HISTORY& history,
-        std::vector<int>& actions, const STATUS& status) const;
-    void GenerateLegal(const STATE& state, const HISTORY& history,
+    virtual void GeneratePreferredAgent(const STATE& state, const HISTORY& history,
+        std::vector<int>& actions, const STATUS& status, const int& index) const;
+    virtual void GenerateLegal(const STATE& state, const HISTORY& history,
         std::vector<int>& legal, const STATUS& status) const;
-    void GenerateLegalAgent(const STATE& state, const HISTORY& history, 
-	std::vector<int>& actions, const STATUS& status) const;
+    virtual void GenerateLegalAgent(const STATE& state, const HISTORY& history, 
+	std::vector<int>& actions, const STATUS& status, const int& index) const;
     virtual bool LocalMove(STATE& state, const HISTORY& history,
         int stepObs, const STATUS& status) const;
 
@@ -66,11 +66,13 @@ public:
     virtual void DisplayState(const STATE& state, std::ostream& ostr) const;
     virtual void DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const;
     virtual void DisplayAction(int action, std::ostream& ostr) const;
+    
+    virtual bool IsActionMultiagent(const int& action, const int& observation) const;
 
 protected:
 
     int GetAgentObservation(const BOXPUSHING_STATE& bpstate, const int& agentindex) const;
-    double MoveAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agentaction) const;
+    double StepAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agentaction) const;
     bool Collision(const BOXPUSHING_STATE& bpstate, const PUSH_ENTITY& pushentity) const;
     void MarkCell(BOXPUSHING_STATE& bpstate, const COORD& coord, const CellContent& content) const;
     void UnmarkCell(BOXPUSHING_STATE& bpstate, const COORD& coord) const;
@@ -82,6 +84,8 @@ protected:
     int YSize;
     int NumSmallBoxes;
     int NumLargeBoxes;
+    
+    std::vector< std::vector<bool> > MultiAgentLabels;
     
 private:
 

@@ -227,7 +227,7 @@ STATE* KITCHEN::CreateStartState() const
     return kitchenstate;
 }
 
-bool KITCHEN::IsActionMultiagent(const int& action) const
+bool KITCHEN::IsActionMultiagent(const int& action, const int& observation) const
 {
     if (action >= (int)MultiAgentLabels.size() || action < 0)
 	return false;
@@ -1177,9 +1177,9 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
     KitchenObservation ko;
     if (history.Size() > 0 && NumObservations > 1)
     {
-	if (status.jointhistory)
-	    ko = IntToObservation(GetAgentObservation(history.Back().Observation, index));
-	else
+	//if (status.jointhistory)
+	  //  ko = IntToObservation(GetAgentObservation(history.Back().Observation, index));
+	//else
 	    ko = IntToObservation(history.Back().Observation);
     }
     for (int i = 0; i < NumObjects; i++)
@@ -1219,11 +1219,6 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
     {
 	//std::cout << "preferred " << status.perspindex << " " << index << "\n";
 	//assume you only grasp tray with right hand
-	KitchenAction lastka;
-	if (status.jointhistory)
-	    lastka = IntToAction(GetAgentObservation(history.Back().Action, index));
-	else
-	    lastka = IntToAction(history.Back().Action);
 	
 	if (location == SIDEBOARD)
 	{
