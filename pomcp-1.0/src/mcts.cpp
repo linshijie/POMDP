@@ -26,7 +26,7 @@ MCTS::PARAMS::PARAMS()
     RaveConstant(0.01),
     DoFastUCB(false),
     DisableTree(false),
-    MultiAgent(false),
+    MultiAgent(true),
     RewardOffset(100.0),
     InitialRewardWeight(20.0)
 {
@@ -392,7 +392,8 @@ void MCTS::UCTSearch(const int& index)
 		
 		tempRewardTemplateValue = tempTotalReward;
 		double probRatio = exp(tempTotalReward)/exp(totalReward);
-		if (RandomDouble(0.0, 1.0) < min(1.0, probRatio) && Statuses[index == 0 ? index : index-1].TerminalReached)
+		if (RandomDouble(0.0, 1.0) < min(1.0, probRatio) && 
+		    Statuses[index == 0 ? index : index-1].TerminalReached)
 		//if (tempTotalReward > totalReward && tempTotalReward > 0)
 		{
 		    //std::cout << totalReward << " " << tempTotalReward << " " << index << "\n";

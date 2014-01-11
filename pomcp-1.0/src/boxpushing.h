@@ -18,7 +18,7 @@ enum CellContent {NONE = -1, AGENT = 0, SMALL_BOX = 1, LARGE_BOX = 2};
    
 enum ActionTypes {STAY = 0, TURN_CW = 1, TURN_CCW = 2, MOVE = 3};
 
-enum ObservationTypes {EMPTY_OBS = 0, WALL_OBS = 1, AGENT_OBS = 2, SMALL_BOX_OBS = 3, LARGE_BOX_OBS = 4};
+enum ObservationTypes {EMPTY_OBS = 0, WALL_OBS = 1, AGENT_OBS = 2, SMALL_BOX_OBS = 3, LARGE_BOX_OBS = 4, LARGE_BOX_AGENT_OBS = 5};
 
 class BOXPUSHING_STATE : public STATE
 {
@@ -84,6 +84,8 @@ protected:
     int YSize;
     int NumSmallBoxes;
     int NumLargeBoxes;
+    
+    bool RandomiseInitialState;
     
     std::vector< std::vector< std::vector<bool> > > MultiAgentLabels;
     

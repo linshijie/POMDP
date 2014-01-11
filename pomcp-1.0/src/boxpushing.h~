@@ -85,7 +85,9 @@ protected:
     int NumSmallBoxes;
     int NumLargeBoxes;
     
-    std::vector< std::vector<bool> > MultiAgentLabels;
+    bool RandomiseInitialState;
+    
+    std::vector< std::vector< std::vector<bool> > > MultiAgentLabels;
     
 private:
 
