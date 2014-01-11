@@ -26,7 +26,7 @@ MCTS::PARAMS::PARAMS()
     RaveConstant(0.01),
     DoFastUCB(false),
     DisableTree(false),
-    MultiAgent(true),
+    MultiAgent(false),
     RewardOffset(100.0),
     InitialRewardWeight(20.0)
 {
@@ -40,8 +40,8 @@ MCTS::PARAMS::PARAMS()
     MinMax.push_back(false);
     MinMax.push_back(false);
     
-    RewardAdaptive.push_back(true);
-    RewardAdaptive.push_back(true);
+    RewardAdaptive.push_back(false);
+    RewardAdaptive.push_back(false);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)

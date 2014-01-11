@@ -67,7 +67,7 @@ public:
     virtual void DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const;
     virtual void DisplayAction(int action, std::ostream& ostr) const;
     
-    virtual bool IsActionMultiagent(const int& action) const;
+    virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
 
 protected:
 

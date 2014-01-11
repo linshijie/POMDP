@@ -117,7 +117,7 @@ void SIMULATOR::GeneratePreferredAgent(const STATE& state, const HISTORY& histor
 
 }
 
-bool SIMULATOR::IsActionMultiagent(const int& action, const int& observation) const
+bool SIMULATOR::IsActionMultiagent(const int& action, const HISTORY& history) const
 {
     return false;
 }
@@ -183,7 +183,7 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
             QNODE& qnode = vnode->Child(a);
             qnode.Value.Set(0, 0);
             qnode.AMAF.Set(0, 0);
-	    if (status.RewardAdaptive && IsActionMultiagent(a, history.Size() > 0 ? history.Back().Observation : -1))
+	    if (status.RewardAdaptive && IsActionMultiagent(a, history))
 		for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
 		    qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
         }
@@ -203,7 +203,7 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
             QNODE& qnode = vnode->Child(a);
             qnode.Value.Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
             qnode.AMAF.Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
-	    if (status.RewardAdaptive && IsActionMultiagent(a, history.Size() > 0 ? history.Back().Observation : -1))
+	    if (status.RewardAdaptive && IsActionMultiagent(a, history))
 		for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
 		    qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
 	    //for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)

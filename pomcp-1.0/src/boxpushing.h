@@ -67,7 +67,7 @@ public:
     virtual void DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const;
     virtual void DisplayAction(int action, std::ostream& ostr) const;
     
-    virtual bool IsActionMultiagent(const int& action, const int& observation) const;
+    virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
 
 protected:
 
@@ -85,7 +85,7 @@ protected:
     int NumSmallBoxes;
     int NumLargeBoxes;
     
-    std::vector< std::vector<bool> > MultiAgentLabels;
+    std::vector< std::vector< std::vector<bool> > > MultiAgentLabels;
     
 private:
 

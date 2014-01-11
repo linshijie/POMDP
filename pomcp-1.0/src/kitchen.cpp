@@ -227,7 +227,7 @@ STATE* KITCHEN::CreateStartState() const
     return kitchenstate;
 }
 
-bool KITCHEN::IsActionMultiagent(const int& action, const int& observation) const
+bool KITCHEN::IsActionMultiagent(const int& action, const HISTORY& history) const
 {
     if (action >= (int)MultiAgentLabels.size() || action < 0)
 	return false;
