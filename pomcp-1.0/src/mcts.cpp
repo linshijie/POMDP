@@ -40,8 +40,8 @@ MCTS::PARAMS::PARAMS()
     MinMax.push_back(false);
     MinMax.push_back(false);
     
-    RewardAdaptive.push_back(false);
-    RewardAdaptive.push_back(false);
+    RewardAdaptive.push_back(true);
+    RewardAdaptive.push_back(true);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)

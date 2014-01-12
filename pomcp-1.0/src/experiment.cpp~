@@ -8,7 +8,7 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(100),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(11),
+    MinDoubles(0),
     MaxDoubles(13),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),

@@ -9,9 +9,10 @@ BOXPUSHING::BOXPUSHING(int xsize, int ysize, int numsmallboxes, int numlargeboxe
   YSize(ysize),
   NumSmallBoxes(numsmallboxes),
   NumLargeBoxes(numlargeboxes),
-  RandomiseInitialState(true)
+  RandomiseInitialState(false),
+  ResetAtCompletion(true)
 {
-    NumSmallBoxes = 0;
+    //NumSmallBoxes = 0;
     //NumLargeBoxes = 2;
     //XSize = 5;
     
@@ -123,7 +124,7 @@ STATE* BOXPUSHING::CreateStartState() const
 	    //else
 		//pe.Direction = Random(4);
 	    if (!RandomiseInitialState)
-		pe.Position = COORD(i==0 ? 1 : XSize-2, 0);
+		pe.Position = COORD(i==0 ? 0 : XSize-1, 0);
 	    else
 		pe.Position = COORD(i==0? Random(1) : Random(1)+2, 0);
 	    pe.Length = 1;
@@ -218,7 +219,32 @@ bool BOXPUSHING::Step(STATE& state, int action,
     
     observation = obs0 + NumAgentObservations*obs1;
     
-    return bpstate.NumBoxesRemaining == 0;//< NumLargeBoxes+NumSmallBoxes;
+    bool terminated = bpstate.NumBoxesRemaining == 0;//< NumLargeBoxes+NumSmallBoxes;
+    
+    /*if (terminated && ResetAtCompletion)
+    {
+	terminated = false;
+	for (int i = 0; i < NumSmallBoxes; i++)
+	{
+	    bpstate.SmallBoxes[i].Direction = 1;
+	    bpstate.SmallBoxes[i].Position = COORD(i == 0 ? 0 : 3, 1);
+	    bpstate.SmallBoxes[i].Length = 1;
+	}
+	for (int i = 0; i < NumLargeBoxes; i++)
+	{
+	    bpstate.LargeBoxes[i].Direction = 1;
+	    bpstate.LargeBoxes[i].Position = COORD(1, 1);
+	    bpstate.LargeBoxes[i].Length = 1;
+	}
+	for (int i = 0; i < NumAgents; i++)
+	{
+	    bpstate.Agents[i].Direction = i==0?1:3;;
+	    bpstate.Agents[i].Position = COORD(i == 0 ? 1 : XSize-2, 0);
+	    bpstate.Agents[i].Length = 1;
+	}
+    }*/
+    
+    return terminated;
 }
 
 double BOXPUSHING::StepAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agentaction) const
@@ -411,6 +437,11 @@ void BOXPUSHING::GenerateLegal(const STATE& state, const HISTORY& history,
         std::vector<int>& legal, const STATUS& status) const
 {
     //GeneratePreferred(state, history, legal, status);
+    if (history.Size() == 0)
+    {
+	legal.push_back(MOVE + NumAgentActions*MOVE);
+        return;
+    }
     for (int a = 0; a < NumActions; a++)
         legal.push_back(a);
 }
@@ -422,7 +453,7 @@ void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
     
     if (history.Size() == 0)
     {
-	actions.push_back(STAY + NumAgentActions*STAY);
+	actions.push_back(MOVE + NumAgentActions*MOVE);
         return;
     }
     
@@ -446,6 +477,11 @@ void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history,
     std::vector<int>& actions, const STATUS& status, const int& index) const
 {
     //GeneratePreferredAgent(state, history, actions, status, index);
+    if (history.Size() == 0)
+    {
+	actions.push_back(MOVE);
+        return;
+    }
     for (int a = 0; a < NumAgentActions; a++)
         actions.push_back(a);
 }
@@ -493,7 +529,7 @@ void BOXPUSHING::GeneratePreferredAgent(const STATE& state, const HISTORY& histo
 {
     if (history.Size() == 0)
     {
-	actions.push_back(STAY);
+	actions.push_back(MOVE);
         return;
     }
     int lastObs = history.Back().Observation;
