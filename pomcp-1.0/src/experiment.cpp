@@ -4,12 +4,12 @@
 using namespace std;
 
 EXPERIMENT::PARAMS::PARAMS()
-:   NumRuns(100),
-    NumSteps(100),
+:   NumRuns(1000),
+    NumSteps(20),
     SimSteps(100),
     TimeOut(3600),
     MinDoubles(0),
-    MaxDoubles(13),
+    MaxDoubles(10),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(true),
@@ -17,7 +17,8 @@ EXPERIMENT::PARAMS::PARAMS()
     TransformAttempts(1000),
     Accuracy(0.01),
     UndiscountedHorizon(20),
-    AutoExploration(true)
+    AutoExploration(true),
+    BreakOnTerminate(false)
 {
 }
 
@@ -85,12 +86,12 @@ void EXPERIMENT::Run()
 	    planLengths.push_back(s2);
 	}
     }
-	
+
     for (t = 0; t < ExpParams.NumSteps; t++)
     {
-        int observation;
-        double reward;
-        int action;
+	int observation;
+	double reward;
+	int action;
 	int action0 = 0, action1 = 0;
 	if (!SearchParams.MultiAgent)
 	    action = mcts.SelectAction(0);
@@ -105,12 +106,12 @@ void EXPERIMENT::Run()
 	    action = action0 + Simulator.GetNumAgentActions()*action1;
 	}
 	SIMULATOR::STATUS status = mcts.GetStatus(0);
-        terminal = Real.Step(*state, action, observation, reward, status);
+	terminal = Real.Step(*state, action, observation, reward, status);
 
-        Results.Reward.Add(reward);
-        undiscountedReturn += reward;
-        discountedReturn += reward * discount;
-        discount *= Real.GetDiscount();
+	Results.Reward.Add(reward);
+	undiscountedReturn += reward;
+	discountedReturn += reward * discount;
+	discount *= Real.GetDiscount();
 	
 	if (UpdatePlanStatistics)
 	{
@@ -140,20 +141,35 @@ void EXPERIMENT::Run()
 	    }
 	}
 	
-        if (SearchParams.Verbose >= 1)
-        {
-            Real.DisplayAction(action, cout);
-            Real.DisplayState(*state, cout);
-            Real.DisplayObservation(*state, observation, cout);
-            Real.DisplayReward(reward, cout);
+	if (SearchParams.Verbose >= 1)
+	{
+	    Real.DisplayAction(action, cout);
+	    Real.DisplayState(*state, cout);
+	    Real.DisplayObservation(*state, observation, cout);
+	    Real.DisplayReward(reward, cout);
 	    sleep(1);
-        }
+	}
 
-        if (terminal)
-        {
-            cout << "Terminated" << endl;
-            break;
-        }
+	if (terminal)
+	{
+	    cout << "Terminated" << endl;
+	    if (ExpParams.BreakOnTerminate)
+		break;
+	    else
+	    {
+		if (!SearchParams.MultiAgent)
+		    mcts.ClearHistory(0);
+		else
+		{
+		    mcts.ClearHistory(1);
+		    mcts.ClearHistory(2);
+		}
+		state = Real.CreateStartState();
+	    }
+	}
+	
+	if (outOfParticles || outOfParticles2)
+	    break;
 	
 	if (!SearchParams.MultiAgent)
 	    outOfParticles = !mcts.Update(action, observation, reward, 0);
@@ -163,15 +179,15 @@ void EXPERIMENT::Run()
 	    outOfParticles2 = !mcts.Update(action1, Simulator.GetAgentObservation(observation,2), reward, 2);
 	}
 	    
-        if (outOfParticles || outOfParticles2)
-            break;
+	if (outOfParticles || outOfParticles2)
+	    break;
 
-        if (timer.elapsed() > ExpParams.TimeOut)
-        {
-            cout << "Timed out after " << t << " steps in "
-                << Results.Time.GetTotal() << "seconds" << endl;
-            break;
-        }
+	if (timer.elapsed() > ExpParams.TimeOut)
+	{
+	    cout << "Timed out after " << t << " steps in "
+		<< Results.Time.GetTotal() << "seconds" << endl;
+	    break;
+	}
     }
 
     if (outOfParticles || outOfParticles2)
@@ -270,7 +286,21 @@ void EXPERIMENT::Run()
             if (terminal)
             {
                 cout << "Terminated" << endl;
-                break;
+		if (ExpParams.BreakOnTerminate)
+		    break;
+		else
+		{
+		    if (!SearchParams.MultiAgent)
+			mcts.ClearHistory(0);
+		    else
+		    {
+			mcts.ClearHistory(1);
+			mcts.ClearHistory(2);
+		    }
+		    state = Real.CreateStartState();
+		    outOfParticles = false;
+		    outOfParticles2 = false;
+		}
             }
 
             if (!SearchParams.MultiAgent)
@@ -362,7 +392,7 @@ void EXPERIMENT::DiscountedReturn()
     
     SearchParams.MaxDepth = Simulator.GetHorizon(ExpParams.Accuracy, ExpParams.UndiscountedHorizon);
     ExpParams.SimSteps = Simulator.GetHorizon(ExpParams.Accuracy, ExpParams.UndiscountedHorizon);
-    ExpParams.NumSteps = Real.GetHorizon(ExpParams.Accuracy, ExpParams.UndiscountedHorizon);
+    //ExpParams.NumSteps = Real.GetHorizon(ExpParams.Accuracy, ExpParams.UndiscountedHorizon);
 
     for (int i = ExpParams.MinDoubles; i <= ExpParams.MaxDoubles; i++)
     {
@@ -389,8 +419,8 @@ void EXPERIMENT::DiscountedReturn()
 	
 	for (int j = minIter; j < maxIter; j++)
 	{
-	    if (ExpParams.EnableRewardIterations)
-		SearchParams.NumLearnSimulations = 1 << j;
+	    //if (ExpParams.EnableRewardIterations)
+		//SearchParams.NumLearnSimulations = 1 << j;
 	    Results.Clear();
 	    MultiRun();
 

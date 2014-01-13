@@ -78,7 +78,8 @@ protected:
     void UnmarkCell(BOXPUSHING_STATE& bpstate, const COORD& coord) const;
     void MarkPushEntity(BOXPUSHING_STATE& bpstate, const PUSH_ENTITY& pushentity, const CellContent& content) const;
     void UnmarkPushEntity(BOXPUSHING_STATE& bpstate, const PUSH_ENTITY& pushentity) const;
-    void GeneratePreferredAgentAction(const int& lastObs, std::vector<int>& actions) const;
+    void GeneratePreferredAgentAction(const BOXPUSHING_STATE& bpstate, const int& lastObs, 
+				      std::vector<int>& actions, const int& index, const bool& humanDefined) const;
     
     int XSize;
     int YSize;
@@ -87,6 +88,8 @@ protected:
     
     bool RandomiseInitialState;
     bool ResetAtCompletion;
+    double ProbLargeAgentBox;
+    double ProbObservation;
     
     std::vector< std::vector< std::vector<bool> > > MultiAgentLabels;
     

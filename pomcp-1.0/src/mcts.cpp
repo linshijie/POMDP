@@ -13,7 +13,7 @@ MCTS::PARAMS::PARAMS()
 :   Verbose(0),
     MaxDepth(100),
     NumSimulations(1000),
-    NumLearnSimulations(1000),
+    NumLearnSimulations(1),
     NumStartStates(20),
     NumStartRewards(1),
     UseTransforms(false),
@@ -74,9 +74,9 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	status.MultiAgentPriorCount = 1;//(int) (ceil(sqrt(Params.NumSimulations)));
 	
 	if (i == 0)
-	    status.GeneratePreferred = false;
+	    status.HumanDefined = false;
 	else
-	    status.GeneratePreferred = false;
+	    status.HumanDefined = false;
 	
 	Statuses.push_back(status);
 	//histories

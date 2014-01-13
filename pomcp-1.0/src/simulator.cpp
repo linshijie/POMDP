@@ -128,7 +128,7 @@ int SIMULATOR::SelectRandom(const STATE& state, const HISTORY& history,
 {
     static vector<int> actions;
 
-    if (Knowledge.RolloutLevel >= KNOWLEDGE::SMART || status.GeneratePreferred)
+    if (Knowledge.RolloutLevel >= KNOWLEDGE::SMART || status.HumanDefined)
     {
         actions.clear();
 	if (index == 0)

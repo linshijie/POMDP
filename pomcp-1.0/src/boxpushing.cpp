@@ -10,9 +10,11 @@ BOXPUSHING::BOXPUSHING(int xsize, int ysize, int numsmallboxes, int numlargeboxe
   NumSmallBoxes(numsmallboxes),
   NumLargeBoxes(numlargeboxes),
   RandomiseInitialState(false),
-  ResetAtCompletion(true)
+  ResetAtCompletion(false),
+  ProbLargeAgentBox(0.0),
+  ProbObservation(0.9)
 {
-    NumSmallBoxes = 0;
+    //NumSmallBoxes = 0;
     //NumLargeBoxes = 2;
     //XSize = 5;
     
@@ -208,18 +210,7 @@ bool BOXPUSHING::Step(STATE& state, int action,
 	    reward = StepAgent(bpstate, 1, actions[1]) + StepAgent(bpstate, 0, actions[0]);
     }
     
-    int obs0 = GetAgentObservation(bpstate, 0);
-    int obs1 = GetAgentObservation(bpstate, 1);
-    
-    if (obs0 == LARGE_BOX_OBS && obs1 == LARGE_BOX_OBS)
-    {
-	obs0 = LARGE_BOX_AGENT_OBS;
-	obs1 = LARGE_BOX_AGENT_OBS;
-    }
-    
-    observation = obs0 + NumAgentObservations*obs1;
-    
-    bool terminated = bpstate.NumBoxesRemaining == 0;//< NumLargeBoxes+NumSmallBoxes;
+    bool terminated = bpstate.NumBoxesRemaining < NumLargeBoxes+NumSmallBoxes;
     
     /*if (terminated && ResetAtCompletion)
     {
@@ -243,6 +234,17 @@ bool BOXPUSHING::Step(STATE& state, int action,
 	    bpstate.Agents[i].Length = 1;
 	}
     }*/
+    
+    int obs0 = GetAgentObservation(bpstate, 0);
+    int obs1 = GetAgentObservation(bpstate, 1);
+    
+    if (obs0 == LARGE_BOX_OBS && obs1 == LARGE_BOX_OBS && RandomDouble(0.0,1.0) < ProbLargeAgentBox)
+    {
+	obs0 = LARGE_BOX_AGENT_OBS;
+	obs1 = LARGE_BOX_AGENT_OBS;
+    }
+    
+    observation = obs0 + NumAgentObservations*obs1;
     
     return terminated;
 }
@@ -312,6 +314,8 @@ double BOXPUSHING::StepAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agen
 
 int BOXPUSHING::GetAgentObservation(const BOXPUSHING_STATE& bpstate, const int& agentindex) const
 {
+    if (RandomDouble(0.0,1.0) > ProbObservation)
+	return Random(NumAgentObservations);
     PUSH_ENTITY agent = bpstate.Agents[agentindex];
     COORD adjacent = agent.Position + COORD::Compass[agent.Direction];
     if (!bpstate.Cells.Inside(adjacent))
@@ -398,11 +402,11 @@ bool BOXPUSHING::LocalMove(STATE& state, const HISTORY& history,
     int obs0 = GetAgentObservation(bpstate, 0);
     int obs1 = GetAgentObservation(bpstate, 1);
     
-    if (obs0 == LARGE_BOX_OBS && obs1 == LARGE_BOX_OBS)
+    /*if (obs0 == LARGE_BOX_OBS && obs1 == LARGE_BOX_OBS)
     {
 	obs0 = LARGE_BOX_AGENT_OBS;
 	obs1 = LARGE_BOX_AGENT_OBS;
-    }
+    }*/
     
     int simObs = obs0 + NumAgentObservations*obs1;
     
@@ -415,13 +419,15 @@ bool BOXPUSHING::IsActionMultiagent(const int& action, const HISTORY& history) c
 {
     if (history.Size() == 0)
 	return false;
-    if (action == MOVE && history.Back().Observation == LARGE_BOX_AGENT_OBS)
+    if (action == MOVE && (history.Back().Observation == LARGE_BOX_AGENT_OBS || 
+	    (history.Back().Observation == LARGE_BOX_OBS && RandomDouble(0.0,1.0) < 1.0-ProbLargeAgentBox)))
 	return true;
     return false;
     
     /*int t = history.Size();
     if (action >= (int)MultiAgentLabels.size() || action < 0 || t < 2)
 	return false;
+    
     int observation1 = history[t-1].Observation;
     int observation2 = history[t-2].Observation;
     
@@ -437,11 +443,11 @@ void BOXPUSHING::GenerateLegal(const STATE& state, const HISTORY& history,
         std::vector<int>& legal, const STATUS& status) const
 {
     //GeneratePreferred(state, history, legal, status);
-    if (history.Size() == 0)
+    /*if (history.Size() == 0)
     {
 	legal.push_back(MOVE + NumAgentActions*MOVE);
         return;
-    }
+    }*/
     for (int a = 0; a < NumActions; a++)
         legal.push_back(a);
 }
@@ -464,9 +470,9 @@ void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
     std::vector<int> actions0;
     std::vector<int> actions1;
     
-    GeneratePreferredAgentAction(lastObs0, actions0);
+    GeneratePreferredAgentAction(bpstate, lastObs0, actions0, 0, status.HumanDefined);
     //GenerateLegalAgent(state,history,actions1,status);
-    GeneratePreferredAgentAction(lastObs1, actions1);
+    GeneratePreferredAgentAction(bpstate, lastObs1, actions1, 1, status.HumanDefined);
     
     for (int i = 0; i < (int)actions0.size(); i++)
 	for (int j = 0; j < (int)actions1.size(); j++)
@@ -476,22 +482,23 @@ void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
 void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history, 
     std::vector<int>& actions, const STATUS& status, const int& index) const
 {
-    //GeneratePreferredAgent(state, history, actions, status, index);
-    if (history.Size() == 0)
+    GeneratePreferredAgent(state, history, actions, status, index);
+    /*if (history.Size() == 0)
     {
 	actions.push_back(MOVE);
         return;
     }
     for (int a = 0; a < NumAgentActions; a++)
-        actions.push_back(a);
+        actions.push_back(a);*/
 }
 
-void BOXPUSHING::GeneratePreferredAgentAction(const int& lastObs, std::vector<int>& actions) const
-{
+void BOXPUSHING::GeneratePreferredAgentAction(const BOXPUSHING_STATE& bpstate, const int& lastObs, 
+					      std::vector<int>& actions, const int& index, const bool& humanDefined) const
+{ 
     switch(lastObs)
     {
 	case(EMPTY_OBS):
-	    actions.push_back(STAY);
+	    //actions.push_back(STAY);
 	    actions.push_back(TURN_CW);
 	    actions.push_back(TURN_CCW);
 	    actions.push_back(MOVE);
@@ -501,7 +508,7 @@ void BOXPUSHING::GeneratePreferredAgentAction(const int& lastObs, std::vector<in
 	    actions.push_back(TURN_CCW);
 	    break;
 	case(AGENT_OBS):
-	    actions.push_back(STAY);
+	    //actions.push_back(STAY);
 	    actions.push_back(TURN_CW);
 	    actions.push_back(TURN_CCW);
 	    //actions.push_back(MOVE);
@@ -513,11 +520,18 @@ void BOXPUSHING::GeneratePreferredAgentAction(const int& lastObs, std::vector<in
 	    //actions.push_back(STAY);
 	    break;
 	case(LARGE_BOX_OBS):
-	case(LARGE_BOX_AGENT_OBS):
-	    actions.push_back(STAY);
 	    actions.push_back(MOVE);
+	    actions.push_back(STAY);
 	    actions.push_back(TURN_CW);
 	    actions.push_back(TURN_CCW);
+	case(LARGE_BOX_AGENT_OBS):
+	    actions.push_back(MOVE);
+	    if (!humanDefined)
+	    {
+		actions.push_back(STAY);
+		actions.push_back(TURN_CW);
+		actions.push_back(TURN_CCW);
+	    }
 	    break;
 	default:
 	    break;
@@ -530,10 +544,14 @@ void BOXPUSHING::GeneratePreferredAgent(const STATE& state, const HISTORY& histo
     if (history.Size() == 0)
     {
 	actions.push_back(MOVE);
+	    //actions.push_back(STAY);
+	    //actions.push_back(TURN_CW);
+	    //actions.push_back(TURN_CCW);
         return;
     }
+    const BOXPUSHING_STATE& bpstate = safe_cast<const BOXPUSHING_STATE&>(state);
     int lastObs = history.Back().Observation;
-    GeneratePreferredAgentAction(lastObs,actions);
+    GeneratePreferredAgentAction(bpstate, lastObs, actions, index-1, status.HumanDefined);
 }
 
 

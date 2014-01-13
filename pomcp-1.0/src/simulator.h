@@ -102,7 +102,7 @@ public:
 	int MultiAgentPriorCount;
 	double MultiAgentPriorValue;
 	
-	bool GeneratePreferred;
+	bool HumanDefined;
 	bool UpdateValues;
 	
 	int SuccessfulPlanCount;

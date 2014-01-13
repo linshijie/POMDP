@@ -52,6 +52,7 @@ public:
 								    Roots[index]->Beliefs(); }
     const HISTORY& GetHistory(const int& index) const { return index > 0 ? Histories[index-1] : Histories[index]; }
     const SIMULATOR::STATUS& GetStatus(const int& index) const { return index > 0 ? Statuses[index-1] : Statuses[index];}
+    void ClearHistory(const int& index) { Histories[index > 0 ? index-1 : index].Clear(); } 
     void ClearStatistics(const int& index);
     void DisplayStatistics(std::ostream& ostr, const int& index) const;
     void DisplayValue(int depth, const int& index, std::ostream& ostr) const;

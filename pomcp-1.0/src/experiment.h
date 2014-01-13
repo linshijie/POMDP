@@ -57,6 +57,7 @@ public:
         double Accuracy;
         int UndiscountedHorizon;
         bool AutoExploration;
+	bool BreakOnTerminate;
     };
 
     EXPERIMENT(const SIMULATOR& real, const SIMULATOR& simulator, 
