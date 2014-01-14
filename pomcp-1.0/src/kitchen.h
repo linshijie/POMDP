@@ -32,13 +32,15 @@ struct KitchenObservation
     std::vector<bool> ObjectVisible;
     std::vector<bool> AgentVisible;
     
+    std::vector<int> LeftGripperContents;
+    std::vector<int> RightGripperContents;
+    
     LocationType OwnLocation;
     bool OwnLocationOpen;
     bool OwnLocationPartiallyOpen;
     std::vector<bool> AtEdge;
     std::vector<bool> IsToppled;
-    int LeftGripperContent;
-    int RightGripperContent;
+    
     
 };
 
