@@ -82,7 +82,7 @@ public:
         std::vector<int>& actions, const STATUS& status, const int& index) const;
 	
     void GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HISTORY& history,
-        std::vector<int>& actions, const STATUS& status, const int& index, const bool& preferred) const;
+        std::vector<int>& actions, const STATUS& status, const int& index, const bool& humanDefined) const;
 	
     virtual void DisplayState(const STATE& state, std::ostream& ostr) const;
     virtual void DisplayAction(int action, std::ostream& ostr) const;

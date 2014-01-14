@@ -19,6 +19,7 @@ struct RESULTS
     std::vector<STATISTIC> SuccessfulPlanCount;
     std::vector<STATISTIC> PlanSequenceReward;
     std::vector<STATISTIC> PlanSequenceLength;
+    STATISTIC JointGoalCount;
 };
 
 inline void RESULTS::Clear()
@@ -27,6 +28,7 @@ inline void RESULTS::Clear()
     Reward.Clear();
     DiscountedReturn.Clear();
     UndiscountedReturn.Clear();
+    JointGoalCount.Clear();
     for (int i = 0; i < (int) SuccessfulPlanCount.size(); i++)
     {
 	SuccessfulPlanCount[i].Clear();

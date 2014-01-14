@@ -271,6 +271,7 @@ void MCTS::UCTSearch(const int& index)
     Statuses[index == 0 ? index : index-1].SuccessfulPlanCount = 0;
     Statuses[index == 0 ? index : index-1].PlanSequenceReward = 0.0;
     Statuses[index == 0 ? index : index-1].PlanSequenceLength = 0;
+    Statuses[index == 0 ? index : index-1].JointGoalCount = 0;
 
     int n = 0;
     

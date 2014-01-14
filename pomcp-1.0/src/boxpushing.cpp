@@ -195,6 +195,7 @@ bool BOXPUSHING::Step(STATE& state, int action,
 		//std::cout << "large box goal " << status.perspindex << "\n";
 		reward = 99.8;
 		bpstate.NumBoxesRemaining--;
+		status.JointGoalCount++;
 	    }
 	    else
 		reward = -0.2;
@@ -482,14 +483,14 @@ void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
 void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history, 
     std::vector<int>& actions, const STATUS& status, const int& index) const
 {
-    GeneratePreferredAgent(state, history, actions, status, index);
+    //GeneratePreferredAgent(state, history, actions, status, index);
     /*if (history.Size() == 0)
     {
 	actions.push_back(MOVE);
         return;
-    }
+    }*/
     for (int a = 0; a < NumAgentActions; a++)
-        actions.push_back(a);*/
+        actions.push_back(a);
 }
 
 void BOXPUSHING::GeneratePreferredAgentAction(const BOXPUSHING_STATE& bpstate, const int& lastObs, 

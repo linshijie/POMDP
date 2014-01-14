@@ -482,14 +482,14 @@ void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
 void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history, 
     std::vector<int>& actions, const STATUS& status, const int& index) const
 {
-    GeneratePreferredAgent(state, history, actions, status, index);
+    //GeneratePreferredAgent(state, history, actions, status, index);
     /*if (history.Size() == 0)
     {
 	actions.push_back(MOVE);
         return;
-    }
+    }*/
     for (int a = 0; a < NumAgentActions; a++)
-        actions.push_back(a);*/
+        actions.push_back(a);
 }
 
 void BOXPUSHING::GeneratePreferredAgentAction(const BOXPUSHING_STATE& bpstate, const int& lastObs, 
@@ -508,7 +508,7 @@ void BOXPUSHING::GeneratePreferredAgentAction(const BOXPUSHING_STATE& bpstate, c
 	    actions.push_back(TURN_CCW);
 	    break;
 	case(AGENT_OBS):
-	    actions.push_back(STAY);
+	    //actions.push_back(STAY);
 	    actions.push_back(TURN_CW);
 	    actions.push_back(TURN_CCW);
 	    //actions.push_back(MOVE);

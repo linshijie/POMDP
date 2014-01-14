@@ -4,7 +4,7 @@ using namespace std;
 using namespace UTILS;
 
 SIMULATOR::KNOWLEDGE::KNOWLEDGE()
-:   TreeLevel(LEGAL),
+:   TreeLevel(SMART),
     RolloutLevel(LEGAL),
     SmartTreeCount(20),
     SmartTreeValue(100.0)

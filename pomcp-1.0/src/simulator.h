@@ -108,6 +108,8 @@ public:
 	int SuccessfulPlanCount;
 	double PlanSequenceReward;
 	int PlanSequenceLength;
+	
+	int JointGoalCount;
     };
     
     /*struct INITIAL_REWARD_PARAMS

@@ -1126,12 +1126,12 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
     for (int i = 0; i < NumAgents; i++)
     {
 	if (i == 0)
-	    GenerateAgentActions(kitchenstate, history, legal, status, i, false);	  
+	    GenerateAgentActions(kitchenstate, history, legal, status, i, status.HumanDefined);	  
 	else
 	{
 	    std::vector<int> currlegal;
 	    currlegal.clear();
-	    GenerateAgentActions(kitchenstate, history, currlegal, status, i, false);
+	    GenerateAgentActions(kitchenstate, history, currlegal, status, i, status.HumanDefined);
 	    int s = legal.size();
 	    for (int k = (int)currlegal.size()-1 ; k >= 0; k--)
 		for (int j = 0 ; j < s ; j++)
@@ -1156,7 +1156,7 @@ void KITCHEN::GenerateLegalAgent(const STATE& state, const HISTORY& history, std
 
 void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HISTORY& history, 
 			std::vector< int >& actions, const SIMULATOR::STATUS& status, const int& index, 
-			const bool& preferred) const
+			const bool& humanDefined) const
 {
     LocationType location = kitchenstate.RobotLocations[index];
     
@@ -1215,7 +1215,7 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
     }
     
     
-    if (preferred && TestTrayOnStove && status.perspindex == index)
+    if (humanDefined && TestTrayOnStove && status.perspindex == index)
     {
 	//std::cout << "preferred " << status.perspindex << " " << index << "\n";
 	//assume you only grasp tray with right hand
@@ -1641,12 +1641,12 @@ void KITCHEN::GeneratePreferred(const STATE& state, const HISTORY& history,
     for (int i = 0; i < NumAgents; i++)
     {
 	if (i == 0)
-	    GenerateAgentActions(kitchenstate, history, actions, status, i, true);	  
+	    GenerateAgentActions(kitchenstate, history, actions, status, i, status.HumanDefined);	  
 	else
 	{
 	    std::vector<int> currlegal;
 	    currlegal.clear();
-	    GenerateAgentActions(kitchenstate, history, currlegal, status, i, true);
+	    GenerateAgentActions(kitchenstate, history, currlegal, status, i, status.HumanDefined);
 	    int s = actions.size();
 	    for (int k = (int)currlegal.size()-1 ; k >= 0; k--)
 		for (int j = 0 ; j < s ; j++)
@@ -1665,7 +1665,7 @@ void KITCHEN::GeneratePreferredAgent(const STATE& state, const HISTORY& history,
 {
     const KITCHEN_STATE& kitchenstate = safe_cast<const KITCHEN_STATE&>(state);
 
-    GenerateAgentActions(kitchenstate, history, actions, status, index-1, true);
+    GenerateAgentActions(kitchenstate, history, actions, status, index-1, status.HumanDefined);
 }
 
 

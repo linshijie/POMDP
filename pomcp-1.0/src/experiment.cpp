@@ -8,8 +8,8 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(20),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(0),
-    MaxDoubles(10),
+    MinDoubles(9),
+    MaxDoubles(9),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(true),
@@ -71,10 +71,13 @@ void EXPERIMENT::Run()
     if (SearchParams.Verbose >= 1)
         Real.DisplayState(*state, cout);
     
+    double timeFactor = 1.0/Real.GetNumAgents();
+    
     
     std::vector<int> planCounts;
     std::vector<STATISTIC> planRewards;
     std::vector<STATISTIC> planLengths;
+    int jointGoalCount;
     if (UpdatePlanStatistics)
     {
 	for (int i = 0; i < Real.GetNumAgents(); i++)
@@ -106,12 +109,15 @@ void EXPERIMENT::Run()
 	    action = action0 + Simulator.GetNumAgentActions()*action1;
 	}
 	SIMULATOR::STATUS status = mcts.GetStatus(0);
+	status.JointGoalCount = 0;
 	terminal = Real.Step(*state, action, observation, reward, status);
 
 	Results.Reward.Add(reward);
 	undiscountedReturn += reward;
 	discountedReturn += reward * discount;
 	discount *= Real.GetDiscount();
+	
+	jointGoalCount += status.JointGoalCount;
 	
 	if (UpdatePlanStatistics)
 	{
@@ -243,12 +249,15 @@ void EXPERIMENT::Run()
 		action = action0 + Simulator.GetNumAgentActions()*action1;
 	    }
 	    SIMULATOR::STATUS status = mcts.GetStatus(0);
+	    status.JointGoalCount = 0;
             terminal = Real.Step(*state, action, observation, reward, status);
 
             Results.Reward.Add(reward);
             undiscountedReturn += reward;
             discountedReturn += reward * discount;
             discount *= Real.GetDiscount();
+	    
+	    jointGoalCount += status.JointGoalCount;
 	    
 	    if (UpdatePlanStatistics)
 	    {
@@ -329,13 +338,17 @@ void EXPERIMENT::Run()
         }
     }
 
-    Results.Time.Add(timer.elapsed());
+    Results.Time.Add(timer.elapsed()*timeFactor);
     Results.UndiscountedReturn.Add(undiscountedReturn);
     Results.DiscountedReturn.Add(discountedReturn);
+    Results.JointGoalCount.Add(jointGoalCount);
     cout << "Discounted return = " << discountedReturn
         << ", average = " << Results.DiscountedReturn.GetMean() << endl;
     cout << "Undiscounted return = " << undiscountedReturn
         << ", average = " << Results.UndiscountedReturn.GetMean() << endl;
+	
+    if (!ExpParams.BreakOnTerminate)
+	cout << "Total joint goals " << Results.JointGoalCount.GetMean()*Results.JointGoalCount.GetTotal() << endl;
 	
     if (UpdatePlanStatistics)
     {
