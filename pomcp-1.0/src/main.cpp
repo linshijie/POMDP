@@ -42,6 +42,11 @@ int main(int argc, char* argv[])
     string problem, outputfile, policy;
     int size = 1, number = 1, treeknowledge = 1, rolloutknowledge = 1, smarttreecount = 10;
     double smarttreevalue = 1.0;
+    
+    //boxpushing params
+    int numSmallBoxes = 2;
+    double probLargeBoxAgent = 0.0;
+    
 
     options_description desc("Allowed options");
     desc.add_options()
@@ -58,7 +63,7 @@ int main(int argc, char* argv[])
         ("runs", value<int>(&expParams.NumRuns), "number of runs")
         ("accuracy", value<double>(&expParams.Accuracy), "accuracy level used to determine horizon")
         ("horizon", value<int>(&expParams.UndiscountedHorizon), "horizon to use when not discounting")
-        ("num steps", value<int>(&expParams.NumSteps), "number of steps to run when using average reward")
+        ("numsteps", value<int>(&expParams.NumSteps), "number of steps to run when using average reward")
         ("verbose", value<int>(&searchParams.Verbose), "verbosity level")
         ("autoexploration", value<bool>(&expParams.AutoExploration), "Automatically assign UCB exploration constant")
         ("exploration", value<double>(&searchParams.ExplorationConstant), "Manual value for UCB exploration constant")
@@ -74,6 +79,9 @@ int main(int argc, char* argv[])
         ("smarttreevalue", value<double>(&knowledge.SmartTreeValue), "Prior value for preferred actions during smart tree search")
         ("disabletree", value<bool>(&searchParams.DisableTree), "Use 1-ply rollout action selection")
 	("multiagent", value<bool>(&searchParams.MultiAgent), "Distributed decision making")
+	("breakonterminate", value<bool>(&expParams.BreakOnTerminate), "Break the loop when a goal state is reached")
+	("numsmallboxes", value<int>(&numSmallBoxes), "Number of small boxes (boxpushing problem)")
+	("problargeboxagent", value<double>(&probLargeBoxAgent), "Probability of special observation (boxpushing problem)")
         ;
 
     variables_map vm;
@@ -129,8 +137,9 @@ int main(int argc, char* argv[])
     }
     else if (problem == "boxpushing")
     {
-        real = new BOXPUSHING(size, size-1, number, number-1);
-        simulator = new BOXPUSHING(size, size-1, number, number-1);
+	expParams.BreakOnTerminate = false;
+        real = new BOXPUSHING(numSmallBoxes, probLargeBoxAgent);
+        simulator = new BOXPUSHING(numSmallBoxes, probLargeBoxAgent);
     }
     else if (problem == "kitchen")
     {

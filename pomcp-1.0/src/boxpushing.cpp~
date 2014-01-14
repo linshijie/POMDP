@@ -4,14 +4,14 @@
 using namespace std;
 using namespace UTILS;
 
-BOXPUSHING::BOXPUSHING(int xsize, int ysize, int numsmallboxes, int numlargeboxes)
-: XSize(xsize),
-  YSize(ysize),
+BOXPUSHING::BOXPUSHING(int numsmallboxes, double probLargeAgentBox)
+: XSize(4),
+  YSize(3),
   NumSmallBoxes(numsmallboxes),
-  NumLargeBoxes(numlargeboxes),
+  NumLargeBoxes(2),
   RandomiseInitialState(false),
   ResetAtCompletion(false),
-  ProbLargeAgentBox(0.9),
+  ProbLargeAgentBox(0.0),
   ProbObservation(0.9)
 {
     //NumSmallBoxes = 0;

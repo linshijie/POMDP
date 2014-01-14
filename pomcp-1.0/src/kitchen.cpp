@@ -18,7 +18,7 @@ KITCHEN::KITCHEN(int nplates, int ncups):
   ProbPlaceUpright(0.95), ProbPutDown(0.95), ProbPutIn(0.95), ProbRemoveFrom(0.95),
   ProbGraspJoint(0.9), ProbPutDownJoint(0.9), ProbMoveJoint(0.9), 
   ProbToppleOnFailPutDown(false),
-  ProbObservation(0.9)
+  ProbObservation(0.1)
 {
     NumObjects = NumPlates+NumCups;
     
@@ -886,11 +886,20 @@ int KITCHEN::MakeObservation(const KITCHEN_STATE& state, const int& index) const
     {
 	if ((state.ObjectLocations[i] == state.RobotLocations[index] &&
 	    (state.RobotLocations[index] == SIDEBOARD || state.RobotLocations[index] == STOVE ||
-	    state.LocationOpen[state.RobotLocations[index]-LOCATION_OFFSET])) &&
-	    UTILS::RandomDouble(0.0,1.0) < ProbObservation)
-	    ko.ObjectVisible.push_back(true);
+	    state.LocationOpen[state.RobotLocations[index]-LOCATION_OFFSET])))
+	{
+	    if (UTILS::RandomDouble(0.0,1.0) < ProbObservation)
+		ko.ObjectVisible.push_back(true);
+	    else
+		ko.ObjectVisible.push_back(false);
+	}
 	else
-	    ko.ObjectVisible.push_back(false);
+	{
+	    if (UTILS::RandomDouble(0.0,1.0) < ProbObservation)
+		ko.ObjectVisible.push_back(false);
+	    else
+		ko.ObjectVisible.push_back(true);
+	}
 	
 	ko.AtEdge.push_back(state.AtEdge[i]);
 	ko.IsToppled.push_back(state.IsToppled[i]);
@@ -914,11 +923,20 @@ int KITCHEN::MakeObservation(const KITCHEN_STATE& state, const int& index) const
     
     for (int i = 0 ; i < NumAgents ; i++)
     {
-	if ((index == i || state.RobotLocations[i] == state.RobotLocations[index]) && 
-	    UTILS::RandomDouble(0.0,1.0) < ProbObservation)
-	    ko.AgentVisible.push_back(true);
+	if ((index == i || state.RobotLocations[i] == state.RobotLocations[index]))
+	{
+	    if (UTILS::RandomDouble(0.0,1.0) < ProbObservation)
+		ko.AgentVisible.push_back(true);
+	    else
+		ko.AgentVisible.push_back(false);
+	}
 	else
-	    ko.AgentVisible.push_back(false);
+	{
+	    if (UTILS::RandomDouble(0.0,1.0) < ProbObservation)
+		ko.AgentVisible.push_back(false);
+	    else
+		ko.AgentVisible.push_back(true);
+	}
     }
     
     ko.OwnLocation = state.RobotLocations[index];
@@ -1122,6 +1140,10 @@ bool KITCHEN::IsTrayAndPlate(const KITCHEN_STATE& state, double& reward) const
 void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vector< int >& legal, 
 			    const SIMULATOR::STATUS& status) const
 {
+    for (int i = 0; i < NumActions; i++)
+	legal.push_back(i);
+    return; 
+    
     const KITCHEN_STATE& kitchenstate = safe_cast<const KITCHEN_STATE&>(state);
     
     
@@ -1151,6 +1173,10 @@ void KITCHEN::GenerateLegal(const STATE& state, const HISTORY& history, std::vec
 void KITCHEN::GenerateLegalAgent(const STATE& state, const HISTORY& history, std::vector< int >& actions, 
 				 const SIMULATOR::STATUS& status, const int& index) const
 {
+    for (int i = 0; i < NumAgentActions; i++)
+	actions.push_back(i);
+    return; 
+    
     const KITCHEN_STATE& kitchenstate = safe_cast<const KITCHEN_STATE&>(state);
 
     GenerateAgentActions(kitchenstate, history, actions, status, index-1, false);

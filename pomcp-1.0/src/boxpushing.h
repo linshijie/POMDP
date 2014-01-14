@@ -41,7 +41,7 @@ class BOXPUSHING : public SIMULATOR
 {
 public:
 
-    BOXPUSHING(int xsize=4, int ysize=3, int numsmallboxes=2, int numlargeboxes=1);
+    BOXPUSHING(int numsmallboxes=2, double probLargeAgentBox=0.0);
 
     virtual STATE* Copy(const STATE& state) const;
     virtual void Validate(const STATE& state) const;
