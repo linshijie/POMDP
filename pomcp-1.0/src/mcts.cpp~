@@ -40,8 +40,8 @@ MCTS::PARAMS::PARAMS()
     MinMax.push_back(false);
     MinMax.push_back(false);
     
-    RewardAdaptive.push_back(true);
-    RewardAdaptive.push_back(true);
+    RewardAdaptive.push_back(false);
+    RewardAdaptive.push_back(false);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
@@ -72,6 +72,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	
 	status.MultiAgentPriorValue = Simulator.GetRewardRange();
 	status.MultiAgentPriorCount = 1;//(int) (ceil(sqrt(Params.NumSimulations)));
+	status.SmartTreeCount = ((int) sqrt(Params.NumSimulations));
 	
 	if (i == 0)
 	    status.HumanDefined = false;
@@ -271,7 +272,6 @@ void MCTS::UCTSearch(const int& index)
     Statuses[index == 0 ? index : index-1].SuccessfulPlanCount = 0;
     Statuses[index == 0 ? index : index-1].PlanSequenceReward = 0.0;
     Statuses[index == 0 ? index : index-1].PlanSequenceLength = 0;
-    Statuses[index == 0 ? index : index-1].JointGoalCount = 0;
 
     int n = 0;
     

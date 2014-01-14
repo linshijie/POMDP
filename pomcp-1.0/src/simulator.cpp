@@ -159,6 +159,8 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
 {
     static vector<int> actions;
     
+    int legalActionSize = -1;
+    
     if (Knowledge.TreeLevel == KNOWLEDGE::PURE || state == 0)
     {
         vnode->SetChildren(0, 0);
@@ -176,6 +178,8 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
 	    GenerateLegal(*state, history, actions, status);
 	else
 	    GenerateLegalAgent(*state, history, actions, status, index);
+	
+	legalActionSize = (int) actions.size();
 
         for (vector<int>::const_iterator i_action = actions.begin(); i_action != actions.end(); ++i_action)
         {
@@ -196,19 +200,22 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
 	    GeneratePreferred(*state, history, actions, status);
 	else
 	    GeneratePreferredAgent(*state, history, actions, status, index);
-
-        for (vector<int>::const_iterator i_action = actions.begin(); i_action != actions.end(); ++i_action)
-        {
-            int a = *i_action;
-            QNODE& qnode = vnode->Child(a);
-            qnode.Value.Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
-            qnode.AMAF.Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
-	    if (status.RewardAdaptive && IsActionMultiagent(a, history))
-		for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
-		    qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
-	    //for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
-		//qnode.OtherAgentValues[i].Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
-        }    
+	
+	if ((index > 0 && legalActionSize == GetNumAgentActions()) || 
+	    (index == 0 && legalActionSize == GetNumActions())
+	)
+	    for (vector<int>::const_iterator i_action = actions.begin(); i_action != actions.end(); ++i_action)
+	    {
+		int a = *i_action;
+		QNODE& qnode = vnode->Child(a);
+		qnode.Value.Set(status.SmartTreeCount, Knowledge.SmartTreeValue);
+		qnode.AMAF.Set(status.SmartTreeCount, Knowledge.SmartTreeValue);
+		if (status.RewardAdaptive && IsActionMultiagent(a, history))
+		    for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
+			qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
+		//for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
+		    //qnode.OtherAgentValues[i].Set(Knowledge.SmartTreeCount, Knowledge.SmartTreeValue);
+	    }    
     }
 }
 

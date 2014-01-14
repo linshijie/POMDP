@@ -8,11 +8,11 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(20),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(9),
-    MaxDoubles(9),
+    MinDoubles(10),
+    MaxDoubles(10),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
-    EnableRewardIterations(true),
+    EnableRewardIterations(false),
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
@@ -77,7 +77,7 @@ void EXPERIMENT::Run()
     std::vector<int> planCounts;
     std::vector<STATISTIC> planRewards;
     std::vector<STATISTIC> planLengths;
-    int jointGoalCount;
+    int jointGoalCount = 0;
     if (UpdatePlanStatistics)
     {
 	for (int i = 0; i < Real.GetNumAgents(); i++)
@@ -348,7 +348,7 @@ void EXPERIMENT::Run()
         << ", average = " << Results.UndiscountedReturn.GetMean() << endl;
 	
     if (!ExpParams.BreakOnTerminate)
-	cout << "Total joint goals " << Results.JointGoalCount.GetMean()*Results.JointGoalCount.GetCount() << endl;
+	cout << "Total joint goals " << Results.JointGoalCount.GetTotal() << endl;
 	
     if (UpdatePlanStatistics)
     {
@@ -391,9 +391,9 @@ void EXPERIMENT::DiscountedReturn()
     OutputFile.precision(4);
     cout << "Main runs" << endl;
     if (!ExpParams.EnableRewardIterations)
-	OutputFile << "Simulations,Runs,Undiscounted return,Undiscounted error,Discounted return,Discounted error,Time,";
+	OutputFile << "Simulations,Runs,Undiscounted return,Undiscounted error,Discounted return,Discounted error,Time,Joint Goal Count,";
     else
-	OutputFile << "Simulations,Reward Simulations,Runs,Undiscounted return,Undiscounted error,Discounted return,Discounted error,Time,";
+	OutputFile << "Simulations,Reward Simulations,Runs,Undiscounted return,Undiscounted error,Discounted return,Discounted error,Time,Joint Goal Count,";
     
     if (UpdatePlanStatistics)
     {
@@ -445,7 +445,8 @@ void EXPERIMENT::DiscountedReturn()
 		<< " +- " << Results.UndiscountedReturn.GetStdErr() << endl
 		<< "Discounted return = " << Results.DiscountedReturn.GetMean()
 		<< " +- " << Results.DiscountedReturn.GetStdErr() << endl
-		<< "Time = " << Results.Time.GetMean() << endl;
+		<< "Time = " << Results.Time.GetMean() << endl
+		<< "Joint goal count = " << Results.JointGoalCount.GetTotal() << endl;
 	    if (UpdatePlanStatistics)
 	    {
 		for (int k = 0; k < Real.GetNumAgents(); k++)
@@ -466,7 +467,8 @@ void EXPERIMENT::DiscountedReturn()
 		<< Results.UndiscountedReturn.GetStdErr() << ","
 		<< Results.DiscountedReturn.GetMean() << ","
 		<< Results.DiscountedReturn.GetStdErr() << ","
-		<< Results.Time.GetMean() << ",";
+		<< Results.Time.GetMean() << ","
+		<< Results.JointGoalCount.GetTotal() << ",";
 	    if (UpdatePlanStatistics)
 	    {
 		for (int k = 0; k < Real.GetNumAgents(); k++)

@@ -11,7 +11,7 @@ BOXPUSHING::BOXPUSHING(int xsize, int ysize, int numsmallboxes, int numlargeboxe
   NumLargeBoxes(numlargeboxes),
   RandomiseInitialState(false),
   ResetAtCompletion(false),
-  ProbLargeAgentBox(0.0),
+  ProbLargeAgentBox(0.9),
   ProbObservation(0.9)
 {
     //NumSmallBoxes = 0;
@@ -195,6 +195,7 @@ bool BOXPUSHING::Step(STATE& state, int action,
 		//std::cout << "large box goal " << status.perspindex << "\n";
 		reward = 99.8;
 		bpstate.NumBoxesRemaining--;
+		status.JointGoalCount++;
 	    }
 	    else
 		reward = -0.2;

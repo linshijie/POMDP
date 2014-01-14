@@ -101,6 +101,7 @@ public:
 	
 	int MultiAgentPriorCount;
 	double MultiAgentPriorValue;
+	int SmartTreeCount;
 	
 	bool HumanDefined;
 	bool UpdateValues;

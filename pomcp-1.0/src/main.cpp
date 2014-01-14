@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
     EXPERIMENT::PARAMS expParams;
     SIMULATOR::KNOWLEDGE knowledge;
     string problem, outputfile, policy;
-    int size, number, treeknowledge = 1, rolloutknowledge = 1, smarttreecount = 10;
+    int size = 1, number = 1, treeknowledge = 1, rolloutknowledge = 1, smarttreecount = 10;
     double smarttreevalue = 1.0;
 
     options_description desc("Allowed options");

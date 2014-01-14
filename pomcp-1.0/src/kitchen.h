@@ -130,6 +130,8 @@ protected:
     double ProbClose, ProbGrasp, ProbGrapsFromEdge, ProbMove, ProbNudge, ProbOpen, ProbOpenPartial,
 	ProbOpenComplete, ProbPassObject, ProbPlaceUpright, ProbPutDown, ProbPutIn, ProbRemoveFrom,
 	ProbGraspJoint, ProbPutDownJoint, ProbMoveJoint, ProbToppleOnFailPutDown, ProbToppleOnFailMove;
+	
+    double ProbObservation;
     
     //GOALS
     bool TestCerealInCupboard, TestPlate1InDishwasher, TestAppleJuiceInFridge;

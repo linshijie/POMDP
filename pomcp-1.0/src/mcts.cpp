@@ -72,6 +72,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	
 	status.MultiAgentPriorValue = Simulator.GetRewardRange();
 	status.MultiAgentPriorCount = 1;//(int) (ceil(sqrt(Params.NumSimulations)));
+	status.SmartTreeCount = ((int) sqrt(Params.NumSimulations));
 	
 	if (i == 0)
 	    status.HumanDefined = false;

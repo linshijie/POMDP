@@ -17,7 +17,8 @@ KITCHEN::KITCHEN(int nplates, int ncups):
   ProbOpenPartial(0.95), ProbOpenComplete(0.95), ProbPassObject(0.95), 
   ProbPlaceUpright(0.95), ProbPutDown(0.95), ProbPutIn(0.95), ProbRemoveFrom(0.95),
   ProbGraspJoint(0.9), ProbPutDownJoint(0.9), ProbMoveJoint(0.9), 
-  ProbToppleOnFailPutDown(false)
+  ProbToppleOnFailPutDown(false),
+  ProbObservation(0.9)
 {
     NumObjects = NumPlates+NumCups;
     
@@ -885,8 +886,8 @@ int KITCHEN::MakeObservation(const KITCHEN_STATE& state, const int& index) const
     {
 	if ((state.ObjectLocations[i] == state.RobotLocations[index] &&
 	    (state.RobotLocations[index] == SIDEBOARD || state.RobotLocations[index] == STOVE ||
-	    state.LocationOpen[state.RobotLocations[index]-LOCATION_OFFSET]))
-	    )
+	    state.LocationOpen[state.RobotLocations[index]-LOCATION_OFFSET])) &&
+	    UTILS::RandomDouble(0.0,1.0) < ProbObservation)
 	    ko.ObjectVisible.push_back(true);
 	else
 	    ko.ObjectVisible.push_back(false);
@@ -913,7 +914,8 @@ int KITCHEN::MakeObservation(const KITCHEN_STATE& state, const int& index) const
     
     for (int i = 0 ; i < NumAgents ; i++)
     {
-	if (index == i || state.RobotLocations[i] == state.RobotLocations[index])
+	if ((index == i || state.RobotLocations[i] == state.RobotLocations[index]) && 
+	    UTILS::RandomDouble(0.0,1.0) < ProbObservation)
 	    ko.AgentVisible.push_back(true);
 	else
 	    ko.AgentVisible.push_back(false);
