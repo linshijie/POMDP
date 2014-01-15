@@ -33,6 +33,7 @@ MCTS::PARAMS::PARAMS()
     JointQActions.clear();
     MinMax.clear();
     RewardAdaptive.clear();
+    HumanDefined.clear();
     
     JointQActions.push_back(false);
     JointQActions.push_back(false);
@@ -42,6 +43,9 @@ MCTS::PARAMS::PARAMS()
     
     RewardAdaptive.push_back(true);
     RewardAdaptive.push_back(true);
+    
+    HumanDefined.push_back(false);
+    HumanDefined.push_back(false);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
@@ -74,10 +78,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	status.MultiAgentPriorCount = 1;//(int) (ceil(sqrt(Params.NumSimulations)));
 	status.SmartTreeCount = ((int) sqrt(Params.NumSimulations));
 	
-	if (i == 0)
-	    status.HumanDefined = false;
-	else
-	    status.HumanDefined = false;
+	status.HumanDefined = Params.HumanDefined[i];
 	
 	Statuses.push_back(status);
 	//histories

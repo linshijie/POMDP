@@ -47,6 +47,15 @@ int main(int argc, char* argv[])
     int numSmallBoxes = 2;
     double probLargeBoxAgent = 0.0;
     
+    //kitchen params
+    bool testTrayOnStove = true;
+    bool testCerealInCupboard = false;
+    
+    //multiagent experiment params
+    bool rewAdaptive1 = true, rewAdaptive2 = true;
+    bool humanDefined1 = false, humanDefined2 = false;
+    bool random1 = false, random2 = false;
+    
 
     options_description desc("Allowed options");
     desc.add_options()
@@ -82,8 +91,23 @@ int main(int argc, char* argv[])
 	("breakonterminate", value<bool>(&expParams.BreakOnTerminate), "Break the loop when a goal state is reached")
 	("numsmallboxes", value<int>(&numSmallBoxes), "Number of small boxes (boxpushing problem)")
 	("problargeboxagent", value<double>(&probLargeBoxAgent), "Probability of special observation (boxpushing problem)")
+	("testtray", value<bool>(&testTrayOnStove), "Test tray on stove (kitchen problem)")
+	("testcereal", value<bool>(&testCerealInCupboard), "Test cereal in cupboard (kitchen problem)")
+	("rewadaptive1", value<bool>(&rewAdaptive1), "First agent reward-adaptive")
+	("rewadaptive2", value<bool>(&rewAdaptive2), "Second agent reward-adaptive")
+	("humandefined1", value<bool>(&humanDefined1), "First agent human-defined")
+	("humandefined2", value<bool>(&humanDefined2), "Second agent human-defined")
+	("random1", value<bool>(&random1), "First agent random")
+	("random2", value<bool>(&random2), "Second agent random")
         ;
 
+    searchParams.RewardAdaptive[0] = rewAdaptive1;
+    searchParams.RewardAdaptive[0] = rewAdaptive2;
+    searchParams.HumanDefined[0] = humanDefined1;
+    searchParams.HumanDefined[1] = humanDefined2;
+    expParams.RandomActions[0] = random1;
+    expParams.RandomActions[1] = random2;
+	
     variables_map vm;
     store(parse_command_line(argc, argv, desc), vm);
     notify(vm);
@@ -143,8 +167,8 @@ int main(int argc, char* argv[])
     }
     else if (problem == "kitchen")
     {
-	real = new KITCHEN(size, number);
-	simulator = new KITCHEN(size, number);
+	real = new KITCHEN(testTrayOnStove, testCerealInCupboard);
+	simulator = new KITCHEN(testTrayOnStove, testCerealInCupboard);
     }
     else 
     {

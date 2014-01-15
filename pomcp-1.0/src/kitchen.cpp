@@ -2,16 +2,16 @@
 #include <iomanip>
 #include <tr1/unordered_set>
 
-KITCHEN::KITCHEN(int nplates, int ncups): 
-  NumPlates(nplates), NumCups(ncups), NumLocations(5),
+KITCHEN::KITCHEN(bool testTrayOnStove, bool testCerealInCupboard): 
+  NumPlates(0), NumCups(0), NumLocations(5),
   LOCATION_OFFSET(static_cast<int>(CUPBOARD)), 
   GRIPPER_OFFSET(static_cast<int>(LEFT)), ACTION_OFFSET(static_cast<int>(CLOSE)),
   HaveAppleJuice(false), HaveCalgonit(false), HaveGranini(false),
   HaveMeasuringCup(false), HaveRiceBox(false), HaveCereal(false),
   HaveTray(false),
-  TestCerealInCupboard(false), TestPlate1InDishwasher(false), TestAppleJuiceInFridge(false),
+  TestCerealInCupboard(testCerealInCupboard), TestPlate1InDishwasher(false), TestAppleJuiceInFridge(false),
   TestCerealAndAppleJuice(false), TestTrayAndPlate(false),
-  TestTrayOnStove(true),
+  TestTrayOnStove(testTrayOnStove),
   NonDeterministicActions(true),
   ProbClose(0.95), ProbGrasp(0.95), ProbGrapsFromEdge(0.95), ProbMove(0.95), ProbNudge(0.95), ProbOpen(0.95),
   ProbOpenPartial(0.95), ProbOpenComplete(0.95), ProbPassObject(0.95), 

@@ -33,6 +33,7 @@ MCTS::PARAMS::PARAMS()
     JointQActions.clear();
     MinMax.clear();
     RewardAdaptive.clear();
+    HumanDefined.clear();
     
     JointQActions.push_back(false);
     JointQActions.push_back(false);
@@ -40,8 +41,11 @@ MCTS::PARAMS::PARAMS()
     MinMax.push_back(false);
     MinMax.push_back(false);
     
-    RewardAdaptive.push_back(false);
-    RewardAdaptive.push_back(false);
+    RewardAdaptive.push_back(true);
+    RewardAdaptive.push_back(true);
+    
+    HumanDefined.push_back(false);
+    HumanDefined.push_back(false);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)

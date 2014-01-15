@@ -63,7 +63,7 @@ class KITCHEN : public SIMULATOR
 {
 public:
     
-    KITCHEN(int nplates = 1, int ncups = 1);
+    KITCHEN(bool testTrayOnStove = true, bool testCerealInCupboard = true);
     
     virtual STATE* Copy(const STATE& state) const;
     virtual void Validate(const STATE& state) const;

@@ -60,6 +60,7 @@ public:
         int UndiscountedHorizon;
         bool AutoExploration;
 	bool BreakOnTerminate;
+	std::vector<bool> RandomActions;
     };
 
     EXPERIMENT(const SIMULATOR& real, const SIMULATOR& simulator, 

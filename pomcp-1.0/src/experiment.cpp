@@ -8,8 +8,8 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(20),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(9),
-    MaxDoubles(9),
+    MinDoubles(0),
+    MaxDoubles(10),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(false),
@@ -20,6 +20,10 @@ EXPERIMENT::PARAMS::PARAMS()
     AutoExploration(true),
     BreakOnTerminate(true)
 {
+    RandomActions.clear();
+    
+    RandomActions.push_back(false);
+    RandomActions.push_back(false);
 }
 
 EXPERIMENT::EXPERIMENT(const SIMULATOR& real,
@@ -64,7 +68,7 @@ void EXPERIMENT::Run()
     double discountedReturn = 0.0;
     double discount = 1.0;
     bool terminal = false;
-    bool outOfParticles = false, outOfParticles2 = false;
+    bool outOfParticles = ExpParams.RandomActions[0], outOfParticles2 = ExpParams.RandomActions[1];
     int t;
     
     STATE* state = Real.CreateStartState();

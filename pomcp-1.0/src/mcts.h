@@ -33,6 +33,7 @@ public:
 	std::vector<bool> JointQActions;
 	std::vector<bool> MinMax;
 	std::vector<bool> RewardAdaptive;
+	std::vector<bool> HumanDefined;
 	double RewardOffset;
 	double InitialRewardWeight;
     };
