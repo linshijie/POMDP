@@ -1,0 +1,33 @@
+#Boxpushing
+#Experiment 1a - Multiagent planning
+./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.0 --rewadaptive1 true --rewadaptive2 true --outputfile output-box-RewRew.txt
+./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.0 --rewadaptive1 false --rewadaptive2 false --outputfile output-box-NN.txt
+./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.0 --rewadaptive1 false --rewadaptive2 false --random1 true --random2 true --outputfile output-box-RandRand.txt
+#Experiment 1b - Ad-hoc coordination
+./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.0 --rewadaptive1 false --rewadaptive2 false --humandefined1 true --humandefined2 true --outputfile output-box-AdHoc-HH.txt
+./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.0 --rewadaptive1 true --rewadaptive2 false --humandefined1 false --humandefined2 true --outputfile output-box-AdHoc-RewH.txt
+./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.0 --rewadaptive1 false --rewadaptive2 false --humandefined1 false --humandefined2 true --outputfile output-box-AdHoc-NH.txt
+./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.0 --rewadaptive1 true --rewadaptive2 false --humandefined1 false --humandefined2 false --outputfile output-box-AdHoc-RewN.txt
+#Experiment 1c - Ad-hoc coordination with special observation
+./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.9 --rewadaptive1 false --rewadaptive2 false --humandefined1 true --humandefined2 true --outputfile output-box-AdHoc-Special-HH.txt
+./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.9 --rewadaptive1 true --rewadaptive2 false --humandefined1 false --humandefined2 true --outputfile output-box-AdHoc-Special-RewH.txt
+./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.9 --rewadaptive1 false --rewadaptive2 false --humandefined1 false --humandefined2 true --outputfile output-box-AdHoc-Special-NH.txt
+./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.9 --rewadaptive1 true --rewadaptive2 false --humandefined1 false --humandefined2 false --outputfile output-box-AdHoc-Special-RewN.txt
+#Experiment 1d - Multiagent planning with a joint goal only
+#./pomcp --problem boxpushing --numsmallboxes 0 --problargeboxagent 0.0 --rewadaptive1 true --rewadaptive2 true --outputfile output-box-NoSmall-RewRew.txt
+#./pomcp --problem boxpushing --numsmallboxes 0 --problargeboxagent 0.0 --rewadaptive1 false --rewadaptive2 false --outputfile output-box-NoSmall-NN.txt
+#./pomcp --problem boxpushing --numsmallboxes 0 --problargeboxagent 0.0 --rewadaptive1 false --rewadaptive2 false --random1 true --random2 true --outputfile output-box-NoSmall-RandRand.txt
+#Boxpushing
+#Experiment 2a - Multiagent planning
+./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 true --rewadaptive2 true --outputfile output-kitchen-RewRew.txt
+./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 false --rewadaptive2 false --outputfile output-kitchen-NN.txt
+./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 false --rewadaptive2 false --random1 true --random2 true --outputfile output-kitchen-RandRand.txt
+#Experiment 2b - Ad-hoc coordination
+./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 true --rewadaptive2 true --humandefined1 true --humandefined2 true --outputfile output-kitchen-AdHoc-HH.txt
+./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 true --rewadaptive2 false --humandefined1 true --humandefined2 true --outputfile output-kitchen-AdHoc-RewH.txt
+./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 false --rewadaptive2 false --humandefined1 true --humandefined2 true --outputfile output-kitchen-AdHoc-NH.txt
+./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 true --rewadaptive2 false --humandefined1 false --humandefined2 false --outputfile output-kitchen-AdHoc-RewN.txt
+#Experiment 2c - Multiagent planning with multiple goals
+./pomcp --problem kitchen --testtray true --testcereal true --rewadaptive1 true --rewadaptive2 true --outputfile output-kitchen-TwoGoals-RewRew.txt
+./pomcp --problem kitchen --testtray true --testcereal true --rewadaptive1 false --rewadaptive2 false --outputfile output-kitchen-TwoGoals-NN.txt
+./pomcp --problem kitchen --testtray true --testcereal true --rewadaptive1 false --rewadaptive2 false --random1 true --random2 true --outputfile output-kitchen-TwoGoals-RandRand.txt
