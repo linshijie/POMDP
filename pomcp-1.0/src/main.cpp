@@ -101,16 +101,16 @@ int main(int argc, char* argv[])
 	("random2", value<bool>(&random2), "Second agent random")
         ;
 
+    variables_map vm;
+    store(parse_command_line(argc, argv, desc), vm);
+    notify(vm);
+    
     searchParams.RewardAdaptive[0] = rewAdaptive1;
-    searchParams.RewardAdaptive[0] = rewAdaptive2;
+    searchParams.RewardAdaptive[1] = rewAdaptive2;
     searchParams.HumanDefined[0] = humanDefined1;
     searchParams.HumanDefined[1] = humanDefined2;
     expParams.RandomActions[0] = random1;
     expParams.RandomActions[1] = random2;
-	
-    variables_map vm;
-    store(parse_command_line(argc, argv, desc), vm);
-    notify(vm);
 
     if (vm.count("help"))
     {

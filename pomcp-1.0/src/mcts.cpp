@@ -105,6 +105,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	STATE* state = Simulator.CreateStartState();
 	root = ExpandNode(state, Params.MultiAgent ? i+1 : i, Params.MultiAgent ? i+1 : i);
 	Roots.push_back(root);
+	
     }
     
 

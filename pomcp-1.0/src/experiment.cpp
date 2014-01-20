@@ -61,7 +61,7 @@ EXPERIMENT::EXPERIMENT(const SIMULATOR& real,
 void EXPERIMENT::Run()
 {
     boost::timer timer;
-
+    
     MCTS mcts(Simulator, SearchParams);
     
     double undiscountedReturn = 0.0;
@@ -76,7 +76,6 @@ void EXPERIMENT::Run()
         Real.DisplayState(*state, cout);
     
     double timeFactor = 1.0/Real.GetNumAgents();
-    
     
     std::vector<int> planCounts;
     std::vector<STATISTIC> planRewards;
@@ -311,8 +310,8 @@ void EXPERIMENT::Run()
 			mcts.ClearHistory(2);
 		    }
 		    state = Real.CreateStartState();
-		    outOfParticles = false;
-		    outOfParticles2 = false;
+		    outOfParticles = ExpParams.RandomActions[0];
+		    outOfParticles2 = ExpParams.RandomActions[1];
 		}
             }
 

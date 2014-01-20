@@ -8,7 +8,7 @@ BOXPUSHING::BOXPUSHING(int numsmallboxes, double probLargeAgentBox)
 : XSize(4),
   YSize(3),
   NumSmallBoxes(numsmallboxes),
-  NumLargeBoxes(2),
+  NumLargeBoxes(1),
   RandomiseInitialState(false),
   ResetAtCompletion(false),
   ProbLargeAgentBox(probLargeAgentBox),

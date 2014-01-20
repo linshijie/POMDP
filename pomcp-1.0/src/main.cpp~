@@ -97,18 +97,20 @@ int main(int argc, char* argv[])
 	("rewadaptive2", value<bool>(&rewAdaptive2), "Second agent reward-adaptive")
 	("humandefined1", value<bool>(&humanDefined1), "First agent human-defined")
 	("humandefined2", value<bool>(&humanDefined2), "Second agent human-defined")
-	("random1", value<bool>(&humanDefined1), "First agent random")
-	("random2", value<bool>(&humanDefined2), "Second agent random")
+	("random1", value<bool>(&random1), "First agent random")
+	("random2", value<bool>(&random2), "Second agent random")
         ;
 
+    variables_map vm;
+    store(parse_command_line(argc, argv, desc), vm);
+    notify(vm);
+    
     searchParams.RewardAdaptive[0] = rewAdaptive1;
     searchParams.RewardAdaptive[0] = rewAdaptive2;
     searchParams.HumanDefined[0] = humanDefined1;
     searchParams.HumanDefined[1] = humanDefined2;
-	
-    variables_map vm;
-    store(parse_command_line(argc, argv, desc), vm);
-    notify(vm);
+    expParams.RandomActions[0] = random1;
+    expParams.RandomActions[1] = random2;
 
     if (vm.count("help"))
     {

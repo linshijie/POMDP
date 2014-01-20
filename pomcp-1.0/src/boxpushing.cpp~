@@ -8,10 +8,10 @@ BOXPUSHING::BOXPUSHING(int numsmallboxes, double probLargeAgentBox)
 : XSize(4),
   YSize(3),
   NumSmallBoxes(numsmallboxes),
-  NumLargeBoxes(2),
+  NumLargeBoxes(1),
   RandomiseInitialState(false),
   ResetAtCompletion(false),
-  ProbLargeAgentBox(0.0),
+  ProbLargeAgentBox(probLargeAgentBox),
   ProbObservation(0.9)
 {
     //NumSmallBoxes = 0;
@@ -421,7 +421,7 @@ bool BOXPUSHING::IsActionMultiagent(const int& action, const HISTORY& history) c
     if (history.Size() == 0)
 	return false;
     if (action == MOVE && (history.Back().Observation == LARGE_BOX_AGENT_OBS || 
-	    (history.Back().Observation == LARGE_BOX_OBS && RandomDouble(0.0,1.0) < 1.0-ProbLargeAgentBox)))
+	    (history.Back().Observation == LARGE_BOX_OBS && RandomDouble(0.0,1.0) < ProbObservation*ProbObservation)))
 	return true;
     return false;
     
