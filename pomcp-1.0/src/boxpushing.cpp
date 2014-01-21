@@ -4,6 +4,8 @@
 using namespace std;
 using namespace UTILS;
 
+boost::math::beta_distribution<> beta(0.5,0.5);
+
 BOXPUSHING::BOXPUSHING(int numsmallboxes, double probLargeAgentBox)
 : XSize(4),
   YSize(3),
@@ -28,6 +30,11 @@ BOXPUSHING::BOXPUSHING(int numsmallboxes, double probLargeAgentBox)
     
     RewardRange = 99.9;
     Discount = 1.0;
+    
+    quantiles.clear();
+    
+    for (int i = 0; i < 100; i++)
+	quantiles.push_back(boost::math::quantile(beta, RandomDouble(0.0, 1.0)));
     
     /*MultiAgentLabels.clear();
     for (int i = 0; i < NumAgentActions; i++)
@@ -247,6 +254,10 @@ bool BOXPUSHING::Step(STATE& state, int action,
     
     observation = obs0 + NumAgentObservations*obs1;
     
+    if (status.RewardAdaptive && status.LearningPhase)
+	status.CurrOtherReward = quantiles[Random(quantiles.size())]*reward;
+	//status.CurrOtherReward = reward + UTILS::RandomDouble(-10.0,10.0);//UTILS::Normal(reward, 1.0);
+    
     return terminated;
 }
 
@@ -420,8 +431,8 @@ bool BOXPUSHING::IsActionMultiagent(const int& action, const HISTORY& history) c
 {
     if (history.Size() == 0)
 	return false;
-    if (action == MOVE && (history.Back().Observation == LARGE_BOX_AGENT_OBS || 
-	    (history.Back().Observation == LARGE_BOX_OBS && RandomDouble(0.0,1.0) < 1.0-ProbLargeAgentBox)))
+    if (action == MOVE && ((history.Back().Observation == LARGE_BOX_AGENT_OBS && RandomDouble(0.0,1.0) < (ProbLargeAgentBox)*(ProbLargeAgentBox)) || 
+	    (history.Back().Observation == LARGE_BOX_OBS && RandomDouble(0.0,1.0) < (1.0-ProbLargeAgentBox)*(1.0-ProbLargeAgentBox))))
 	return true;
     return false;
     

@@ -2,6 +2,8 @@
 #include <iomanip>
 #include <tr1/unordered_set>
 
+boost::math::beta_distribution<> betak(0.5,0.5);
+
 KITCHEN::KITCHEN(bool testTrayOnStove, bool testCerealInCupboard): 
   NumPlates(0), NumCups(0), NumLocations(5),
   LOCATION_OFFSET(static_cast<int>(CUPBOARD)), 
@@ -121,6 +123,9 @@ KITCHEN::KITCHEN(bool testTrayOnStove, bool testCerealInCupboard):
     MinReward = -0.1;
     MaxReward = 100.0;
     Discount = 1.0;
+    
+    for (int i = 0; i < 100; i++)
+	quantiles.push_back(boost::math::quantile(betak, UTILS::RandomDouble(0.0, 1.0)));
 }
 
 STATE* KITCHEN::Copy(const STATE& state) const
@@ -440,7 +445,9 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
     
     //other agent reward
     //if (status.RewardAdaptive)
-	//status.CurrOtherReward = UTILS::Normal(status.SampledRewardValue, 1.0);
+	//status.CurrOtherReward = reward + UTILS::RandomDouble(-1.0,1.0);//UTILS::Normal(reward, 1.0);
+    if (status.RewardAdaptive && status.LearningPhase)
+	status.CurrOtherReward = quantiles[UTILS::Random(quantiles.size())]*reward;
     
     //if (reachedGoal)
 	//std::cout << "terminal" << status.perspindex << "\n";

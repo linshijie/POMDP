@@ -190,7 +190,7 @@ int MCTS::SelectAction(const int& index)
 	RolloutSearch(index);
     else
 	UCTSearch(index);
-    return GreedyUCB(Roots[index == 0 ? index : index-1], Params.DoFastUCB, index);
+    return GreedyUCB(Roots[index == 0 ? index : index-1], false, index);
 }
 
 void MCTS::RolloutSearch(const int& index)
@@ -580,7 +580,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     Statuses[index == 0 ? index : index-1].TerminalReached = terminal;
     
     if (Params.RewardAdaptive[index == 0 ? index : index-1] && Statuses[index == 0 ? index : index-1].LearningPhase)
-	otherImmediateReward = immediateReward;//Statuses[index == 0 ? index : index-1].CurrOtherReward;
+	otherImmediateReward = Statuses[index == 0 ? index : index-1].CurrOtherReward;
     
     assert(observation >= 0 && observation < Simulator.GetNumObservations());
     Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
@@ -962,7 +962,7 @@ double MCTS::Rollout(STATE& state, const int& index, double otherReward)
         }
 
         totalReward += reward * discount;
-	if (Params.RewardAdaptive[index == 0 ? index : index-1])
+	if (Params.RewardAdaptive[index == 0 ? index : index-1] && Statuses[index == 0 ? index : index-1].LearningPhase)
 	    otherReward += Statuses[index == 0 ? index : index-1].CurrOtherReward*discount;
         discount *= Simulator.GetDiscount();
     }

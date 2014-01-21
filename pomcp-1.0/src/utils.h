@@ -23,6 +23,12 @@
 #define safe_cast static_cast
 #endif
 
+/*boost::mt19937 rng;
+boost::normal_distribution<> nd100(100,1.0);
+boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > vg100(rng,nd100);
+boost::normal_distribution<> ndm01(-0.1,1.0);
+boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > vgm01(rng,ndm01);*/
+
 namespace UTILS
 {
 
@@ -85,7 +91,6 @@ inline double Normal(double m, double s)
     double d = vg();
     return d;
 }
-
 
 inline bool CheckFlag(int flags, int bit) { return (flags & (1 << bit)) != 0; }
 

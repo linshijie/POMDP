@@ -9,6 +9,7 @@
 #include "memorypool.h"
 #include <algorithm>
 #include <boost/math/distributions/beta.hpp>
+#include <boost/math/distributions/gamma.hpp>
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
 
@@ -21,6 +22,12 @@
 #else
 #define safe_cast static_cast
 #endif
+
+/*boost::mt19937 rng;
+boost::normal_distribution<> nd100(100,1.0);
+boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > vg100(rng,nd100);
+boost::normal_distribution<> ndm01(-0.1,1.0);
+boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > vgm01(rng,ndm01);*/
 
 namespace UTILS
 {
@@ -66,11 +73,35 @@ inline double Beta(double a, double b)
     return boost::math::quantile(beta, RandomDouble(0.0, 1.0));
 }
 
+inline double Gamma(double k, double theta)
+{
+    boost::math::gamma_distribution<> gamma(k,theta);
+    return boost::math::quantile(gamma, RandomDouble(0.0, 1.0));
+}
+
 inline double Normal(double m, double s)
 {
+    /*std::mt19937 rng;
+    std::normal_distribution<> normal(m,s);
+    return normal(rng);*/
+    
     boost::mt19937 rng;
     boost::normal_distribution<> nd(m,s);
-    boost::variate_generator<>
+    boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > vg(rng,nd);
+    double d = vg();
+    return d;
+}
+
+inline double Normal100()
+{
+    double d = vg100();
+    return d;
+}
+
+inline double Normalm01()
+{
+    double d = vgm01();
+    return d;
 }
 
 

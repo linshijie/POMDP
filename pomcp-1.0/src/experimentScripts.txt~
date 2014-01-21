@@ -17,9 +17,9 @@
 ./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.9 --rewadaptive1 false --rewadaptive2 false --outputfile output-box-Special-NN.txt
 ./pomcp --problem boxpushing --numsmallboxes 2 --problargeboxagent 0.9 --rewadaptive1 false --rewadaptive2 false --random1 true --random2 true --outputfile output-box-Special-RandRand.txt
 #Experiment 1d - Multiagent planning with a joint goal only
-#./pomcp --problem boxpushing --numsmallboxes 0 --problargeboxagent 0.9 --rewadaptive1 true --rewadaptive2 true --outputfile output-box-NoSmall-Special-RewRew.txt
-#./pomcp --problem boxpushing --numsmallboxes 0 --problargeboxagent 0.9 --rewadaptive1 false --rewadaptive2 false --outputfile output-box-NoSmall-Special-NN.txt
-#./pomcp --problem boxpushing --numsmallboxes 0 --problargeboxagent 0.9 --rewadaptive1 false --rewadaptive2 false --random1 true --random2 true --outputfile output-box-NoSmall-Special-RandRand.txt
+./pomcp --problem boxpushing --numsmallboxes 0 --problargeboxagent 0.9 --rewadaptive1 true --rewadaptive2 true --outputfile output-box-NoSmall-Special-RewRew.txt
+./pomcp --problem boxpushing --numsmallboxes 0 --problargeboxagent 0.9 --rewadaptive1 false --rewadaptive2 false --outputfile output-box-NoSmall-Special-NN.txt
+./pomcp --problem boxpushing --numsmallboxes 0 --problargeboxagent 0.9 --rewadaptive1 false --rewadaptive2 false --random1 true --random2 true --outputfile output-box-NoSmall-Special-RandRand.txt
 #Kitchen
 #Experiment 2a - Multiagent planning
 ./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 true --rewadaptive2 true --outputfile output-kitchen-RewRew.txt
@@ -35,6 +35,6 @@
 ./pomcp --problem kitchen --testtray true --testcereal true --rewadaptive1 false --rewadaptive2 false --outputfile output-kitchen-TwoGoals-NN.txt
 ./pomcp --problem kitchen --testtray true --testcereal true --rewadaptive1 false --rewadaptive2 false --random1 true --random2 true --outputfile output-kitchen-TwoGoals-RandRand.txt
 ./pomcp --problem kitchen --testtray true --testcereal true --rewadaptive1 true --rewadaptive2 true --humandefined1 true --humandefined2 true --outputfile output-kitchen-TwoGoals-AdHoc-HH.txt
-./pomcp --problem kitchen --testtray true --testcereal true --rewadaptive1 true --rewadaptive2 false --humandefined1 true --humandefined2 true --outputfile output-kitchen-AdHoc-RewH.txt
-./pomcp --problem kitchen --testtray true --testcereal true --rewadaptive1 false --rewadaptive2 false --humandefined1 true --humandefined2 true --outputfile output-kitchen-AdHoc-NH.txt
-./pomcp --problem kitchen --testtray true --testcereal true --rewadaptive1 true --rewadaptive2 false --humandefined1 false --humandefined2 false --outputfile output-kitchen-AdHoc-RewN.txt
+./pomcp --problem kitchen --testtray true --testcereal true --rewadaptive1 true --rewadaptive2 false --humandefined1 true --humandefined2 true --outputfile output-kitchen-TwoGoals-AdHoc-RewH.txt
+./pomcp --problem kitchen --testtray true --testcereal true --rewadaptive1 false --rewadaptive2 false --humandefined1 true --humandefined2 true --outputfile output-kitchen-TwoGoals-AdHoc-NH.txt
+./pomcp --problem kitchen --testtray true --testcereal true --rewadaptive1 true --rewadaptive2 false --humandefined1 false --humandefined2 false --outputfile output-kitchen-TwoGoals-AdHoc-RewN.txt
