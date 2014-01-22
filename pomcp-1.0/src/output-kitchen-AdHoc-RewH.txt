@@ -1,2 +1,2 @@
 Simulations,Runs,Undiscounted return,Undiscounted error,Discounted return,Discounted error,Time,Joint Goal Count,
-512,1000,19.72,1.71,19.72,1.71,0.2651,335,
+512,1000,19.58,1.312,19.58,1.312,0.9458,0,

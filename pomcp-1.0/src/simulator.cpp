@@ -4,7 +4,7 @@ using namespace std;
 using namespace UTILS;
 
 SIMULATOR::KNOWLEDGE::KNOWLEDGE()
-:   TreeLevel(SMART),
+:   TreeLevel(LEGAL),
     RolloutLevel(LEGAL),
     SmartTreeCount(20),
     SmartTreeValue(100.0)
@@ -193,7 +193,7 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
         }
     }
     
-    if (Knowledge.TreeLevel >= KNOWLEDGE::SMART)
+    if (Knowledge.TreeLevel >= KNOWLEDGE::SMART || status.HumanDefined)
     {
         actions.clear();
         if (index == 0)

@@ -4,7 +4,7 @@ using namespace std;
 using namespace UTILS;
 
 SIMULATOR::KNOWLEDGE::KNOWLEDGE()
-:   TreeLevel(LEGAL),
+:   TreeLevel(SMART),
     RolloutLevel(LEGAL),
     SmartTreeCount(20),
     SmartTreeValue(100.0)
@@ -189,12 +189,11 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
             qnode.AMAF.Set(0, 0);
 	    if (status.RewardAdaptive && IsActionMultiagent(a, history))
 		for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
-		    qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount+status.SmartTreeCount, 
-						  status.MultiAgentPriorValue+Knowledge.SmartTreeValue);
+		    qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
         }
     }
     
-    if (Knowledge.TreeLevel >= KNOWLEDGE::SMART)
+    if (Knowledge.TreeLevel >= KNOWLEDGE::SMART || status.HumanDefined)
     {
         actions.clear();
         if (index == 0)

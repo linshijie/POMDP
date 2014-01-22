@@ -837,7 +837,8 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 		//cout << "Q = " << q << ", alphaQ = " << alphaq << endl;
 	    }
 	    
-	    if (ucb)
+	    if (ucb && !(Params.MultiAgent && 
+		Params.RewardAdaptive[index == 0 ? index : index-1] && Statuses[index == 0 ? index : index-1].LearningPhase))
 		q += FastUCB(N, n, logN);
 	    
 	    if (Params.MultiAgent && 

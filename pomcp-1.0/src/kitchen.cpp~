@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <tr1/unordered_set>
 
-boost::math::beta_distribution<> betak(0.5,0.5);
+boost::math::beta_distribution<> betak(0.9,0.9);
 
 KITCHEN::KITCHEN(bool testTrayOnStove, bool testCerealInCupboard): 
   NumPlates(0), NumCups(0), NumLocations(5),
@@ -446,8 +446,10 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
     //other agent reward
     //if (status.RewardAdaptive)
 	//status.CurrOtherReward = reward + UTILS::RandomDouble(-1.0,1.0);//UTILS::Normal(reward, 1.0);
-    if (status.RewardAdaptive && status.LearningPhase)
-	status.CurrOtherReward = reward;//quantiles[UTILS::Random(quantiles.size())]*reward;
+    if (status.RewardAdaptive && status.LearningPhase && !status.HumanDefined)
+	status.CurrOtherReward = quantiles[UTILS::Random(quantiles.size())]*reward*2;
+    else
+	status.CurrOtherReward = reward;
     
     //if (reachedGoal)
 	//std::cout << "terminal" << status.perspindex << "\n";

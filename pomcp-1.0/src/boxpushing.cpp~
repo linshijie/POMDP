@@ -4,7 +4,7 @@
 using namespace std;
 using namespace UTILS;
 
-boost::math::beta_distribution<> beta(0.5,0.5);
+boost::math::beta_distribution<> beta(0.9,0.9);
 
 BOXPUSHING::BOXPUSHING(int numsmallboxes, double probLargeAgentBox)
 : XSize(4),
@@ -255,7 +255,7 @@ bool BOXPUSHING::Step(STATE& state, int action,
     observation = obs0 + NumAgentObservations*obs1;
     
     if (status.RewardAdaptive && status.LearningPhase)
-	status.CurrOtherReward = quantiles[Random(quantiles.size())]*reward;
+	status.CurrOtherReward = quantiles[Random(quantiles.size())]*reward*2;
 	//status.CurrOtherReward = reward + UTILS::RandomDouble(-10.0,10.0);//UTILS::Normal(reward, 1.0);
     
     return terminated;
@@ -414,11 +414,11 @@ bool BOXPUSHING::LocalMove(STATE& state, const HISTORY& history,
     int obs0 = GetAgentObservation(bpstate, 0);
     int obs1 = GetAgentObservation(bpstate, 1);
     
-    /*if (obs0 == LARGE_BOX_OBS && obs1 == LARGE_BOX_OBS)
+    if (obs0 == LARGE_BOX_OBS && obs1 == LARGE_BOX_OBS && RandomDouble(0.0,1.0) < ProbLargeAgentBox)
     {
 	obs0 = LARGE_BOX_AGENT_OBS;
 	obs1 = LARGE_BOX_AGENT_OBS;
-    }*/
+    }
     
     int simObs = obs0 + NumAgentObservations*obs1;
     
@@ -431,8 +431,7 @@ bool BOXPUSHING::IsActionMultiagent(const int& action, const HISTORY& history) c
 {
     if (history.Size() == 0)
 	return false;
-    if (action == MOVE && ((history.Back().Observation == LARGE_BOX_AGENT_OBS && RandomDouble(0.0,1.0) < (1.0-ProbLargeAgentBox)*(1.0-ProbLargeAgentBox)) || 
-	    (history.Back().Observation == LARGE_BOX_OBS && RandomDouble(0.0,1.0) < (1.0-ProbLargeAgentBox)*(1.0-ProbLargeAgentBox))))
+    if (action == MOVE && (history.Back().Observation == LARGE_BOX_AGENT_OBS))
 	return true;
     return false;
     
@@ -443,7 +442,7 @@ bool BOXPUSHING::IsActionMultiagent(const int& action, const HISTORY& history) c
     int observation1 = history[t-1].Observation;
     int observation2 = history[t-2].Observation;
     
-    if (action == MOVE && observation1 == LARGE_BOX_OBS && observation2 == AGENT_OBS)
+    if (action == MOVE && observation1 == LARGE_BOX_OBS && observation2 == AGENT_OBS && RandomDouble(0.0,1.0) < pow(0.9,4))
 	return true;
     return false;*/
     
@@ -495,11 +494,11 @@ void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history,
     std::vector<int>& actions, const STATUS& status, const int& index) const
 {
     //GeneratePreferredAgent(state, history, actions, status, index);
-    /*if (history.Size() == 0)
+    if (history.Size() == 0)
     {
 	actions.push_back(MOVE);
         return;
-    }*/
+    }
     for (int a = 0; a < NumAgentActions; a++)
         actions.push_back(a);
 }

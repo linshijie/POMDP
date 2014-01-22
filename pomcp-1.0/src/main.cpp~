@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
     notify(vm);
     
     searchParams.RewardAdaptive[0] = rewAdaptive1;
-    searchParams.RewardAdaptive[0] = rewAdaptive2;
+    searchParams.RewardAdaptive[1] = rewAdaptive2;
     searchParams.HumanDefined[0] = humanDefined1;
     searchParams.HumanDefined[1] = humanDefined2;
     expParams.RandomActions[0] = random1;
@@ -162,6 +162,7 @@ int main(int argc, char* argv[])
     else if (problem == "boxpushing")
     {
 	expParams.BreakOnTerminate = false;
+	searchParams.UseTransforms = true;
         real = new BOXPUSHING(numSmallBoxes, probLargeBoxAgent);
         simulator = new BOXPUSHING(numSmallBoxes, probLargeBoxAgent);
     }

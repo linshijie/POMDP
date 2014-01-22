@@ -162,11 +162,13 @@ int main(int argc, char* argv[])
     else if (problem == "boxpushing")
     {
 	expParams.BreakOnTerminate = false;
+	searchParams.UseTransforms = true;
         real = new BOXPUSHING(numSmallBoxes, probLargeBoxAgent);
         simulator = new BOXPUSHING(numSmallBoxes, probLargeBoxAgent);
     }
     else if (problem == "kitchen")
     {
+	searchParams.UseTransforms = false;
 	real = new KITCHEN(testTrayOnStove, testCerealInCupboard);
 	simulator = new KITCHEN(testTrayOnStove, testCerealInCupboard);
     }

@@ -75,7 +75,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	status.LearningPhase = false;
 	
 	status.MultiAgentPriorValue = Simulator.GetRewardRange();
-	status.MultiAgentPriorCount = 1;//(int) (ceil(sqrt(Params.NumSimulations)));
+	status.MultiAgentPriorCount = Params.NumSimulations;//1;//(int) (ceil(sqrt(Params.NumSimulations)));
 	status.SmartTreeCount = ((int) sqrt(Params.NumSimulations));
 	
 	status.HumanDefined = Params.HumanDefined[i];
@@ -837,7 +837,8 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 		//cout << "Q = " << q << ", alphaQ = " << alphaq << endl;
 	    }
 	    
-	    if (ucb)
+	    if (ucb && !(Params.MultiAgent && 
+		Params.RewardAdaptive[index == 0 ? index : index-1] && Statuses[index == 0 ? index : index-1].LearningPhase))
 		q += FastUCB(N, n, logN);
 	    
 	    if (Params.MultiAgent && 
@@ -962,7 +963,7 @@ double MCTS::Rollout(STATE& state, const int& index, double otherReward)
         }
 
         totalReward += reward * discount;
-	if (Params.RewardAdaptive[index == 0 ? index : index-1])
+	if (Params.RewardAdaptive[index == 0 ? index : index-1] && Statuses[index == 0 ? index : index-1].LearningPhase)
 	    otherReward += Statuses[index == 0 ? index : index-1].CurrOtherReward*discount;
         discount *= Simulator.GetDiscount();
     }
