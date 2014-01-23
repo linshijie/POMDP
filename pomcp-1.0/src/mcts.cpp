@@ -22,13 +22,15 @@ MCTS::PARAMS::PARAMS()
     ExpandCount(1),
     ExplorationConstant(1),
     UseRave(false),
-    RaveDiscount(1.0),
+    RaveDiscount(1.0), 
     RaveConstant(0.01),
     DoFastUCB(false),
     DisableTree(false),
     MultiAgent(true),
     RewardOffset(100.0),
-    InitialRewardWeight(20.0)
+    InitialRewardWeight(20.0),
+    MultiAgentPriorCount(0),
+    MultiAgentPriorValue(0.0)
 {
     JointQActions.clear();
     MinMax.clear();
@@ -74,8 +76,8 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	status.UpdateValues = true;
 	status.LearningPhase = false;
 	
-	status.MultiAgentPriorValue = Simulator.GetRewardRange();
-	status.MultiAgentPriorCount = 1;//(int) (ceil(sqrt(Params.NumSimulations)));
+	status.MultiAgentPriorValue = Params.MultiAgentPriorValue;//Simulator.GetRewardRange();
+	status.MultiAgentPriorCount = Params.MultiAgentPriorCount;//1;//(int) (ceil(sqrt(Params.NumSimulations)));
 	status.SmartTreeCount = ((int) sqrt(Params.NumSimulations));
 	
 	status.HumanDefined = Params.HumanDefined[i];
@@ -408,30 +410,33 @@ void MCTS::UCTSearch(const int& index)
 		    
 		    
 		    //Subtract old values
-		    VNODE* vnode = Roots[index == 0 ? index : index-1];
-		    int indV = (int) Statuses[index == 0 ? index : index-1].MainVValueSequence.size() - 1;
-		    int indQ = 0;
-		    Roots[index == 0 ? index : index-1]->Value.Subtract(Statuses[index == 0 ? index : 
-			    index-1].MainVValueSequence[indV]);
-		    indV--;
-		    int size = (int) Statuses[index == 0 ? index : index-1].MainSequence.size();
-		    for (int j = 0; j < size; j += 2)
+		    if (!Statuses[index == 0 ? index : index-1].HumanDefined)
 		    {
-			QNODE& qnode = vnode->Child(Statuses[index == 0 ? index : index-1].MainSequence[j]);
-			if (indQ < (int) Statuses[index == 0 ? index : index-1].MainQValueSequence.size())
+			VNODE* vnode = Roots[index == 0 ? index : index-1];
+			int indV = (int) Statuses[index == 0 ? index : index-1].MainVValueSequence.size() - 1;
+			int indQ = 0;
+			Roots[index == 0 ? index : index-1]->Value.Subtract(Statuses[index == 0 ? index : 
+				index-1].MainVValueSequence[indV]);
+			indV--;
+			int size = (int) Statuses[index == 0 ? index : index-1].MainSequence.size();
+			for (int j = 0; j < size; j += 2)
 			{
-			    qnode.Value.Subtract(Statuses[index == 0 ? index : index-1].MainQValueSequence[indQ]);
-			    qnode.OtherAgentValues[0].Subtract(Statuses[index == 0 ? index : 
-				index-1].MainOtherQValueSequence[indQ]);
-			    indQ++;
-			}
-			if (j+1 < size)
-			{
-			    vnode = qnode.Child(Statuses[index == 0 ? index : index-1].MainSequence[j+1]);
-			    if (vnode && indV >= 0)
+			    QNODE& qnode = vnode->Child(Statuses[index == 0 ? index : index-1].MainSequence[j]);
+			    if (indQ < (int) Statuses[index == 0 ? index : index-1].MainQValueSequence.size())
 			    {
-				vnode->Value.Subtract(Statuses[index == 0 ? index : index-1].MainVValueSequence[indV]);
-				indV--;
+				qnode.Value.Subtract(Statuses[index == 0 ? index : index-1].MainQValueSequence[indQ]);
+				qnode.OtherAgentValues[0].Subtract(Statuses[index == 0 ? index : 
+				    index-1].MainOtherQValueSequence[indQ]);
+				indQ++;
+			    }
+			    if (j+1 < size)
+			    {
+				vnode = qnode.Child(Statuses[index == 0 ? index : index-1].MainSequence[j+1]);
+				if (vnode && indV >= 0)
+				{
+				    vnode->Value.Subtract(Statuses[index == 0 ? index : index-1].MainVValueSequence[indV]);
+				    indV--;
+				}
 			    }
 			}
 		    }
@@ -486,31 +491,33 @@ void MCTS::UCTSearch(const int& index)
 		{
 		    doLearn = false;
 		    
-		    
-		    VNODE* vnode = Roots[index == 0 ? index : index-1];
-		    int indV = (int) Statuses[index == 0 ? index : index-1].LearnVValueSequence.size() - 1;
-		    int indQ = 0;
-		    Roots[index == 0 ? index : index-1]->Value.Subtract(Statuses[index == 0 ? index : 
-			    index-1].LearnVValueSequence[indV]);
-		    indV--;
-		    int size = (int) Statuses[index == 0 ? index : index-1].LearnSequence.size();
-		    for (int j = 0; j < size; j += 2)
+		    if (!Statuses[index == 0 ? index : index-1].HumanDefined)
 		    {
-			QNODE& qnode = vnode->Child(Statuses[index == 0 ? index : index-1].LearnSequence[j]);
-			if (indQ < (int) Statuses[index == 0 ? index : index-1].LearnQValueSequence.size())
+			VNODE* vnode = Roots[index == 0 ? index : index-1];
+			int indV = (int) Statuses[index == 0 ? index : index-1].LearnVValueSequence.size() - 1;
+			int indQ = 0;
+			Roots[index == 0 ? index : index-1]->Value.Subtract(Statuses[index == 0 ? index : 
+				index-1].LearnVValueSequence[indV]);
+			indV--;
+			int size = (int) Statuses[index == 0 ? index : index-1].LearnSequence.size();
+			for (int j = 0; j < size; j += 2)
 			{
-			    qnode.Value.Subtract(Statuses[index == 0 ? index : index-1].LearnQValueSequence[indQ]);
-			    qnode.OtherAgentValues[0].Subtract(Statuses[index == 0 ? index : 
-				index-1].LearnOtherQValueSequence[indQ]);
-			    indQ++;
-			}
-			if (j+1 < size)
-			{
-			    vnode = qnode.Child(Statuses[index == 0 ? index : index-1].LearnSequence[j+1]);
-			    if (vnode && indV >= 0)
+			    QNODE& qnode = vnode->Child(Statuses[index == 0 ? index : index-1].LearnSequence[j]);
+			    if (indQ < (int) Statuses[index == 0 ? index : index-1].LearnQValueSequence.size())
 			    {
-				vnode->Value.Subtract(Statuses[index == 0 ? index : index-1].LearnVValueSequence[indV]);
-				indV--;
+				qnode.Value.Subtract(Statuses[index == 0 ? index : index-1].LearnQValueSequence[indQ]);
+				qnode.OtherAgentValues[0].Subtract(Statuses[index == 0 ? index : 
+				    index-1].LearnOtherQValueSequence[indQ]);
+				indQ++;
+			    }
+			    if (j+1 < size)
+			    {
+				vnode = qnode.Child(Statuses[index == 0 ? index : index-1].LearnSequence[j+1]);
+				if (vnode && indV >= 0)
+				{
+				    vnode->Value.Subtract(Statuses[index == 0 ? index : index-1].LearnVValueSequence[indV]);
+				    indV--;
+				}
 			    }
 			}
 		    }
@@ -870,8 +877,7 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 		//cout << "Q = " << q << ", alphaQ = " << alphaq << endl;
 	    }
 	    
-	    if (ucb && !(Params.MultiAgent && 
-		Params.RewardAdaptive[index == 0 ? index : index-1] && Statuses[index == 0 ? index : index-1].LearningPhase))
+	    if (ucb)
 		q += FastUCB(N, n, logN);
 	    
 	    if (Params.MultiAgent && 

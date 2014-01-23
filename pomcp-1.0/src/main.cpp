@@ -169,8 +169,10 @@ int main(int argc, char* argv[])
     else if (problem == "kitchen")
     {
 	searchParams.UseTransforms = false;
+	searchParams.MultiAgentPriorCount = 1;
 	real = new KITCHEN(testTrayOnStove, testCerealInCupboard);
 	simulator = new KITCHEN(testTrayOnStove, testCerealInCupboard);
+	searchParams.MultiAgentPriorValue = real->GetRewardRange();
     }
     else 
     {

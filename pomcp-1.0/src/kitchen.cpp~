@@ -448,8 +448,10 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
 	//status.CurrOtherReward = reward + UTILS::RandomDouble(-1.0,1.0);//UTILS::Normal(reward, 1.0);
     if (status.RewardAdaptive && status.LearningPhase && !status.HumanDefined)
 	status.CurrOtherReward = quantiles[UTILS::Random(quantiles.size())]*reward*2;
-    else
+    else if (status.HumanDefined)
 	status.CurrOtherReward = reward;
+    else
+	status.CurrOtherReward = 0;
     
     //if (reachedGoal)
 	//std::cout << "terminal" << status.perspindex << "\n";

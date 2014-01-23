@@ -256,6 +256,8 @@ bool BOXPUSHING::Step(STATE& state, int action,
     
     if (status.RewardAdaptive && status.LearningPhase)
 	status.CurrOtherReward = quantiles[Random(quantiles.size())]*reward*2;
+    else
+	status.CurrOtherReward = 0.0;
 	//status.CurrOtherReward = reward + UTILS::RandomDouble(-10.0,10.0);//UTILS::Normal(reward, 1.0);
     
     return terminated;
@@ -494,11 +496,11 @@ void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history,
     std::vector<int>& actions, const STATUS& status, const int& index) const
 {
     //GeneratePreferredAgent(state, history, actions, status, index);
-    /*if (history.Size() == 0 && ProbLargeAgentBox > 0.5)
+    if (history.Size() == 0)
     {
 	actions.push_back(MOVE);
         return;
-    }*/
+    }
     for (int a = 0; a < NumAgentActions; a++)
         actions.push_back(a);
 }

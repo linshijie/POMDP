@@ -256,6 +256,8 @@ bool BOXPUSHING::Step(STATE& state, int action,
     
     if (status.RewardAdaptive && status.LearningPhase)
 	status.CurrOtherReward = quantiles[Random(quantiles.size())]*reward*2;
+    else
+	status.CurrOtherReward = 0.0;
 	//status.CurrOtherReward = reward + UTILS::RandomDouble(-10.0,10.0);//UTILS::Normal(reward, 1.0);
     
     return terminated;
