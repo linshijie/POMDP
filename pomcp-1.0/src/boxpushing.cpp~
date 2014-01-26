@@ -494,11 +494,11 @@ void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history,
     std::vector<int>& actions, const STATUS& status, const int& index) const
 {
     //GeneratePreferredAgent(state, history, actions, status, index);
-    /*if (history.Size() == 0 && ProbLargeAgentBox > 0.5)
+    if (history.Size() == 0 && ProbLargeAgentBox > 0.5)
     {
 	actions.push_back(MOVE);
         return;
-    }*/
+    }
     for (int a = 0; a < NumAgentActions; a++)
         actions.push_back(a);
 }
