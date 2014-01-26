@@ -36,6 +36,8 @@ public:
 	std::vector<bool> HumanDefined;
 	double RewardOffset;
 	double InitialRewardWeight;
+	int MultiAgentPriorCount;
+	double MultiAgentPriorValue;
     };
     
     MCTS(const SIMULATOR& simulator, const PARAMS& params);

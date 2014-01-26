@@ -4,7 +4,7 @@ using namespace std;
 using namespace UTILS;
 
 SIMULATOR::KNOWLEDGE::KNOWLEDGE()
-:   TreeLevel(SMART),
+:   TreeLevel(LEGAL),
     RolloutLevel(LEGAL),
     SmartTreeCount(20),
     SmartTreeValue(100.0)
@@ -187,7 +187,7 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
             QNODE& qnode = vnode->Child(a);
             qnode.Value.Set(0, 0);
             qnode.AMAF.Set(0, 0);
-	    if (status.RewardAdaptive && IsActionMultiagent(a, history))
+	    if (IsActionMultiagent(a, history))
 		for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
 		    qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
         }

@@ -163,13 +163,18 @@ int main(int argc, char* argv[])
     {
 	expParams.BreakOnTerminate = false;
 	searchParams.UseTransforms = true;
+	searchParams.DoFastUCB = false;
         real = new BOXPUSHING(numSmallBoxes, probLargeBoxAgent);
         simulator = new BOXPUSHING(numSmallBoxes, probLargeBoxAgent);
     }
     else if (problem == "kitchen")
     {
+	searchParams.UseTransforms = false;
+	searchParams.MultiAgentPriorCount = 1;
+	searchParams.DoFastUCB = false;
 	real = new KITCHEN(testTrayOnStove, testCerealInCupboard);
 	simulator = new KITCHEN(testTrayOnStove, testCerealInCupboard);
+	searchParams.MultiAgentPriorValue = real->GetRewardRange();
     }
     else 
     {
