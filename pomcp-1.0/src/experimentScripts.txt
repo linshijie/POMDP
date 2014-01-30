@@ -30,6 +30,7 @@
 #./pomcp --problem boxpushing --numsmallboxes 0 --problargeboxagent 0.9 --rewadaptive1 true --rewadaptive2 false --humandefined1 false --humandefined2 true --outputfile output-box-AdHoc-NoSmall-Special-RewH.txt
 #./pomcp --problem boxpushing --numsmallboxes 0 --problargeboxagent 0.9 --rewadaptive1 false --rewadaptive2 false --humandefined1 false --humandefined2 true --outputfile output-box-AdHoc-NoSmall-Special-NH.txt
 #./pomcp --problem boxpushing --numsmallboxes 0 --problargeboxagent 0.9 --rewadaptive1 true --rewadaptive2 false --humandefined1 false --humandefined2 false --outputfile output-box-AdHoc-NoSmall-Special-RewN.txt
+
 #Kitchen
 #Experiment 2a - Multiagent planning
 ./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 true --rewadaptive2 true --outputfile output-kitchen-RewRew.txt

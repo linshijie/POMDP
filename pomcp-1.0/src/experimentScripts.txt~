@@ -42,7 +42,7 @@
 ./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 true --rewadaptive2 false --humandefined1 false --humandefined2 false --outputfile output-kitchen-AdHoc-RewN.txt
 ./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 true --rewadaptive2 false --random2 true --outputfile output-kitchen-RewRand.txt
 ./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 false --rewadaptive2 false --random2 true --outputfile output-kitchen-NRand.txt
-./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 true --humandefined1 true --rewadaptive2 false --random2 true --outputfile output-kitchen-RewRand.txt
+./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 true --humandefined1 true --rewadaptive2 false --random2 true --outputfile output-kitchen-HRand.txt
 #Experiment 2c - Ad-hoc coordination with a "bad teammate"
 ./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 false --rewadaptive2 false --humandefined1 true --humandefined2 true --outputfile output-kitchen-AdHoc-HBadHBad.txt
 ./pomcp --problem kitchen --testtray true --testcereal false --rewadaptive1 true --rewadaptive2 false --humandefined1 false --humandefined2 true --outputfile output-kitchen-AdHoc-RewHBad.txt

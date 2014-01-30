@@ -8,8 +8,8 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(20),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(11),
-    MaxDoubles(11),
+    MinDoubles(9),
+    MaxDoubles(9),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(false),
@@ -341,7 +341,7 @@ void EXPERIMENT::Run()
         }
     }
 
-    Results.Time.Add(timer.elapsed()*timeFactor);
+    Results.Time.Add(timer.elapsed()/(t > 0 ? t*1.0 : 1.0));
     Results.UndiscountedReturn.Add(undiscountedReturn);
     Results.DiscountedReturn.Add(discountedReturn);
     Results.JointGoalCount.Add(jointGoalCount);

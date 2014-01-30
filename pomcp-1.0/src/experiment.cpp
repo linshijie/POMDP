@@ -341,7 +341,7 @@ void EXPERIMENT::Run()
         }
     }
 
-    Results.Time.Add(timer.elapsed()*timeFactor);
+    Results.Time.Add(timer.elapsed()/(t > 0 ? t*1.0 : 1.0));
     Results.UndiscountedReturn.Add(undiscountedReturn);
     Results.DiscountedReturn.Add(discountedReturn);
     Results.JointGoalCount.Add(jointGoalCount);
