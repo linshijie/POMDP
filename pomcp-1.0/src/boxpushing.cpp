@@ -501,6 +501,9 @@ void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history,
 	actions.push_back(MOVE);
         return;
     }
+    int maxIter = NumAgentActions;
+    if (status.UseCommunication)
+	maxIter *= NumAgentMessages;
     for (int a = 0; a < NumAgentActions; a++)
         actions.push_back(a);
 }

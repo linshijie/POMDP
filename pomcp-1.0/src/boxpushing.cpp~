@@ -458,13 +458,10 @@ bool BOXPUSHING::IsActionMultiagent(const int& action, const HISTORY& history) c
 void BOXPUSHING::GenerateLegal(const STATE& state, const HISTORY& history,
         std::vector<int>& legal, const STATUS& status) const
 {
-    //GeneratePreferred(state, history, legal, status);
-    /*if (history.Size() == 0)
-    {
-	legal.push_back(MOVE + NumAgentActions*MOVE);
-        return;
-    }*/
-    for (int a = 0; a < NumActions; a++)
+    int maxIter = NumActions;
+    if (status.UseCommunication)
+	maxIter *= NumMessages;
+    for (int a = 0; a < maxIter; a++)
         legal.push_back(a);
 }
 
