@@ -741,14 +741,14 @@ pomcp-kitchen.o: kitchen.cpp kitchen.h simulator.h history.h \
  /usr/include/boost/random/gamma_distribution.hpp \
  /usr/include/boost/random/binomial_distribution.hpp \
  /usr/include/boost/random/uniform_on_sphere.hpp \
+ /usr/include/c++/4.6/deque /usr/include/c++/4.6/bits/stl_deque.h \
+ /usr/include/c++/4.6/bits/deque.tcc \
  /usr/include/c++/4.6/tr1/unordered_map \
  /usr/include/c++/4.6/tr1/type_traits \
  /usr/include/c++/4.6/tr1/functional_hash.h \
  /usr/include/c++/4.6/tr1/hashtable.h \
  /usr/include/c++/4.6/tr1/hashtable_policy.h \
- /usr/include/c++/4.6/tr1/unordered_map.h /usr/include/c++/4.6/deque \
- /usr/include/c++/4.6/bits/stl_deque.h \
- /usr/include/c++/4.6/bits/deque.tcc \
+ /usr/include/c++/4.6/tr1/unordered_map.h \
  /usr/include/c++/4.6/tr1/unordered_set \
  /usr/include/c++/4.6/tr1/unordered_set.h
 
@@ -2406,6 +2406,12 @@ memorypool.h:
 
 /usr/include/boost/random/uniform_on_sphere.hpp:
 
+/usr/include/c++/4.6/deque:
+
+/usr/include/c++/4.6/bits/stl_deque.h:
+
+/usr/include/c++/4.6/bits/deque.tcc:
+
 /usr/include/c++/4.6/tr1/unordered_map:
 
 /usr/include/c++/4.6/tr1/type_traits:
@@ -2417,12 +2423,6 @@ memorypool.h:
 /usr/include/c++/4.6/tr1/hashtable_policy.h:
 
 /usr/include/c++/4.6/tr1/unordered_map.h:
-
-/usr/include/c++/4.6/deque:
-
-/usr/include/c++/4.6/bits/stl_deque.h:
-
-/usr/include/c++/4.6/bits/deque.tcc:
 
 /usr/include/c++/4.6/tr1/unordered_set:
 

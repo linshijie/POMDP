@@ -740,11 +740,12 @@ pomcp-main.o: main.cpp battleship.h simulator.h history.h \
  /usr/include/boost/random/poisson_distribution.hpp \
  /usr/include/boost/random/gamma_distribution.hpp \
  /usr/include/boost/random/binomial_distribution.hpp \
- /usr/include/boost/random/uniform_on_sphere.hpp grid.h \
- /usr/include/c++/4.6/list /usr/include/c++/4.6/bits/stl_list.h \
- /usr/include/c++/4.6/bits/list.tcc boxpushing.h mcts.h statistic.h \
- network.h pocman.h rocksample.h tag.h experiment.h \
- /usr/include/c++/4.6/fstream /usr/include/c++/4.6/cstdio \
+ /usr/include/boost/random/uniform_on_sphere.hpp \
+ /usr/include/c++/4.6/deque /usr/include/c++/4.6/bits/stl_deque.h \
+ /usr/include/c++/4.6/bits/deque.tcc grid.h /usr/include/c++/4.6/list \
+ /usr/include/c++/4.6/bits/stl_list.h /usr/include/c++/4.6/bits/list.tcc \
+ boxpushing.h mcts.h statistic.h network.h pocman.h rocksample.h tag.h \
+ experiment.h /usr/include/c++/4.6/fstream /usr/include/c++/4.6/cstdio \
  /usr/include/libio.h /usr/include/_G_config.h \
  /usr/include/i386-linux-gnu/bits/sys_errlist.h \
  /usr/include/i386-linux-gnu/bits/stdio.h \
@@ -757,9 +758,7 @@ pomcp-main.o: main.cpp battleship.h simulator.h history.h \
  /usr/include/c++/4.6/tr1/functional_hash.h \
  /usr/include/c++/4.6/tr1/hashtable.h \
  /usr/include/c++/4.6/tr1/hashtable_policy.h \
- /usr/include/c++/4.6/tr1/unordered_map.h /usr/include/c++/4.6/deque \
- /usr/include/c++/4.6/bits/stl_deque.h \
- /usr/include/c++/4.6/bits/deque.tcc \
+ /usr/include/c++/4.6/tr1/unordered_map.h \
  /usr/include/boost/program_options.hpp \
  /usr/include/boost/program_options/options_description.hpp \
  /usr/include/boost/program_options/config.hpp \
@@ -2457,6 +2456,12 @@ memorypool.h:
 
 /usr/include/boost/random/uniform_on_sphere.hpp:
 
+/usr/include/c++/4.6/deque:
+
+/usr/include/c++/4.6/bits/stl_deque.h:
+
+/usr/include/c++/4.6/bits/deque.tcc:
+
 grid.h:
 
 /usr/include/c++/4.6/list:
@@ -2514,12 +2519,6 @@ kitchen.h:
 /usr/include/c++/4.6/tr1/hashtable_policy.h:
 
 /usr/include/c++/4.6/tr1/unordered_map.h:
-
-/usr/include/c++/4.6/deque:
-
-/usr/include/c++/4.6/bits/stl_deque.h:
-
-/usr/include/c++/4.6/bits/deque.tcc:
 
 /usr/include/boost/program_options.hpp:
 

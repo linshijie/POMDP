@@ -210,7 +210,7 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
 		QNODE& qnode = vnode->Child(a);
 		qnode.Value.Set(status.SmartTreeCount, Knowledge.SmartTreeValue);
 		qnode.AMAF.Set(status.SmartTreeCount, Knowledge.SmartTreeValue);
-		if (status.RewardAdaptive && IsActionMultiagent(a, history))
+		if (IsActionMultiagent(a, history))
 		    for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
 			qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
 		//for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)

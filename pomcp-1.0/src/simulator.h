@@ -6,11 +6,20 @@
 #include "utils.h"
 #include <iostream>
 #include <math.h>
+#include <deque>
 
 class BELIEF_STATE;
 
 class STATE : public MEMORY_OBJECT
 {
+public:
+    struct MESSAGE
+    {
+	int AgentID;
+	std::string Message;
+    };
+    
+    std::deque<MESSAGE> MessageQueue;
 };
 
 class REWARD_TEMPLATE : public MEMORY_OBJECT
@@ -111,7 +120,9 @@ public:
 	int PlanSequenceLength;
 	
 	int JointGoalCount;
+	bool UseCommunication;
     };
+    
     
     /*struct INITIAL_REWARD_PARAMS
     {
@@ -206,10 +217,19 @@ public:
     int GetNumAgents() const { return NumAgents; }
     int GetNumAgentActions() const { return NumAgentActions; }
     int GetNumAgentObservations() const { return NumAgentObservations; }
+    int GetNumMessages() const { return NumMessages; }
+    int GetNumAgentMessages() const { return NumAgentMessages; }
     int GetAgentAction(const int& action, const int& index) const { return index > 1 ? action/NumAgentActions : 
 									    action%NumAgentActions;}
     int GetAgentObservation(const int& observation, const int& index) const { return index > 1 ? 
 						    observation/NumAgentObservations : observation%NumAgentObservations;}
+						   
+    int GetActionComponentFromAction(const int& action) const { return action%NumAgentActions; }
+    int GetMesssageComponentFromAction(const int& action) const { return action/NumAgentMessages; }
+    int GetObservationComponentFromObservation(const int& observation) const { return observation%NumAgentObservations; }
+    int GetMessageComponentFromObservation(const int& observation) const { return observation/NumAgentMessages; }
+    
+						   
     bool IsEpisodic() const { return false; }
     double GetDiscount() const { return Discount; }
     double GetRewardRange() const { return RewardRange; }
@@ -217,7 +237,7 @@ public:
     
 protected:
 
-    int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations;
+    int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations, NumMessages, NumAgentMessages;
     double Discount, RewardRange;
     KNOWLEDGE Knowledge;
     mutable MEMORY_POOL<REWARD_TEMPLATE> RewardMemoryPool;

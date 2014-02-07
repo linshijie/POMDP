@@ -740,9 +740,10 @@ pomcp-battleship.o: battleship.cpp battleship.h simulator.h history.h \
  /usr/include/boost/random/poisson_distribution.hpp \
  /usr/include/boost/random/gamma_distribution.hpp \
  /usr/include/boost/random/binomial_distribution.hpp \
- /usr/include/boost/random/uniform_on_sphere.hpp grid.h \
- /usr/include/c++/4.6/list /usr/include/c++/4.6/bits/stl_list.h \
- /usr/include/c++/4.6/bits/list.tcc
+ /usr/include/boost/random/uniform_on_sphere.hpp \
+ /usr/include/c++/4.6/deque /usr/include/c++/4.6/bits/stl_deque.h \
+ /usr/include/c++/4.6/bits/deque.tcc grid.h /usr/include/c++/4.6/list \
+ /usr/include/c++/4.6/bits/stl_list.h /usr/include/c++/4.6/bits/list.tcc
 
 battleship.h:
 
@@ -2397,6 +2398,12 @@ memorypool.h:
 /usr/include/boost/random/binomial_distribution.hpp:
 
 /usr/include/boost/random/uniform_on_sphere.hpp:
+
+/usr/include/c++/4.6/deque:
+
+/usr/include/c++/4.6/bits/stl_deque.h:
+
+/usr/include/c++/4.6/bits/deque.tcc:
 
 grid.h:
 

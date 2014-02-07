@@ -77,7 +77,7 @@ public:
     
     std::vector<VALUE<int> > OtherAgentValues;
 
-    void Initialise();
+    void Initialise(const int& qChildren);
 
     VNODE*& Child(int c) { return Children[c]; }
     VNODE* Child(int c) const { return Children[c]; }
@@ -87,7 +87,7 @@ public:
     void DisplayValue(HISTORY& history, int maxDepth, std::ostream& ostr) const;
     void DisplayPolicy(HISTORY& history, int maxDepth, std::ostream& ostr) const;
 
-    static int NumChildren;
+    int NumChildren;
     
     static int NumOtherAgentValues;
 
@@ -107,8 +107,8 @@ public:
 
     VALUE<int> Value;
 
-    void Initialise();
-    static VNODE* Create();
+    void Initialise(const int& qChildren);
+    static VNODE* Create(const int& vChildren, const int& qChildren);
     static void Free(VNODE* vnode, const SIMULATOR& simulator);
     static void FreeAll();
 
@@ -122,7 +122,7 @@ public:
     void DisplayValue(HISTORY& history, int maxDepth, std::ostream& ostr) const;
     void DisplayPolicy(HISTORY& history, int maxDepth, std::ostream& ostr) const;
 
-    static int NumChildren;
+    int NumChildren;
 
 private:
 

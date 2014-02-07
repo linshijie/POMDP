@@ -92,7 +92,7 @@ protected:
     double ProbObservation;
     
     std::vector< std::vector< std::vector<bool> > > MultiAgentLabels;
-    
+    std::vector<double> quantiles;
     
 private:
 

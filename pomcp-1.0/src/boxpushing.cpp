@@ -23,6 +23,9 @@ BOXPUSHING::BOXPUSHING(int numsmallboxes, double probLargeAgentBox)
     NumAgentActions = 4;
     NumAgentObservations = 6;
     
+    NumAgentMessages = 3;
+    NumMessages = pow(NumAgentMessages, NumAgents);
+    
     NumAgents = 2;
     
     NumActions = pow(NumAgentActions, NumAgents);
@@ -455,13 +458,10 @@ bool BOXPUSHING::IsActionMultiagent(const int& action, const HISTORY& history) c
 void BOXPUSHING::GenerateLegal(const STATE& state, const HISTORY& history,
         std::vector<int>& legal, const STATUS& status) const
 {
-    //GeneratePreferred(state, history, legal, status);
-    /*if (history.Size() == 0)
-    {
-	legal.push_back(MOVE + NumAgentActions*MOVE);
-        return;
-    }*/
-    for (int a = 0; a < NumActions; a++)
+    int maxIter = NumActions;
+    if (status.UseCommunication)
+	maxIter *= NumMessages;
+    for (int a = 0; a < maxIter; a++)
         legal.push_back(a);
 }
 
@@ -672,6 +672,9 @@ void BOXPUSHING::DisplayObservation(const STATE& state, int observation, ostream
     int observation0 = observation%NumAgentObservations;
     int observation1 = observation/NumAgentObservations;
     
+    //observation0 = GetObservationComponentFromObservation(observation0);
+    //observation1 = GetObservationComponentFromObservation(observation1);
+    
     ostr << observationNames[observation0] << ", " << observationNames[observation1] << "\n";
 }
 
@@ -681,6 +684,9 @@ void BOXPUSHING::DisplayAction(int action, std::ostream& ostr) const
     
     int action0 = action%NumAgentActions;
     int action1 = action/NumAgentActions;
+    
+    //action0 = GetActionComponentFromAction(action0);
+    //action1 = GetActionComponentFromAction(action1);
     
     ostr << actionNames[action0] << ", " << actionNames[action1] << "\n";
 }

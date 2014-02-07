@@ -38,6 +38,8 @@ public:
 	double InitialRewardWeight;
 	int MultiAgentPriorCount;
 	double MultiAgentPriorValue;
+	
+	std::vector<bool> UsesComm;
     };
     
     MCTS(const SIMULATOR& simulator, const PARAMS& params);

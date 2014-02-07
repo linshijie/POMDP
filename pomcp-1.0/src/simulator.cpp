@@ -44,6 +44,8 @@ SIMULATOR::SIMULATOR(int numActions, int numObservations, double discount)
     NumAgents(1),
     NumAgentActions(numActions),
     NumAgentObservations(numObservations),
+    NumMessages(1),
+    NumAgentMessages(1),
     Discount(discount)
 { 
     assert(discount > 0 && discount <= 1);

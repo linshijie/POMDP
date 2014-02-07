@@ -48,6 +48,9 @@ MCTS::PARAMS::PARAMS()
     
     HumanDefined.push_back(false);
     HumanDefined.push_back(false);
+    
+    UsesComm.push_back(true);
+    UsesComm.push_back(true);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
@@ -57,7 +60,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 {
     //VNODE::NumChildren = Params.MultiAgent && !Params.JointQActions[0] ? Simulator.GetNumAgentActions() : 
 	//		Simulator.GetNumActions();
-    QNODE::NumChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
+    //QNODE::NumChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
     
     Statuses.clear();
     Roots.clear();
@@ -65,6 +68,8 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
     StatTreeDepths.clear();
     StatRolloutDepths.clear();
     StatTotalRewards.clear();
+    
+    QNODE::NumOtherAgentValues = 1;
     
     for (int i = 0 ; i < Simulator.GetNumAgents(); i++)
     {
@@ -81,6 +86,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	status.SmartTreeCount = ((int) sqrt(Params.NumSimulations));
 	
 	status.HumanDefined = Params.HumanDefined[i];
+	status.UseCommunication = Params.UsesComm[i];
 	
 	Statuses.push_back(status);
 	//histories
@@ -94,18 +100,8 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	STATISTIC StatTotalReward;
 	StatTotalRewards.push_back(StatTotalReward);
 	//root
-	VNODE* root; 
-	root->NumChildren = Params.MultiAgent && !Params.JointQActions[i] ? Simulator.GetNumAgentActions() : 
-			Simulator.GetNumActions();
-	if (Params.RewardAdaptive[i])
-	{
-	    //if (Params.JointQActions[i])
-		QNODE::NumOtherAgentValues = 1;
-	    //else
-		//QNODE::NumOtherAgentValues = Simulator.GetNumAgentActions();
-	}
 	STATE* state = Simulator.CreateStartState();
-	root = ExpandNode(state, Params.MultiAgent ? i+1 : i, Params.MultiAgent ? i+1 : i);
+	VNODE* root = ExpandNode(state, Params.MultiAgent ? i+1 : i, Params.MultiAgent ? i+1 : i);
 	Roots.push_back(root);
 	
     }
@@ -397,7 +393,7 @@ void MCTS::UCTSearch(const int& index)
 		}
 		
 		tempRewardTemplateValue = tempTotalReward;
-		double probRatio = exp(tempTotalReward*tempOtherTotalReward)/exp(totalReward*otherTotalReward);
+		double probRatio = exp(tempTotalReward)/exp(totalReward);
 		if (RandomDouble(0.0, 1.0) < min(1.0, probRatio))// && 
 		    //Statuses[index == 0 ? index : index-1].TerminalReached)
 		//if (tempTotalReward > totalReward && tempTotalReward > 0)
@@ -407,7 +403,7 @@ void MCTS::UCTSearch(const int& index)
 		    
 		    rewardTemplateValue = tempRewardTemplateValue;
 		    totalReward = tempTotalReward;
-		    otherTotalReward = tempOtherTotalReward;
+		    
 		    
 		    //Subtract old values
 		    if (!Statuses[index == 0 ? index : index-1].HumanDefined)
@@ -747,7 +743,25 @@ void MCTS::AddRave(VNODE* vnode, double totalReward, const STATE& state, const i
 
 VNODE* MCTS::ExpandNode(const STATE* state, const int& perspindex, const int& agentindex)
 {
-    VNODE* vnode = VNODE::Create();
+    int vChildren = Params.MultiAgent && !Params.JointQActions[perspindex-1] ? Simulator.GetNumAgentActions() : 
+			Simulator.GetNumActions();
+    int qChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
+    
+    if (Params.UsesComm[perspindex-1])
+    {
+	if (!Params.JointQActions[perspindex-1])
+	{
+	    vChildren *= Simulator.GetNumAgentMessages();
+	    qChildren *= Simulator.GetNumAgentMessages();
+	}
+	else
+	{
+	    vChildren *= Simulator.GetNumMessages();
+	    qChildren *= Simulator.GetNumMessages();
+	}
+    }
+    
+    VNODE* vnode = VNODE::Create(vChildren, qChildren);
     vnode->Value.Set(0, 0);
     
     if (!Params.MultiAgent)

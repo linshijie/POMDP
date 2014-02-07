@@ -87,7 +87,7 @@ public:
     void DisplayValue(HISTORY& history, int maxDepth, std::ostream& ostr) const;
     void DisplayPolicy(HISTORY& history, int maxDepth, std::ostream& ostr) const;
 
-    static int NumChildren;
+    int NumChildren;
     
     static int NumOtherAgentValues;
 
@@ -108,7 +108,7 @@ public:
     VALUE<int> Value;
 
     void Initialise();
-    static VNODE* Create();
+    static VNODE* Create(const int& vChildren, const int& qChildren);
     static void Free(VNODE* vnode, const SIMULATOR& simulator);
     static void FreeAll();
 
@@ -122,7 +122,7 @@ public:
     void DisplayValue(HISTORY& history, int maxDepth, std::ostream& ostr) const;
     void DisplayPolicy(HISTORY& history, int maxDepth, std::ostream& ostr) const;
 
-    static int NumChildren;
+    int NumChildren;
 
 private:
 

@@ -740,7 +740,9 @@ pomcp-beliefstate.o: beliefstate.cpp beliefstate.h \
  /usr/include/boost/random/poisson_distribution.hpp \
  /usr/include/boost/random/gamma_distribution.hpp \
  /usr/include/boost/random/binomial_distribution.hpp \
- /usr/include/boost/random/uniform_on_sphere.hpp
+ /usr/include/boost/random/uniform_on_sphere.hpp \
+ /usr/include/c++/4.6/deque /usr/include/c++/4.6/bits/stl_deque.h \
+ /usr/include/c++/4.6/bits/deque.tcc
 
 beliefstate.h:
 
@@ -2393,3 +2395,9 @@ memorypool.h:
 /usr/include/boost/random/binomial_distribution.hpp:
 
 /usr/include/boost/random/uniform_on_sphere.hpp:
+
+/usr/include/c++/4.6/deque:
+
+/usr/include/c++/4.6/bits/stl_deque.h:
+
+/usr/include/c++/4.6/bits/deque.tcc:

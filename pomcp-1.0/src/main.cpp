@@ -55,6 +55,7 @@ int main(int argc, char* argv[])
     bool rewAdaptive1 = true, rewAdaptive2 = true;
     bool humanDefined1 = false, humanDefined2 = false;
     bool random1 = false, random2 = false;
+    bool comm1 = true, comm2 = true;
     
 
     options_description desc("Allowed options");
@@ -99,6 +100,8 @@ int main(int argc, char* argv[])
 	("humandefined2", value<bool>(&humanDefined2), "Second agent human-defined")
 	("random1", value<bool>(&random1), "First agent random")
 	("random2", value<bool>(&random2), "Second agent random")
+	("comm1", value<bool>(&random1), "First agent communication")
+	("comm2", value<bool>(&random2), "Second agent communication")
         ;
 
     variables_map vm;
@@ -109,6 +112,8 @@ int main(int argc, char* argv[])
     searchParams.RewardAdaptive[1] = rewAdaptive2;
     searchParams.HumanDefined[0] = humanDefined1;
     searchParams.HumanDefined[1] = humanDefined2;
+    searchParams.UsesComm[0] = comm1;
+    searchParams.UsesComm[1] = comm2;
     expParams.RandomActions[0] = random1;
     expParams.RandomActions[1] = random2;
 
