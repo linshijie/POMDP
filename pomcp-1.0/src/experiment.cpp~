@@ -8,8 +8,8 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(20),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(10),
-    MaxDoubles(10),
+    MinDoubles(9),
+    MaxDoubles(9),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(false),
@@ -18,7 +18,8 @@ EXPERIMENT::PARAMS::PARAMS()
     Accuracy(0.01),
     UndiscountedHorizon(20),
     AutoExploration(true),
-    BreakOnTerminate(true)
+    BreakOnTerminate(true),
+    RealSimCommunication(true)
 {
     RandomActions.clear();
     
@@ -113,7 +114,10 @@ void EXPERIMENT::Run()
 	}
 	SIMULATOR::STATUS status = mcts.GetStatus(0);
 	status.JointGoalCount = 0;
+	bool statusComm = status.UseCommunication;
+	status.UseCommunication = ExpParams.RealSimCommunication;
 	terminal = Real.Step(*state, action, observation, reward, status);
+	status.UseCommunication = statusComm;
 
 	Results.Reward.Add(reward);
 	undiscountedReturn += reward;
@@ -253,7 +257,11 @@ void EXPERIMENT::Run()
 	    }
 	    SIMULATOR::STATUS status = mcts.GetStatus(0);
 	    status.JointGoalCount = 0;
+	    
+	    bool statusComm = status.UseCommunication;
+	    status.UseCommunication = ExpParams.RealSimCommunication;
             terminal = Real.Step(*state, action, observation, reward, status);
+	    status.UseCommunication = statusComm;
 
             Results.Reward.Add(reward);
             undiscountedReturn += reward;

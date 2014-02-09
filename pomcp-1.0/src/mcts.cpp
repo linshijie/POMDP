@@ -598,13 +598,16 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     
     if (Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1])
     {
+	int numIter = Simulator.GetNumAgentActions();
+	if (Statuses[index == 0 ? index : index-1].UseCommunication)
+	    numIter *= Simulator.GetNumAgentMessages();
 	if (index == 1)
 	    action = action + 
-		Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 2);
+		numIter*Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 2);
 		//action + Simulator.GetNumAgentActions()*Random(Simulator.GetNumAgentActions());
 	else
 	    action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),1) + 
-		Simulator.GetNumAgentActions()*action;
+		numIter*action;
 		//Random(Simulator.GetNumAgentActions()) + Simulator.GetNumAgentActions()*action;
     }
 
@@ -728,12 +731,15 @@ void MCTS::AddRave(VNODE* vnode, double totalReward, const STATE& state, const i
 	    action = GetHistory(index)[t].Action;
 	else
 	{
+	    int numIter = Simulator.GetNumAgentActions();
+	    if (Statuses[index == 0 ? index : index-1].UseCommunication)
+		numIter *= Simulator.GetNumAgentMessages();
 	    if (index == 1)
 		action = GetHistory(index)[t].Action + 
-		    Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),2);
+		    numIter*Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),2);
 	    else
 		action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),1) + 
-		    Simulator.GetNumAgentActions()*GetHistory(index)[t].Action;
+		    numIter*GetHistory(index)[t].Action;
 	}
         QNODE& qnode = vnode->Child(action);
         qnode.AMAF.Add(totalReward, totalDiscount);
@@ -827,9 +833,17 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
     if ((Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1]) ||
 	(Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
     )
+    {
 	maxIter = Simulator.GetNumAgentActions();
+	if (Statuses[index == 0 ? index : index-1].UseCommunication)
+	    maxIter *= Simulator.GetNumAgentMessages();
+    }
     else
+    {
 	maxIter = Simulator.GetNumActions();
+	if (Statuses[index == 0 ? index : index-1].UseCommunication)
+	    maxIter *= Simulator.GetNumMessages();
+    }
     
     
     std::vector<int> maxOwnActions;
@@ -1077,12 +1091,15 @@ STATE* MCTS::CreateTransform(const int& index) const
 	action = GetHistory(index).Back().Action;
     else
     {
+	int numIter = Simulator.GetNumAgentActions();
+	if (Statuses[index == 0 ? index : index-1].UseCommunication)
+	    numIter *= Simulator.GetNumAgentMessages();
 	if (index == 1)
 	    action = GetHistory(index).Back().Action + 
-		Simulator.GetNumAgentActions()*Simulator.SelectRandom(*state, GetHistory(index), GetStatus(index), 2);
+		numIter*Simulator.SelectRandom(*state, GetHistory(index), GetStatus(index), 2);
 	else
 	    action = Simulator.SelectRandom(*state, GetHistory(index), GetStatus(index),1) + 
-		Simulator.GetNumAgentActions()*GetHistory(index).Back().Action;
+		numIter*GetHistory(index).Back().Action;
     }
     SIMULATOR::STATUS status = Statuses[index == 0 ? index : index-1];
     Simulator.Step(*state, action, stepObs, stepReward, status);

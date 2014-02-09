@@ -57,6 +57,9 @@ int main(int argc, char* argv[])
     bool random1 = false, random2 = false;
     bool comm1 = true, comm2 = true;
     
+    //communication
+    double probMessageLoss = 0.0, probMessageDelay = 0.0, probMessageMisinterp = 0.0;
+    
 
     options_description desc("Allowed options");
     desc.add_options()
@@ -90,6 +93,7 @@ int main(int argc, char* argv[])
         ("disabletree", value<bool>(&searchParams.DisableTree), "Use 1-ply rollout action selection")
 	("multiagent", value<bool>(&searchParams.MultiAgent), "Distributed decision making")
 	("breakonterminate", value<bool>(&expParams.BreakOnTerminate), "Break the loop when a goal state is reached")
+	("realcommunication", value<bool>(&expParams.RealSimCommunication), "Enable communication in real simulator")
 	("numsmallboxes", value<int>(&numSmallBoxes), "Number of small boxes (boxpushing problem)")
 	("problargeboxagent", value<double>(&probLargeBoxAgent), "Probability of special observation (boxpushing problem)")
 	("testtray", value<bool>(&testTrayOnStove), "Test tray on stove (kitchen problem)")
@@ -102,6 +106,9 @@ int main(int argc, char* argv[])
 	("random2", value<bool>(&random2), "Second agent random")
 	("comm1", value<bool>(&random1), "First agent communication")
 	("comm2", value<bool>(&random2), "Second agent communication")
+	("messageloss", value<double>(&probMessageLoss), "Probability of message loss")
+	("messagedelay", value<double>(&probMessageDelay), "Probability of message delay")
+	("messagemisinterp", value<double>(&probMessageMisinterp), "Probability of message misinterpretation")
         ;
 
     variables_map vm;
@@ -184,8 +191,14 @@ int main(int argc, char* argv[])
         cout << "Unknown problem" << endl;
         exit(1);
     }
-
-
+    
+    real->SetProbMessageLoss(probMessageLoss);
+    simulator->SetProbMessageLoss(probMessageLoss);
+    real->SetProbMessageDelay(probMessageDelay);
+    simulator->SetProbMessageDelay(probMessageDelay);
+    real->SetProbMessageMisinterp(probMessageMisinterp);
+    simulator->SetProbMessageMisinterp(probMessageMisinterp);
+    
     simulator->SetKnowledge(knowledge);
     EXPERIMENT experiment(*real, *simulator, outputfile, expParams, searchParams);
     experiment.DiscountedReturn();

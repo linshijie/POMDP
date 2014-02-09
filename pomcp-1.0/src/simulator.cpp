@@ -46,7 +46,10 @@ SIMULATOR::SIMULATOR(int numActions, int numObservations, double discount)
     NumAgentObservations(numObservations),
     NumMessages(1),
     NumAgentMessages(1),
-    Discount(discount)
+    Discount(discount),
+    ProbMessageLoss(0.0),
+    ProbMessageDelay(0.0),
+    ProbMessageMisinterp(0.0)
 { 
     assert(discount > 0 && discount <= 1);
 }
@@ -253,6 +256,12 @@ void SIMULATOR::DisplayObservation(const STATE& state, int observation, ostream&
     ostr << "Observation " << observation << endl;
 }
 
+void SIMULATOR::DisplayMessage(int message, ostream& ostr) const
+{
+    ostr << "Message " << message << endl;
+}
+
+
 void SIMULATOR::DisplayAgentAction(int action, ostream& ostr) const
 {
     ostr << "Action " << action << endl;
@@ -263,6 +272,10 @@ void SIMULATOR::DisplayAgentObservation(int observation, ostream& ostr) const
     ostr << "Observation " << observation << endl;
 }
 
+void SIMULATOR::DisplayAgentMessage(int message, ostream& ostr) const
+{
+    ostr << "Message " << message << endl;
+}
 
 void SIMULATOR::DisplayReward(double reward, std::ostream& ostr) const
 {

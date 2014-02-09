@@ -18,7 +18,8 @@ EXPERIMENT::PARAMS::PARAMS()
     Accuracy(0.01),
     UndiscountedHorizon(20),
     AutoExploration(true),
-    BreakOnTerminate(true)
+    BreakOnTerminate(true),
+    RealSimCommunication(true)
 {
     RandomActions.clear();
     
@@ -113,7 +114,10 @@ void EXPERIMENT::Run()
 	}
 	SIMULATOR::STATUS status = mcts.GetStatus(0);
 	status.JointGoalCount = 0;
+	bool statusComm = status.UseCommunication;
+	status.UseCommunication = ExpParams.RealSimCommunication;
 	terminal = Real.Step(*state, action, observation, reward, status);
+	status.UseCommunication = statusComm;
 
 	Results.Reward.Add(reward);
 	undiscountedReturn += reward;
@@ -253,7 +257,11 @@ void EXPERIMENT::Run()
 	    }
 	    SIMULATOR::STATUS status = mcts.GetStatus(0);
 	    status.JointGoalCount = 0;
+	    
+	    bool statusComm = status.UseCommunication;
+	    status.UseCommunication = ExpParams.RealSimCommunication;
             terminal = Real.Step(*state, action, observation, reward, status);
+	    status.UseCommunication = statusComm;
 
             Results.Reward.Add(reward);
             undiscountedReturn += reward;
@@ -289,7 +297,7 @@ void EXPERIMENT::Run()
 
             if (SearchParams.Verbose >= 1)
             {
-                Real.DisplayAction(action, cout);
+		Real.DisplayAction(action, cout);
                 Real.DisplayState(*state, cout);
                 Real.DisplayObservation(*state, observation, cout);
                 Real.DisplayReward(reward, cout);

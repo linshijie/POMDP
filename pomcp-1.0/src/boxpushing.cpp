@@ -163,6 +163,31 @@ bool BOXPUSHING::Step(STATE& state, int action,
     BOXPUSHING_STATE& bpstate = safe_cast<BOXPUSHING_STATE&>(state);
     
     int actions[] = {action%NumAgentActions, action/NumAgentActions};
+    int messages[] = {0, 0};
+    
+    if (status.UseCommunication)
+    {
+	int action0 = GetActionComponentFromAction(actions[0]);
+	int action1 = GetActionComponentFromAction(actions[1]);
+	messages[0] = GetMessageComponentFromAction(actions[0]);
+	messages[1] = GetMessageComponentFromAction(actions[1]);
+	actions[0] = action0;
+	actions[1] = action1;
+	for (int i = 0; i < NumAgents; i++)
+	    if (UTILS::RandomDouble(0.0,1.0) > ProbMessageLoss)
+	    {
+		std::string mess = MessageToString(messages[i]);
+		STATE::MESSAGE message;
+		message.Message = mess;
+		message.AgentID = i;
+		if (UTILS::RandomDouble(0.0,1.0) > ProbMessageDelay)
+		    bpstate.MessageQueue.push_front(message);
+		else
+		    bpstate.MessageQueue.push_back(message);
+	    }
+    }
+    
+    
     
     COORD next0 = bpstate.Agents[0].Position + COORD::Compass[bpstate.Agents[0].Direction];
     COORD next1 = bpstate.Agents[1].Position + COORD::Compass[bpstate.Agents[1].Direction];
@@ -253,6 +278,27 @@ bool BOXPUSHING::Step(STATE& state, int action,
     {
 	obs0 = LARGE_BOX_AGENT_OBS;
 	obs1 = LARGE_BOX_AGENT_OBS;
+    }
+    
+    if (status.UseCommunication)
+    {
+	for (int i = 0; i < NumAgents; i++)
+	{
+	    int m = 0;
+	    for (int j = 0; j < (int) bpstate.MessageQueue.size(); j++)
+		if (bpstate.MessageQueue.at(j).AgentID != i)
+		{
+		    if (RandomDouble(0.0,1.0) > ProbMessageMisinterp)
+			m = MessageToInt(bpstate.MessageQueue.at(j).Message);
+		    else
+			m = Random(NumAgentMessages);
+		    break;
+		}
+	    if (i == 0)
+		obs0 = obs0 + m*NumAgentObservations;
+	    else
+		obs1 = obs1 + m*NumAgentObservations;
+	}
     }
     
     observation = obs0 + NumAgentObservations*obs1;
@@ -671,25 +717,60 @@ void BOXPUSHING::DisplayState(const STATE& state, ostream& ostr) const
 void BOXPUSHING::DisplayObservation(const STATE& state, int observation, ostream& ostr) const
 {
     string observationNames[6] = {"EMPTY_OBS", "WALL_OBS", "AGENT_OBS", "SMALL_BOX_OBS", "LARGE_BOX_OBS", "LARGE_BOX_AGENT_OBS"};
+    string messageNames[3] = {"NO_MES", "SMALL_BOX_MES", "LARGE_BOX_MES"};
     
     int observation0 = observation%NumAgentObservations;
     int observation1 = observation/NumAgentObservations;
     
-    //observation0 = GetObservationComponentFromObservation(observation0);
-    //observation1 = GetObservationComponentFromObservation(observation1);
-    
-    ostr << observationNames[observation0] << ", " << observationNames[observation1] << "\n";
+    ostr << "OBSERVATIONS: " << observationNames[GetObservationComponentFromObservation(observation0)] << ", " << 
+	observationNames[GetObservationComponentFromObservation(observation1)] << "\n";
+    ostr << "MESSAGES RECEIVED: " << messageNames[GetMessageComponentFromObservation(observation0)] << ", " << 
+	messageNames[GetMessageComponentFromObservation(observation1)] << "\n";
 }
 
 void BOXPUSHING::DisplayAction(int action, std::ostream& ostr) const
 {
     string actionNames[4] = {"STAY", "TURN_CW", "TURN_CCW", "MOVE"};
+    string messageNames[3] = {"NO_MES", "SMALL_BOX_MES", "LARGE_BOX_MES"};
     
     int action0 = action%NumAgentActions;
     int action1 = action/NumAgentActions;
     
-    //action0 = GetActionComponentFromAction(action0);
-    //action1 = GetActionComponentFromAction(action1);
-    
-    ostr << actionNames[action0] << ", " << actionNames[action1] << "\n";
+    ostr << "ACTIONS: " << actionNames[GetActionComponentFromAction(action0)] << ", " 
+	    << actionNames[GetActionComponentFromAction(action1)] << "\n";
+    ostr << "MESSAGES SENT: " << messageNames[GetMessageComponentFromAction(action0)] << ", " 
+	    << messageNames[GetMessageComponentFromAction(action1)] << "\n";
 }
+
+void BOXPUSHING::DisplayMessage(int message, ostream& ostr) const
+{
+    string messageNames[3] = {"NO_MES", "SMALL_BOX_MES", "LARGE_BOX_MES"};
+    
+    int message0 = message%NumAgentMessages;
+    int message1 = message/NumAgentMessages;
+    
+    ostr << messageNames[message0] << ", " << messageNames[message1] << "\n";
+}
+
+string BOXPUSHING::MessageToString(const int& message) const
+{
+    assert(message >= 0 && message < NumAgentMessages);
+    string messageNames[3] = {"NO_MES", "SMALL_BOX_MES", "LARGE_BOX_MES"};
+    
+    return messageNames[message];
+}
+
+int BOXPUSHING::MessageToInt(const string& message) const
+{
+    if (message == "NO_MES")
+	return 0;
+    else if (message == "SMALL_BOX_MES")
+	return 1;
+    else if (message == "LARGE_BOX_MES")
+	return 2;
+    else
+	return 0;
+}
+
+
+

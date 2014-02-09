@@ -68,6 +68,7 @@ public:
     virtual void DisplayState(const STATE& state, std::ostream& ostr) const;
     virtual void DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const;
     virtual void DisplayAction(int action, std::ostream& ostr) const;
+    virtual void DisplayMessage(int message, std::ostream& ostr) const;
     
     virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
 
@@ -92,6 +93,9 @@ protected:
     bool ResetAtCompletion;
     double ProbLargeAgentBox;
     double ProbObservation;
+    
+    int MessageToInt(const std::string& message) const;
+    std::string MessageToString(const int& message) const;
     
     std::vector< std::vector< std::vector<bool> > > MultiAgentLabels;
     std::vector<double> quantiles;

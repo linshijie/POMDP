@@ -202,15 +202,20 @@ public:
     virtual void DisplayState(const STATE& state, std::ostream& ostr) const;
     virtual void DisplayAction(int action, std::ostream& ostr) const;
     virtual void DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const;
+    virtual void DisplayMessage(int message, std::ostream& ostr) const;
     virtual void DisplayReward(double reward, std::ostream& ostr) const;
     
     virtual void DisplayAgentAction(int action, std::ostream& ostr) const;
     virtual void DisplayAgentObservation(int observation, std::ostream& ostr) const;
+    virtual void DisplayAgentMessage(int message, std::ostream& ostr) const;
     
     virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
 
     // Accessors
     void SetKnowledge(const KNOWLEDGE& knowledge) { Knowledge = knowledge; }
+    void SetProbMessageLoss(const double& prob) { ProbMessageLoss = prob; }
+    void SetProbMessageDelay(const double& prob) { ProbMessageDelay = prob; }
+    void SetProbMessageMisinterp(const double& prob) { ProbMessageMisinterp = prob; }
     int GetRolloutLevel() const { return Knowledge.RolloutLevel; }
     int GetNumActions() const { return NumActions; }
     int GetNumObservations() const { return NumObservations; }
@@ -225,7 +230,7 @@ public:
 						    observation/NumAgentObservations : observation%NumAgentObservations;}
 						   
     int GetActionComponentFromAction(const int& action) const { return action%NumAgentActions; }
-    int GetMesssageComponentFromAction(const int& action) const { return action/NumAgentMessages; }
+    int GetMessageComponentFromAction(const int& action) const { return action/NumAgentMessages; }
     int GetObservationComponentFromObservation(const int& observation) const { return observation%NumAgentObservations; }
     int GetMessageComponentFromObservation(const int& observation) const { return observation/NumAgentMessages; }
     
@@ -239,6 +244,7 @@ protected:
 
     int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations, NumMessages, NumAgentMessages;
     double Discount, RewardRange;
+    double ProbMessageLoss, ProbMessageDelay, ProbMessageMisinterp;
     KNOWLEDGE Knowledge;
     mutable MEMORY_POOL<REWARD_TEMPLATE> RewardMemoryPool;
     //INITIAL_REWARD_PARAMS InitialRewardParams;
