@@ -151,6 +151,8 @@ protected:
     
     bool StartLocationsFixed;
     
+    std::vector<double> quantiles;
+    
 private:
     mutable MEMORY_POOL<KITCHEN_STATE> MemoryPool;
     

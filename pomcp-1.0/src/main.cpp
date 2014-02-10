@@ -104,8 +104,8 @@ int main(int argc, char* argv[])
 	("humandefined2", value<bool>(&humanDefined2), "Second agent human-defined")
 	("random1", value<bool>(&random1), "First agent random")
 	("random2", value<bool>(&random2), "Second agent random")
-	("comm1", value<bool>(&random1), "First agent communication")
-	("comm2", value<bool>(&random2), "Second agent communication")
+	("comm1", value<bool>(&comm1), "First agent communication")
+	("comm2", value<bool>(&comm2), "Second agent communication")
 	("messageloss", value<double>(&probMessageLoss), "Probability of message loss")
 	("messagedelay", value<double>(&probMessageDelay), "Probability of message delay")
 	("messagemisinterp", value<double>(&probMessageMisinterp), "Probability of message misinterpretation")
@@ -200,6 +200,10 @@ int main(int argc, char* argv[])
     simulator->SetProbMessageMisinterp(probMessageMisinterp);
     
     simulator->SetKnowledge(knowledge);
+    
+    if (!comm1 && !comm2)
+	expParams.RealSimCommunication = false;
+    
     EXPERIMENT experiment(*real, *simulator, outputfile, expParams, searchParams);
     experiment.DiscountedReturn();
 

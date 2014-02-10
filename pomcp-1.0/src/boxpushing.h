@@ -70,11 +70,11 @@ public:
     virtual void DisplayAction(int action, std::ostream& ostr) const;
     virtual void DisplayMessage(int message, std::ostream& ostr) const;
     
-    virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
+    virtual bool IsActionMultiagent(const int& action, const HISTORY& history, const bool& comm) const;
 
 protected:
 
-    int GetAgentObservation(const BOXPUSHING_STATE& bpstate, const int& agentindex) const;
+    int MakeAgentObservation(const BOXPUSHING_STATE& bpstate, const int& agentindex) const;
     double StepAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agentaction) const;
     bool Collision(const BOXPUSHING_STATE& bpstate, const PUSH_ENTITY& pushentity) const;
     void MarkCell(BOXPUSHING_STATE& bpstate, const COORD& coord, const CellContent& content) const;

@@ -122,7 +122,7 @@ void SIMULATOR::GeneratePreferredAgent(const STATE& state, const HISTORY& histor
 
 }
 
-bool SIMULATOR::IsActionMultiagent(const int& action, const HISTORY& history) const
+bool SIMULATOR::IsActionMultiagent(const int& action, const HISTORY& history, const bool& comm) const
 {
     return false;
 }
@@ -192,7 +192,7 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
             QNODE& qnode = vnode->Child(a);
             qnode.Value.Set(0, 0);
             qnode.AMAF.Set(0, 0);
-	    if (IsActionMultiagent(a, history))
+	    if (IsActionMultiagent(a, history, status.UseCommunication))
 		for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
 		    qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
         }
@@ -206,16 +206,16 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
 	else
 	    GeneratePreferredAgent(*state, history, actions, status, index);
 	
-	if ((index > 0 && legalActionSize == GetNumAgentActions()) || 
+	/*if ((index > 0 && legalActionSize == GetNumAgentActions()) || 
 	    (index == 0 && legalActionSize == GetNumActions())
-	)
+	)*/
 	    for (vector<int>::const_iterator i_action = actions.begin(); i_action != actions.end(); ++i_action)
 	    {
 		int a = *i_action;
 		QNODE& qnode = vnode->Child(a);
 		qnode.Value.Set(status.SmartTreeCount, Knowledge.SmartTreeValue);
 		qnode.AMAF.Set(status.SmartTreeCount, Knowledge.SmartTreeValue);
-		if (IsActionMultiagent(a, history))
+		if (IsActionMultiagent(a, history, status.UseCommunication))
 		    for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
 			qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
 		//for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)

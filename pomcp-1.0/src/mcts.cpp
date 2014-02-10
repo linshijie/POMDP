@@ -125,12 +125,13 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
 	Histories[index == 0 ? index : index-1].Add(action, observation);
     else
     {
+	int commFactor = Statuses[index == 0 ? index : index-1].UseCommunication ? Simulator.GetNumAgentMessages() : 1;
 	if (index == 1 && Params.JointQActions[index == 0 ? index : index-1])
-	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,1), observation);
+	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,1,commFactor), observation);
 	else if (index == 1)
 	    Histories[index == 0 ? index : index-1].Add(action, observation);
 	else if (index == 2 && Params.JointQActions[index == 0 ? index : index-1])
-	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,2), observation);
+	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,2,commFactor), observation);
 	else if (index == 2)
 	    Histories[index == 0 ? index : index-1].Add(action, observation);
     }
@@ -220,9 +221,9 @@ void MCTS::RolloutSearch(const int& index)
 	    if (Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1])
 	    {
 		if (index == 1)
-		    treeaction = Simulator.GetAgentAction(action,1);
+		    treeaction = Simulator.GetAgentAction(action,1,1);
 		else
-		    treeaction = Simulator.GetAgentAction(action,2);
+		    treeaction = Simulator.GetAgentAction(action,2,1);
 		/*if (Params.RewardAdaptive[index == 0 ? index : index-1])
 		{
 		    if (index == 1)
@@ -233,7 +234,7 @@ void MCTS::RolloutSearch(const int& index)
 	    }
 
 	    VNODE*& vnode = Roots[index == 0 ? index : index-1]->Child(treeaction).Child(index == 0 ?
-		    observation : Simulator.GetAgentObservation(observation,index));			
+		    observation : Simulator.GetAgentObservation(observation,index,1));			
 	    
 	    if (!vnode && !terminal)
 	    {
@@ -241,8 +242,8 @@ void MCTS::RolloutSearch(const int& index)
 		    AddSample(vnode, *state);
 	    }
 	    
-	    Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action,index), 
-				       index == 0 ? observation : Simulator.GetAgentObservation(observation,index));
+	    Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action,index,1), 
+				       index == 0 ? observation : Simulator.GetAgentObservation(observation,index,1));
 	    double otherDelayedReward = 0.0;
 	    delayedReward = Rollout(*state, index, otherDelayedReward);
 	    totalReward = immediateReward + Simulator.GetDiscount() * delayedReward;
@@ -526,8 +527,6 @@ void MCTS::UCTSearch(const int& index)
 	}
 	Statuses[index == 0 ? index : index-1].LearningPhase = false;
     }
-    
-    
 
     DisplayStatistics(cout, index);
 }
@@ -535,7 +534,6 @@ void MCTS::UCTSearch(const int& index)
 double MCTS::SimulateV(STATE& state, VNODE* vnode, const int& index, double otherTotalReward)
 {
     int action = GreedyUCB(vnode, Params.DoFastUCB, index);
-    
     
     PeakTreeDepth = TreeDepth;
     if (TreeDepth >= Params.MaxDepth) // search horizon reached
@@ -568,7 +566,7 @@ double MCTS::SimulateV(STATE& state, VNODE* vnode, const int& index, double othe
     }
     
     totalReward = SimulateQ(state, qnode, action, index, otherTotalReward);
-    
+
     if (Statuses[index == 0 ? index : index-1].UpdateValues)
     {
 	vnode->Value.Add(totalReward);
@@ -595,6 +593,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     double immediateReward, delayedReward = 0;
     double otherImmediateReward = 0, otherDelayedReward = 0;
     
+    int commFactor = Statuses[index == 0 ? index : index-1].UseCommunication ? Simulator.GetNumAgentMessages() : 1;
     
     if (Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1])
     {
@@ -622,8 +621,8 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
 	otherImmediateReward = Statuses[index == 0 ? index : index-1].CurrOtherReward;
     
     assert(observation >= 0 && observation < Simulator.GetNumObservations());
-    Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
-			       index == 0 ? observation : Simulator.GetAgentObservation(observation, index));
+    Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index, commFactor), 
+			       index == 0 ? observation : Simulator.GetAgentObservation(observation, index, commFactor));
 
     if (Params.Verbose >= 3)
     {
@@ -634,7 +633,8 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     }
     
     VNODE*& vnode = index == 0 ? qnode.Child(observation) : 
-		qnode.Child(Simulator.GetAgentObservation(observation, index));
+		qnode.Child(Simulator.GetAgentObservation(observation, index, 
+							  Statuses[index == 0 ? index : index-1].UseCommunication ? Simulator.GetNumAgentMessages() : 1));
 	
 		
     if (!vnode && !terminal && qnode.Value.GetCount() >= Params.ExpandCount)
@@ -645,16 +645,16 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
 	if (Statuses[index == 0 ? index : index-1].LearningPhase)
 	{
 	    Statuses[index == 0 ? index : index-1].LearnSequence.push_back(index == 0 ? observation : 
-		Simulator.GetAgentObservation(observation, index));
+		Simulator.GetAgentObservation(observation, index, commFactor));
 	    Statuses[index == 0 ? index : index-1].LearnFullSequence.push_back(index == 0 ? observation : 
-		Simulator.GetAgentObservation(observation, index));
+		Simulator.GetAgentObservation(observation, index, commFactor));
 	}
 	else
 	{
 	    Statuses[index == 0 ? index : index-1].MainSequence.push_back(index == 0 ? observation : 
-		Simulator.GetAgentObservation(observation, index)); 
+		Simulator.GetAgentObservation(observation, index, commFactor)); 
 	    Statuses[index == 0 ? index : index-1].MainFullSequence.push_back(index == 0 ? observation : 
-		Simulator.GetAgentObservation(observation, index)); 
+		Simulator.GetAgentObservation(observation, index, commFactor)); 
 	}
     }
     
@@ -993,6 +993,7 @@ double MCTS::Rollout(STATE& state, const int& index, double otherReward)
     double discount = 1.0;
     bool terminal = false;
     int numSteps;
+    int commFactor = Statuses[index == 0 ? index : index-1].UseCommunication ? Simulator.GetNumAgentMessages() : 1;
     for (numSteps = 0; numSteps + TreeDepth < Params.MaxDepth && !terminal; ++numSteps)
     {
         int observation;
@@ -1003,22 +1004,22 @@ double MCTS::Rollout(STATE& state, const int& index, double otherReward)
 	
 	Statuses[index == 0 ? index : index-1].TerminalReached = terminal;
 	    
-	Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
-			      index == 0 ? observation : Simulator.GetAgentObservation(observation, index));
+	Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index, commFactor), 
+			      index == 0 ? observation : Simulator.GetAgentObservation(observation, index, commFactor));
 	
 	if (Statuses[index == 0 ? index : index-1].LearningPhase)
 	{
 	    Statuses[index == 0 ? index : index-1].LearnFullSequence.push_back(index == 0 ? action : 
-		    Simulator.GetAgentAction(action, index));
+		    Simulator.GetAgentAction(action, index, commFactor));
 	    Statuses[index == 0 ? index : index-1].LearnFullSequence.push_back(index == 0 ? observation : 
-		    Simulator.GetAgentObservation(observation, index));
+		    Simulator.GetAgentObservation(observation, index, commFactor));
 	}
 	else
 	{
 	    Statuses[index == 0 ? index : index-1].MainFullSequence.push_back(index == 0 ? action : 
-		    Simulator.GetAgentAction(action, index));
+		    Simulator.GetAgentAction(action, index, commFactor));
 	    Statuses[index == 0 ? index : index-1].MainFullSequence.push_back(index == 0 ? observation : 
-		    Simulator.GetAgentObservation(observation, index));
+		    Simulator.GetAgentObservation(observation, index, commFactor));
 	}
 
         if (Params.Verbose >= 4)

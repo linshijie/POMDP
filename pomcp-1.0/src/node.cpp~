@@ -74,6 +74,7 @@ void VNODE::Initialise(const int& qChildren)
 
 VNODE* VNODE::Create(const int& vChildren, const int& qChildren)
 {
+    std::cout << vChildren << " " << qChildren << "\n";
     VNODE* vnode = VNodePool.Allocate();
     vnode->NumChildren = vChildren;
     vnode->Initialise(qChildren);

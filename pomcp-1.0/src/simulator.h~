@@ -209,7 +209,7 @@ public:
     virtual void DisplayAgentObservation(int observation, std::ostream& ostr) const;
     virtual void DisplayAgentMessage(int message, std::ostream& ostr) const;
     
-    virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
+    virtual bool IsActionMultiagent(const int& action, const HISTORY& history, const bool& comm) const;
 
     // Accessors
     void SetKnowledge(const KNOWLEDGE& knowledge) { Knowledge = knowledge; }
@@ -224,15 +224,15 @@ public:
     int GetNumAgentObservations() const { return NumAgentObservations; }
     int GetNumMessages() const { return NumMessages; }
     int GetNumAgentMessages() const { return NumAgentMessages; }
-    int GetAgentAction(const int& action, const int& index) const { return index > 1 ? action/NumAgentActions : 
-									    action%NumAgentActions;}
-    int GetAgentObservation(const int& observation, const int& index) const { return index > 1 ? 
-						    observation/NumAgentObservations : observation%NumAgentObservations;}
+    int GetAgentAction(const int& action, const int& index, int commFactor) const { return index > 1 ? action/(NumAgentActions*commFactor) : 
+									    action%(NumAgentActions*commFactor);}
+    int GetAgentObservation(const int& observation, const int& index, int commFactor) const { return index > 1 ? 
+						    observation/(NumAgentObservations*commFactor) : observation%(NumAgentObservations*commFactor);}
 						   
     int GetActionComponentFromAction(const int& action) const { return action%NumAgentActions; }
-    int GetMesssageComponentFromAction(const int& action) const { return action/NumAgentMessages; }
+    int GetMessageComponentFromAction(const int& action) const { return action/NumAgentActions; }
     int GetObservationComponentFromObservation(const int& observation) const { return observation%NumAgentObservations; }
-    int GetMessageComponentFromObservation(const int& observation) const { return observation/NumAgentMessages; }
+    int GetMessageComponentFromObservation(const int& observation) const { return observation/NumAgentObservations; }
     
 						   
     bool IsEpisodic() const { return false; }

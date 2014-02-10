@@ -65,6 +65,14 @@ void EXPERIMENT::Run()
     
     MCTS mcts(Simulator, SearchParams);
     
+    //int commFactor0 = mcts.GetStatus(0).UseCommunication ? Simulator.GetNumAgentMessages() : 1;
+    int commFactor1 = 1, commFactor2 = 1;
+    if (SearchParams.MultiAgent)
+    {
+	commFactor1 = mcts.GetStatus(1).UseCommunication ? Simulator.GetNumAgentMessages() : 1;
+	commFactor2 = mcts.GetStatus(2).UseCommunication ? Simulator.GetNumAgentMessages() : 1;
+    }
+    
     double undiscountedReturn = 0.0;
     double discountedReturn = 0.0;
     double discount = 1.0;
@@ -188,8 +196,8 @@ void EXPERIMENT::Run()
 	    outOfParticles = !mcts.Update(action, observation, reward, 0);
 	else
 	{
-	    outOfParticles = !mcts.Update(action0, Simulator.GetAgentObservation(observation,1), reward, 1);
-	    outOfParticles2 = !mcts.Update(action1, Simulator.GetAgentObservation(observation,2), reward, 2);
+	    outOfParticles = !mcts.Update(action0, Simulator.GetAgentObservation(observation,1,commFactor1), reward, 1);
+	    outOfParticles2 = !mcts.Update(action1, Simulator.GetAgentObservation(observation,2,commFactor2), reward, 2);
 	}
 	    
 	if (outOfParticles || outOfParticles2)
@@ -330,21 +338,21 @@ void EXPERIMENT::Run()
 		if (outOfParticles)
 		{
 		    if (SearchParams.JointQActions[0])
-			history.Add(Simulator.GetAgentAction(action,1), Simulator.GetAgentObservation(observation,1));
+			history.Add(Simulator.GetAgentAction(action,1,commFactor1), Simulator.GetAgentObservation(observation,1,commFactor1));
 		    else
-			history.Add(action0, Simulator.GetAgentObservation(observation,1));
+			history.Add(action0, Simulator.GetAgentObservation(observation,1,commFactor1));
 		}
 		else
-		    outOfParticles = !mcts.Update(action0, Simulator.GetAgentObservation(observation,1), reward, 1);
+		    outOfParticles = !mcts.Update(action0, Simulator.GetAgentObservation(observation,1,commFactor1), reward, 1);
 		if (outOfParticles2)
 		{
 		    if (SearchParams.JointQActions[1])
-			history2.Add(Simulator.GetAgentAction(action,2), Simulator.GetAgentObservation(observation,2));
+			history2.Add(Simulator.GetAgentAction(action,2,commFactor2), Simulator.GetAgentObservation(observation,2,commFactor2));
 		    else
-			history2.Add(action1, Simulator.GetAgentObservation(observation,2));
+			history2.Add(action1, Simulator.GetAgentObservation(observation,2,commFactor2));
 		}
 		else
-		    outOfParticles2 = !mcts.Update(action1, Simulator.GetAgentObservation(observation,2), reward, 2);
+		    outOfParticles2 = !mcts.Update(action1, Simulator.GetAgentObservation(observation,2,commFactor2), reward, 2);
 	    }
         }
     }
