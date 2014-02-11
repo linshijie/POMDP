@@ -38,6 +38,8 @@ public:
 	double InitialRewardWeight;
 	int MultiAgentPriorCount;
 	double MultiAgentPriorValue;
+	
+	std::vector<bool> UsesComm;
     };
     
     MCTS(const SIMULATOR& simulator, const PARAMS& params);
@@ -65,6 +67,8 @@ public:
 
     static void UnitTest(const int& index);
     static void InitFastUCB(double exploration);
+    
+    void SetLastMessageReceived(const int& index, const std::string& message) const { Statuses[index > 0 ? index-1 : index].LastMessageReceived = message; }
 
 private:
 

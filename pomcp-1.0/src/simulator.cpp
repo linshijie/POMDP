@@ -17,7 +17,8 @@ SIMULATOR::STATUS::STATUS()
     UpdateValues(true),
     TerminalReached(false),
     MultiAgentPriorCount(10),
-    MultiAgentPriorValue(100.0)
+    MultiAgentPriorValue(100.0),
+    UseCommunication(false)
 {
 }
 
@@ -44,8 +45,6 @@ SIMULATOR::SIMULATOR(int numActions, int numObservations, double discount)
     NumAgents(1),
     NumAgentActions(numActions),
     NumAgentObservations(numObservations),
-    NumMessages(1),
-    NumAgentMessages(1),
     Discount(discount),
     ProbMessageLoss(0.0),
     ProbMessageDelay(0.0),
@@ -122,7 +121,7 @@ void SIMULATOR::GeneratePreferredAgent(const STATE& state, const HISTORY& histor
 
 }
 
-bool SIMULATOR::IsActionMultiagent(const int& action, const HISTORY& history, const bool& comm) const
+bool SIMULATOR::IsActionMultiagent(const int& action, const HISTORY& history) const
 {
     return false;
 }
@@ -192,7 +191,7 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
             QNODE& qnode = vnode->Child(a);
             qnode.Value.Set(0, 0);
             qnode.AMAF.Set(0, 0);
-	    if (IsActionMultiagent(a, history, status.UseCommunication))
+	    if (IsActionMultiagent(a, history))
 		for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
 		    qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
         }
@@ -206,16 +205,16 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
 	else
 	    GeneratePreferredAgent(*state, history, actions, status, index);
 	
-	/*if ((index > 0 && legalActionSize == GetNumAgentActions()) || 
+	if ((index > 0 && legalActionSize == GetNumAgentActions()) || 
 	    (index == 0 && legalActionSize == GetNumActions())
-	)*/
+	)
 	    for (vector<int>::const_iterator i_action = actions.begin(); i_action != actions.end(); ++i_action)
 	    {
 		int a = *i_action;
 		QNODE& qnode = vnode->Child(a);
 		qnode.Value.Set(status.SmartTreeCount, Knowledge.SmartTreeValue);
 		qnode.AMAF.Set(status.SmartTreeCount, Knowledge.SmartTreeValue);
-		if (IsActionMultiagent(a, history, status.UseCommunication))
+		if (IsActionMultiagent(a, history))
 		    for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
 			qnode.OtherAgentValues[i].Set(status.MultiAgentPriorCount, status.MultiAgentPriorValue);
 		//for (int i = 0; i < (int) qnode.OtherAgentValues.size(); i++)
@@ -223,6 +222,18 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
 	    }    
     }
 }
+
+string SIMULATOR::SelectMessage(const STATUS& status, const HISTORY& history) const
+{
+    return "";
+}
+
+string SIMULATOR::SelectRandomMessage() const
+{
+    return "";
+}
+
+
 
 bool SIMULATOR::HasAlpha() const
 {
@@ -256,12 +267,6 @@ void SIMULATOR::DisplayObservation(const STATE& state, int observation, ostream&
     ostr << "Observation " << observation << endl;
 }
 
-void SIMULATOR::DisplayMessage(int message, ostream& ostr) const
-{
-    ostr << "Message " << message << endl;
-}
-
-
 void SIMULATOR::DisplayAgentAction(int action, ostream& ostr) const
 {
     ostr << "Action " << action << endl;
@@ -272,10 +277,6 @@ void SIMULATOR::DisplayAgentObservation(int observation, ostream& ostr) const
     ostr << "Observation " << observation << endl;
 }
 
-void SIMULATOR::DisplayAgentMessage(int message, ostream& ostr) const
-{
-    ostr << "Message " << message << endl;
-}
 
 void SIMULATOR::DisplayReward(double reward, std::ostream& ostr) const
 {

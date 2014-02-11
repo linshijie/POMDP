@@ -60,7 +60,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 {
     //VNODE::NumChildren = Params.MultiAgent && !Params.JointQActions[0] ? Simulator.GetNumAgentActions() : 
 	//		Simulator.GetNumActions();
-    //QNODE::NumChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
+    QNODE::NumChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
     
     Statuses.clear();
     Roots.clear();
@@ -68,8 +68,6 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
     StatTreeDepths.clear();
     StatRolloutDepths.clear();
     StatTotalRewards.clear();
-    
-    QNODE::NumOtherAgentValues = 1;
     
     for (int i = 0 ; i < Simulator.GetNumAgents(); i++)
     {
@@ -100,8 +98,18 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	STATISTIC StatTotalReward;
 	StatTotalRewards.push_back(StatTotalReward);
 	//root
+	VNODE* root; 
+	root->NumChildren = Params.MultiAgent && !Params.JointQActions[i] ? Simulator.GetNumAgentActions() : 
+			Simulator.GetNumActions();
+	if (Params.RewardAdaptive[i])
+	{
+	    //if (Params.JointQActions[i])
+		QNODE::NumOtherAgentValues = 1;
+	    //else
+		//QNODE::NumOtherAgentValues = Simulator.GetNumAgentActions();
+	}
 	STATE* state = Simulator.CreateStartState();
-	VNODE* root = ExpandNode(state, Params.MultiAgent ? i+1 : i, Params.MultiAgent ? i+1 : i);
+	root = ExpandNode(state, Params.MultiAgent ? i+1 : i, Params.MultiAgent ? i+1 : i);
 	Roots.push_back(root);
 	
     }
@@ -125,13 +133,12 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
 	Histories[index == 0 ? index : index-1].Add(action, observation);
     else
     {
-	int commFactor = Statuses[index == 0 ? index : index-1].UseCommunication ? Simulator.GetNumAgentMessages() : 1;
 	if (index == 1 && Params.JointQActions[index == 0 ? index : index-1])
-	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,1,commFactor), observation);
+	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,1), observation);
 	else if (index == 1)
 	    Histories[index == 0 ? index : index-1].Add(action, observation);
 	else if (index == 2 && Params.JointQActions[index == 0 ? index : index-1])
-	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,2,commFactor), observation);
+	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,2), observation);
 	else if (index == 2)
 	    Histories[index == 0 ? index : index-1].Add(action, observation);
     }
@@ -221,9 +228,9 @@ void MCTS::RolloutSearch(const int& index)
 	    if (Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1])
 	    {
 		if (index == 1)
-		    treeaction = Simulator.GetAgentAction(action,1,1);
+		    treeaction = Simulator.GetAgentAction(action,1);
 		else
-		    treeaction = Simulator.GetAgentAction(action,2,1);
+		    treeaction = Simulator.GetAgentAction(action,2);
 		/*if (Params.RewardAdaptive[index == 0 ? index : index-1])
 		{
 		    if (index == 1)
@@ -234,7 +241,7 @@ void MCTS::RolloutSearch(const int& index)
 	    }
 
 	    VNODE*& vnode = Roots[index == 0 ? index : index-1]->Child(treeaction).Child(index == 0 ?
-		    observation : Simulator.GetAgentObservation(observation,index,1));			
+		    observation : Simulator.GetAgentObservation(observation,index));			
 	    
 	    if (!vnode && !terminal)
 	    {
@@ -242,8 +249,8 @@ void MCTS::RolloutSearch(const int& index)
 		    AddSample(vnode, *state);
 	    }
 	    
-	    Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action,index,1), 
-				       index == 0 ? observation : Simulator.GetAgentObservation(observation,index,1));
+	    Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action,index), 
+				       index == 0 ? observation : Simulator.GetAgentObservation(observation,index));
 	    double otherDelayedReward = 0.0;
 	    delayedReward = Rollout(*state, index, otherDelayedReward);
 	    totalReward = immediateReward + Simulator.GetDiscount() * delayedReward;
@@ -527,6 +534,8 @@ void MCTS::UCTSearch(const int& index)
 	}
 	Statuses[index == 0 ? index : index-1].LearningPhase = false;
     }
+    
+    
 
     DisplayStatistics(cout, index);
 }
@@ -534,6 +543,7 @@ void MCTS::UCTSearch(const int& index)
 double MCTS::SimulateV(STATE& state, VNODE* vnode, const int& index, double otherTotalReward)
 {
     int action = GreedyUCB(vnode, Params.DoFastUCB, index);
+    
     
     PeakTreeDepth = TreeDepth;
     if (TreeDepth >= Params.MaxDepth) // search horizon reached
@@ -566,7 +576,7 @@ double MCTS::SimulateV(STATE& state, VNODE* vnode, const int& index, double othe
     }
     
     totalReward = SimulateQ(state, qnode, action, index, otherTotalReward);
-
+    
     if (Statuses[index == 0 ? index : index-1].UpdateValues)
     {
 	vnode->Value.Add(totalReward);
@@ -593,27 +603,39 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     double immediateReward, delayedReward = 0;
     double otherImmediateReward = 0, otherDelayedReward = 0;
     
-    int commFactor = Statuses[index == 0 ? index : index-1].UseCommunication ? Simulator.GetNumAgentMessages() : 1;
     
     if (Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1])
     {
-	int numIter = Simulator.GetNumAgentActions();
-	if (Statuses[index == 0 ? index : index-1].UseCommunication)
-	    numIter *= Simulator.GetNumAgentMessages();
 	if (index == 1)
 	    action = action + 
-		numIter*Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 2);
+		Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 2);
 		//action + Simulator.GetNumAgentActions()*Random(Simulator.GetNumAgentActions());
 	else
 	    action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),1) + 
-		numIter*action;
+		Simulator.GetNumAgentActions()*action;
 		//Random(Simulator.GetNumAgentActions()) + Simulator.GetNumAgentActions()*action;
     }
 
     if (Simulator.HasAlpha())
         Simulator.UpdateAlpha(qnode, state);
     
+    if (Statuses[index == 0 ? index : index-1].UseCommunication)
+    {
+	Statuses[index == 0 ? index : index-1].MessagesToBeSent.clear();
+	Statuses[index == 0 ? index : index-1].MessagesReceived.clear();
+	if (index == 1)
+	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.SelectMessage(GetStatus(index), GetHistory(index)));
+	else
+	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.SelectRandomMessage());
+	if (index == 2)
+	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.SelectMessage(GetStatus(index), GetHistory(index)));
+	else
+	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.SelectRandomMessage());
+	    
+    }
     bool terminal = Simulator.Step(state, action, observation, immediateReward, Statuses[index == 0 ? index : index-1]);
+    if (Statuses[index == 0 ? index : index-1].UseCommunication)
+	Statuses[index > 0 ? index-1 : index].LastMessageReceived = Statuses[index > 0 ? index-1 : index].MessagesReceived[index-1]; 
     
     Statuses[index == 0 ? index : index-1].TerminalReached = terminal;
     
@@ -621,8 +643,8 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
 	otherImmediateReward = Statuses[index == 0 ? index : index-1].CurrOtherReward;
     
     assert(observation >= 0 && observation < Simulator.GetNumObservations());
-    Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index, commFactor), 
-			       index == 0 ? observation : Simulator.GetAgentObservation(observation, index, commFactor));
+    Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
+			       index == 0 ? observation : Simulator.GetAgentObservation(observation, index));
 
     if (Params.Verbose >= 3)
     {
@@ -633,8 +655,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     }
     
     VNODE*& vnode = index == 0 ? qnode.Child(observation) : 
-		qnode.Child(Simulator.GetAgentObservation(observation, index, 
-							  Statuses[index == 0 ? index : index-1].UseCommunication ? Simulator.GetNumAgentMessages() : 1));
+		qnode.Child(Simulator.GetAgentObservation(observation, index));
 	
 		
     if (!vnode && !terminal && qnode.Value.GetCount() >= Params.ExpandCount)
@@ -645,16 +666,16 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
 	if (Statuses[index == 0 ? index : index-1].LearningPhase)
 	{
 	    Statuses[index == 0 ? index : index-1].LearnSequence.push_back(index == 0 ? observation : 
-		Simulator.GetAgentObservation(observation, index, commFactor));
+		Simulator.GetAgentObservation(observation, index));
 	    Statuses[index == 0 ? index : index-1].LearnFullSequence.push_back(index == 0 ? observation : 
-		Simulator.GetAgentObservation(observation, index, commFactor));
+		Simulator.GetAgentObservation(observation, index));
 	}
 	else
 	{
 	    Statuses[index == 0 ? index : index-1].MainSequence.push_back(index == 0 ? observation : 
-		Simulator.GetAgentObservation(observation, index, commFactor)); 
+		Simulator.GetAgentObservation(observation, index)); 
 	    Statuses[index == 0 ? index : index-1].MainFullSequence.push_back(index == 0 ? observation : 
-		Simulator.GetAgentObservation(observation, index, commFactor)); 
+		Simulator.GetAgentObservation(observation, index)); 
 	}
     }
     
@@ -731,15 +752,12 @@ void MCTS::AddRave(VNODE* vnode, double totalReward, const STATE& state, const i
 	    action = GetHistory(index)[t].Action;
 	else
 	{
-	    int numIter = Simulator.GetNumAgentActions();
-	    if (Statuses[index == 0 ? index : index-1].UseCommunication)
-		numIter *= Simulator.GetNumAgentMessages();
 	    if (index == 1)
 		action = GetHistory(index)[t].Action + 
-		    numIter*Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),2);
+		    Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),2);
 	    else
 		action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),1) + 
-		    numIter*GetHistory(index)[t].Action;
+		    Simulator.GetNumAgentActions()*GetHistory(index)[t].Action;
 	}
         QNODE& qnode = vnode->Child(action);
         qnode.AMAF.Add(totalReward, totalDiscount);
@@ -749,25 +767,7 @@ void MCTS::AddRave(VNODE* vnode, double totalReward, const STATE& state, const i
 
 VNODE* MCTS::ExpandNode(const STATE* state, const int& perspindex, const int& agentindex)
 {
-    int vChildren = Params.MultiAgent && !Params.JointQActions[perspindex-1] ? Simulator.GetNumAgentActions() : 
-			Simulator.GetNumActions();
-    int qChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
-    
-    if (Params.UsesComm[perspindex-1])
-    {
-	if (!Params.JointQActions[perspindex-1])
-	{
-	    vChildren *= Simulator.GetNumAgentMessages();
-	    qChildren *= Simulator.GetNumAgentMessages();
-	}
-	else
-	{
-	    vChildren *= Simulator.GetNumMessages();
-	    qChildren *= Simulator.GetNumMessages();
-	}
-    }
-    
-    VNODE* vnode = VNODE::Create(vChildren, qChildren);
+    VNODE* vnode = VNODE::Create();
     vnode->Value.Set(0, 0);
     
     if (!Params.MultiAgent)
@@ -833,17 +833,9 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
     if ((Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1]) ||
 	(Params.MinMax[index == 0 ? index : index-1] && Params.JointQActions[index == 0 ? index : index-1])
     )
-    {
 	maxIter = Simulator.GetNumAgentActions();
-	if (Statuses[index == 0 ? index : index-1].UseCommunication)
-	    maxIter *= Simulator.GetNumAgentMessages();
-    }
     else
-    {
 	maxIter = Simulator.GetNumActions();
-	if (Statuses[index == 0 ? index : index-1].UseCommunication)
-	    maxIter *= Simulator.GetNumMessages();
-    }
     
     
     std::vector<int> maxOwnActions;
@@ -993,33 +985,49 @@ double MCTS::Rollout(STATE& state, const int& index, double otherReward)
     double discount = 1.0;
     bool terminal = false;
     int numSteps;
-    int commFactor = Statuses[index == 0 ? index : index-1].UseCommunication ? Simulator.GetNumAgentMessages() : 1;
     for (numSteps = 0; numSteps + TreeDepth < Params.MaxDepth && !terminal; ++numSteps)
     {
         int observation;
         double reward;
 
         int action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 0);
+	
+	if (Statuses[index == 0 ? index : index-1].UseCommunication)
+	{
+	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.clear();
+	    Statuses[index == 0 ? index : index-1].MessagesReceived.clear();
+	    if (index == 1)
+		Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.SelectMessage(GetStatus(index), GetHistory(index)));
+	    else
+		Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.SelectRandomMessage());
+	    if (index == 2)
+		Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.SelectMessage(GetStatus(index), GetHistory(index)));
+	    else
+		Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.SelectRandomMessage());
+		
+	}
         terminal = Simulator.Step(state, action, observation, reward, Statuses[index == 0 ? index : index-1]);
+	if (Statuses[index == 0 ? index : index-1].UseCommunication)
+	   Statuses[index > 0 ? index-1 : index].LastMessageReceived = Statuses[index > 0 ? index-1 : index].MessagesReceived[index-1]; 
 	
 	Statuses[index == 0 ? index : index-1].TerminalReached = terminal;
 	    
-	Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index, commFactor), 
-			      index == 0 ? observation : Simulator.GetAgentObservation(observation, index, commFactor));
+	Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
+			      index == 0 ? observation : Simulator.GetAgentObservation(observation, index));
 	
 	if (Statuses[index == 0 ? index : index-1].LearningPhase)
 	{
 	    Statuses[index == 0 ? index : index-1].LearnFullSequence.push_back(index == 0 ? action : 
-		    Simulator.GetAgentAction(action, index, commFactor));
+		    Simulator.GetAgentAction(action, index));
 	    Statuses[index == 0 ? index : index-1].LearnFullSequence.push_back(index == 0 ? observation : 
-		    Simulator.GetAgentObservation(observation, index, commFactor));
+		    Simulator.GetAgentObservation(observation, index));
 	}
 	else
 	{
 	    Statuses[index == 0 ? index : index-1].MainFullSequence.push_back(index == 0 ? action : 
-		    Simulator.GetAgentAction(action, index, commFactor));
+		    Simulator.GetAgentAction(action, index));
 	    Statuses[index == 0 ? index : index-1].MainFullSequence.push_back(index == 0 ? observation : 
-		    Simulator.GetAgentObservation(observation, index, commFactor));
+		    Simulator.GetAgentObservation(observation, index));
 	}
 
         if (Params.Verbose >= 4)
@@ -1092,18 +1100,30 @@ STATE* MCTS::CreateTransform(const int& index) const
 	action = GetHistory(index).Back().Action;
     else
     {
-	int numIter = Simulator.GetNumAgentActions();
-	if (Statuses[index == 0 ? index : index-1].UseCommunication)
-	    numIter *= Simulator.GetNumAgentMessages();
 	if (index == 1)
 	    action = GetHistory(index).Back().Action + 
-		numIter*Simulator.SelectRandom(*state, GetHistory(index), GetStatus(index), 2);
+		Simulator.GetNumAgentActions()*Simulator.SelectRandom(*state, GetHistory(index), GetStatus(index), 2);
 	else
 	    action = Simulator.SelectRandom(*state, GetHistory(index), GetStatus(index),1) + 
-		numIter*GetHistory(index).Back().Action;
+		Simulator.GetNumAgentActions()*GetHistory(index).Back().Action;
     }
     SIMULATOR::STATUS status = Statuses[index == 0 ? index : index-1];
+    /*if (status.UseCommunication)
+    {
+	status.MessagesToBeSent.clear();
+	status.MessagesReceived.clear();
+	if (index == 1)
+	    status.MessagesToBeSent.push_back(Simulator.SelectMessage(status, GetHistory(index)));
+	else
+	    status.MessagesToBeSent.push_back(Simulator.SelectRandomMessage(status, GetHistory(index)));
+	if (index == 2)
+	    status.MessagesToBeSent.push_back(Simulator.SelectMessage(status, GetHistory(index)));
+	else
+	    status.MessagesToBeSent.push_back(Simulator.SelectRandomMessage(status, GetHistory(index)));
+    }*/
     Simulator.Step(*state, action, stepObs, stepReward, status);
+    /*if (Statuses[index == 0 ? index : index-1].UseCommunication)
+	Statuses[index > 0 ? index-1 : index].LastMessageReceived = status.MessagesReceived[index-1]; */
     if (Simulator.LocalMove(*state, GetHistory(index), stepObs, GetStatus(index)))
 	return state;
     Simulator.FreeState(state);

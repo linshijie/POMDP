@@ -61,6 +61,7 @@ public:
         bool AutoExploration;
 	bool BreakOnTerminate;
 	std::vector<bool> RandomActions;
+	bool RealSimCommunication;p
     };
 
     EXPERIMENT(const SIMULATOR& real, const SIMULATOR& simulator, 

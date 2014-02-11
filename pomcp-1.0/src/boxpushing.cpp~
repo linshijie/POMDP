@@ -23,13 +23,10 @@ BOXPUSHING::BOXPUSHING(int numsmallboxes, double probLargeAgentBox)
     NumAgentActions = 4;
     NumAgentObservations = 6;
     
-    NumAgentMessages = 3;
-    
     NumAgents = 2;
     
     NumActions = pow(NumAgentActions, NumAgents);
     NumObservations = pow(NumAgentObservations, NumAgents);
-    NumMessages = pow(NumAgentMessages, NumAgents);
     
     RewardRange = 99.9;
     Discount = 1.0;
@@ -162,31 +159,17 @@ bool BOXPUSHING::Step(STATE& state, int action,
     int& observation, double& reward, STATUS& status) const
 {
     BOXPUSHING_STATE& bpstate = safe_cast<BOXPUSHING_STATE&>(state);
-    int div = NumAgentActions;
-    if (status.UseCommunication)
-	div *= NumAgentMessages;
     
-    int actions[] = {action%div, action/div};
-    int messages[] = {0, 0};
+    int actions[] = {action%NumAgentActions, action/NumAgentActions};
     
     reward = 0.0;
     
-    if (status.UseCommunication)
+    if (status.UseCommunication && !status.MessagesToBeSent.empty())
     {
-	int action0 = GetActionComponentFromAction(actions[0]);
-	int action1 = GetActionComponentFromAction(actions[1]);
-	//std::cout << actions[0]<< " " << actions[1] << "\n";
-	messages[0] = GetMessageComponentFromAction(actions[0]);
-	messages[1] = GetMessageComponentFromAction(actions[1]);
-	actions[0] = action0;
-	actions[1] = action1;
-	
-	//std::cout << "actions " << action0<< " " << action1 << "\n";
-	//std::cout << "messages " << messages[0]<< " " << messages[1] << "\n";
 	for (int i = 0; i < NumAgents; i++)
 	    if (UTILS::RandomDouble(0.0,1.0) > ProbMessageLoss)
 	    {
-		std::string mess = MessageToString(messages[i]);
+		std::string mess = status.MessagesToBeSent[i];
 		STATE::MESSAGE message;
 		message.Message = mess;
 		message.AgentID = i;
@@ -194,12 +177,11 @@ bool BOXPUSHING::Step(STATE& state, int action,
 		    bpstate.MessageQueue.push_front(message);
 		else
 		    bpstate.MessageQueue.push_back(message);
-		//if (messages[i] > 0)
-		   // reward -= 0.1;
+		//if (mess.length() > 0)
+		    //reward -= 0.1;
+		//reward -= 0.1*mess.length();
 	    }
     }
-     
-    
     
     COORD next0 = bpstate.Agents[0].Position + COORD::Compass[bpstate.Agents[0].Direction];
     COORD next1 = bpstate.Agents[1].Position + COORD::Compass[bpstate.Agents[1].Direction];
@@ -283,8 +265,8 @@ bool BOXPUSHING::Step(STATE& state, int action,
 	}
     }*/
     
-    int obs0 = MakeAgentObservation(bpstate, 0);
-    int obs1 = MakeAgentObservation(bpstate, 1);
+    int obs0 = GetAgentObservation(bpstate, 0);
+    int obs1 = GetAgentObservation(bpstate, 1);
     
     if (obs0 == LARGE_BOX_OBS && obs1 == LARGE_BOX_OBS && RandomDouble(0.0,1.0) < ProbLargeAgentBox)
     {
@@ -296,34 +278,22 @@ bool BOXPUSHING::Step(STATE& state, int action,
     {
 	for (int i = 0; i < NumAgents; i++)
 	{
-	    int m = 0;
-	    //int countMes = 0;
+	    string m = "";
 	    for (int j = 0; j < (int) bpstate.MessageQueue.size(); j++)
 		if (bpstate.MessageQueue.at(j).AgentID != i)
 		{
-		    //countMes++;
-		    //if (countMes == 1)
-		    //{
-			if (RandomDouble(0.0,1.0) > ProbMessageMisinterp)
-			    m = MessageToInt(bpstate.MessageQueue.at(j).Message);
-			else
-			    m = Random(NumAgentMessages);
-			bpstate.MessageQueue.erase(bpstate.MessageQueue.begin()+j);
-			break;
-		    //}
+		    if (RandomDouble(0.0,1.0) > ProbMessageMisinterp)
+			m = bpstate.MessageQueue.at(j).Message;
+		    //else
+			//m = SelectRandomMessage();
+		    bpstate.MessageQueue.erase(bpstate.MessageQueue.begin()+j);
+		    break;
 		}
-	    if (i == 0)
-		obs0 = obs0 + m*NumAgentObservations;
-	    else
-		obs1 = obs1 + m*NumAgentObservations;
+	    status.MessagesReceived.push_back(m);
 	}
     }
     
-    int n = NumAgentObservations;
-    if (status.UseCommunication)
-	n *= NumAgentMessages;
-    
-    observation = obs0 + n*obs1;
+    observation = obs0 + NumAgentObservations*obs1;
     
     if (status.RewardAdaptive && status.LearningPhase)
 	status.CurrOtherReward = quantiles[Random(quantiles.size())]*reward*2;
@@ -397,7 +367,7 @@ double BOXPUSHING::StepAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agen
     }
 }
 
-int BOXPUSHING::MakeAgentObservation(const BOXPUSHING_STATE& bpstate, const int& agentindex) const
+int BOXPUSHING::GetAgentObservation(const BOXPUSHING_STATE& bpstate, const int& agentindex) const
 {
     if (RandomDouble(0.0,1.0) > ProbObservation)
 	return Random(NumAgentObservations);
@@ -484,8 +454,8 @@ bool BOXPUSHING::LocalMove(STATE& state, const HISTORY& history,
     }
 
     int realObs = history.Back().Observation;
-    int obs0 = MakeAgentObservation(bpstate, 0);
-    int obs1 = MakeAgentObservation(bpstate, 1);
+    int obs0 = GetAgentObservation(bpstate, 0);
+    int obs1 = GetAgentObservation(bpstate, 1);
     
     if (obs0 == LARGE_BOX_OBS && obs1 == LARGE_BOX_OBS && RandomDouble(0.0,1.0) < ProbLargeAgentBox)
     {
@@ -500,29 +470,13 @@ bool BOXPUSHING::LocalMove(STATE& state, const HISTORY& history,
     
 }
 
-bool BOXPUSHING::IsActionMultiagent(const int& action, const HISTORY& history, const bool& comm) const
+bool BOXPUSHING::IsActionMultiagent(const int& action, const HISTORY& history) const
 {
-    
     if (history.Size() == 0)
 	return false;
-    
-    if (!comm)
-    {
-	if (action == MOVE && (history.Back().Observation == LARGE_BOX_AGENT_OBS))
-	    return true;
-	return false;
-    }
-    else
-    {
-	int lastCombinedObs = history.Back().Observation;
-	int lastObs = GetObservationComponentFromObservation(lastCombinedObs);
-	int lastMes = GetMessageComponentFromObservation(lastCombinedObs);
-	int actionComp = GetActionComponentFromAction(action);
-	int messComp = GetMessageComponentFromAction(action);
-	if (actionComp == MOVE && lastObs == LARGE_BOX_OBS && lastMes == LARGE_BOX_MES)
-	    return true;
-	return false;
-    }
+    if (action == MOVE && (history.Back().Observation == LARGE_BOX_AGENT_OBS))
+	return true;
+    return false;
     
     /*int t = history.Size();
     if (action >= (int)MultiAgentLabels.size() || action < 0 || t < 2)
@@ -538,33 +492,45 @@ bool BOXPUSHING::IsActionMultiagent(const int& action, const HISTORY& history, c
     //return MultiAgentLabels[action][observation1][observation2];
 }
 
+string BOXPUSHING::SelectMessage(const STATUS& status, const HISTORY& history) const
+{
+    if (history.Size() == 0 || !status.UseCommunication)
+	return "";
+    switch (history.Back().Observation)
+    {
+	case(AGENT_OBS):
+	case(EMPTY_OBS):
+	case(WALL_OBS):
+	    return MessageToString(NO_MES);
+	case(SMALL_BOX_OBS):
+	    return MessageToString(SMALL_BOX_MES);
+	case(LARGE_BOX_OBS):
+	case(LARGE_BOX_AGENT_OBS):
+	    return MessageToString(LARGE_BOX_MES);
+	default:
+	    return "";
+    }
+}
+
+string BOXPUSHING::SelectRandomMessage() const
+{
+    return MessageToString(UTILS::Random(3));
+}
+
+
+
 
 void BOXPUSHING::GenerateLegal(const STATE& state, const HISTORY& history,
         std::vector<int>& legal, const STATUS& status) const
 {
-    int maxIter = NumActions;
-    if (status.UseCommunication)
-	maxIter *= NumMessages;
-    
-    if (!status.UseCommunication || history.Size() == 0)
+    //GeneratePreferred(state, history, legal, status);
+    /*if (history.Size() == 0)
     {
-	for (int a = 0; a < maxIter; a++)
-	    legal.push_back(a);
-    }
-    else
-    {
-	std::vector<int> actions0;
-	
-	GenerateLegalAgent(state, history, actions0, status, status.perspindex);
-	for (int i=0; i<(int)actions0.size(); i++)
-	    for (int j=0; j<(int)actions0.size(); j++)
-	    {
-		if (status.perspindex == 0)
-		    legal.push_back(actions0[i] + NumAgentActions*NumAgentMessages*j);
-		else
-		    legal.push_back(j + NumAgentActions*NumAgentMessages*actions0[i]);
-	    }
-    }
+	legal.push_back(MOVE + NumAgentActions*MOVE);
+        return;
+    }*/
+    for (int a = 0; a < NumActions; a++)
+        legal.push_back(a);
 }
 
 void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
@@ -597,66 +563,44 @@ void BOXPUSHING::GeneratePreferred(const STATE& state, const HISTORY& history,
 void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history, 
     std::vector<int>& actions, const STATUS& status, const int& index) const
 {
-    int maxIter = NumAgentActions;
-    if (status.UseCommunication)
-	maxIter *= NumAgentMessages;
-	
-    if (!status.UseCommunication || history.Size() == 0)
+    //GeneratePreferredAgent(state, history, actions, status, index);
+    if (history.Size() == 0)// && ProbLargeAgentBox > 0.5)
     {
-	//GeneratePreferredAgent(state, history, actions, status, index);
-	if (history.Size() == 0 && ProbLargeAgentBox > 0.5)
-	{
-	    actions.push_back(MOVE);
-	    return;
-	}
-	for (int a = 0; a < maxIter; a++)
+	actions.push_back(MOVE);
+        return;
+    }
+    else if (history.Size() == 1)
+    {
+	if (index == 1)
+	    actions.push_back(TURN_CCW);
+	else
+	    actions.push_back(TURN_CW);
+    }
+    else if (!status.UseCommunication || history.Size() == 0)
+    {
+	for (int a = 0; a < NumAgentActions; a++)
 	    actions.push_back(a);
     }
     else
     {
-	int lastCombinedObs = history.Back().Observation;
-	int lastObs = GetObservationComponentFromObservation(lastCombinedObs);
-	int lastMes = GetMessageComponentFromObservation(lastCombinedObs);
-	switch(lastObs)
+	int lastMessage = StringToMessage(status.LastMessageReceived);
+	int lastObs = history.Back().Observation;
+	if ((lastObs == LARGE_BOX_OBS || lastObs == LARGE_BOX_AGENT_OBS))
 	{
-	    case(EMPTY_OBS):
-	    case(WALL_OBS):
-	    case(AGENT_OBS):
-		actions.push_back(STAY + NumAgentActions*NO_MES);
-		actions.push_back(TURN_CW + NumAgentActions*NO_MES);
-		actions.push_back(TURN_CCW + NumAgentActions*NO_MES);
-		actions.push_back(MOVE + NumAgentActions*NO_MES);
-		break;
-	    case(SMALL_BOX_OBS):
-		//if (lastMes != LARGE_BOX_MES)
-		    actions.push_back(MOVE + NumAgentActions*SMALL_BOX_MES);
-		//else{
-		actions.push_back(TURN_CW + NumAgentActions*SMALL_BOX_MES);
-		actions.push_back(TURN_CCW + NumAgentActions*SMALL_BOX_MES);
-		//}
-		actions.push_back(STAY + NumAgentActions*SMALL_BOX_MES);
-		break;
-	    case(LARGE_BOX_OBS):
-		//if (lastMes == LARGE_BOX_MES)
-		    actions.push_back(MOVE + NumAgentActions*LARGE_BOX_MES);
-		//else
-		//{
-		actions.push_back(STAY + NumAgentActions*LARGE_BOX_MES);
-		actions.push_back(TURN_CW + NumAgentActions*LARGE_BOX_MES);
-		actions.push_back(TURN_CCW + NumAgentActions*LARGE_BOX_MES);
-		//}
-		break;
-	    case(LARGE_BOX_AGENT_OBS):
-		actions.push_back(MOVE + NumAgentActions*LARGE_BOX_MES);
-		if (!status.HumanDefined)
-		{
-		    actions.push_back(STAY + NumAgentActions*LARGE_BOX_MES);
-		    actions.push_back(TURN_CW + NumAgentActions*LARGE_BOX_MES);
-		    actions.push_back(TURN_CCW + NumAgentActions*LARGE_BOX_MES);
-		}
-		break;
-	    default:
-		break;
+	    if (lastMessage == LARGE_BOX_MES)
+		actions.push_back(MOVE);
+	    else
+		actions.push_back(STAY);
+	}
+	/*else if (lastObs == SMALL_BOX_OBS && lastMessage == LARGE_BOX_MES)
+	{
+	    actions.push_back(TURN_CW);
+	    actions.push_back(TURN_CCW);
+	}*/
+	else
+	{
+	    for (int a = 0; a < NumAgentActions; a++)
+		actions.push_back(a);
 	}
     }
 }
@@ -693,7 +637,6 @@ void BOXPUSHING::GeneratePreferredAgentAction(const BOXPUSHING_STATE& bpstate, c
 	    actions.push_back(STAY);
 	    actions.push_back(TURN_CW);
 	    actions.push_back(TURN_CCW);
-	    break;
 	case(LARGE_BOX_AGENT_OBS):
 	    actions.push_back(MOVE);
 	    if (!humanDefined)
@@ -825,60 +768,37 @@ void BOXPUSHING::DisplayState(const STATE& state, ostream& ostr) const
 void BOXPUSHING::DisplayObservation(const STATE& state, int observation, ostream& ostr) const
 {
     string observationNames[6] = {"EMPTY_OBS", "WALL_OBS", "AGENT_OBS", "SMALL_BOX_OBS", "LARGE_BOX_OBS", "LARGE_BOX_AGENT_OBS"};
-    string messageNames[3] = {"NO_MES", "SMALL_BOX_MES", "LARGE_BOX_MES"};
     
-    int observation0 = GetAgentObservation(observation,1,NumAgentMessages);
-    int observation1 = GetAgentObservation(observation,2,NumAgentMessages);
+    int observation0 = observation%NumAgentObservations;
+    int observation1 = observation/NumAgentObservations;
     
-    ostr << "OBSERVATIONS: " << observationNames[GetObservationComponentFromObservation(observation0)] << ", " << 
-	observationNames[GetObservationComponentFromObservation(observation1)] << "\n";
-    ostr << "MESSAGES RECEIVED: " << messageNames[GetMessageComponentFromObservation(observation0)] << ", " << 
-	messageNames[GetMessageComponentFromObservation(observation1)] << "\n";
+    ostr << observationNames[observation0] << ", " << observationNames[observation1] << "\n";
 }
 
 void BOXPUSHING::DisplayAction(int action, std::ostream& ostr) const
 {
     string actionNames[4] = {"STAY", "TURN_CW", "TURN_CCW", "MOVE"};
-    string messageNames[3] = {"NO_MES", "SMALL_BOX_MES", "LARGE_BOX_MES"};
     
-    int action0 = GetAgentAction(action, 1, NumAgentMessages);
-    int action1 = GetAgentAction(action, 2, NumAgentMessages);
+    int action0 = action%NumAgentActions;
+    int action1 = action/NumAgentActions;
     
-    ostr << "ACTIONS: " << actionNames[GetActionComponentFromAction(action0)] << ", " 
-	    << actionNames[GetActionComponentFromAction(action1)] << "\n";
-    ostr << "MESSAGES SENT: " << messageNames[GetMessageComponentFromAction(action0)] << ", " 
-	    << messageNames[GetMessageComponentFromAction(action1)] << "\n";
-}
-
-void BOXPUSHING::DisplayMessage(int message, ostream& ostr) const
-{
-    string messageNames[3] = {"NO_MES", "SMALL_BOX_MES", "LARGE_BOX_MES"};
-    
-    int message0 = message%NumAgentMessages;
-    int message1 = message/NumAgentMessages;
-    
-    ostr << messageNames[message0] << ", " << messageNames[message1] << "\n";
+    ostr << actionNames[action0] << ", " << actionNames[action1] << "\n";
 }
 
 string BOXPUSHING::MessageToString(const int& message) const
 {
     assert(message >= 0 && message < NumAgentMessages);
-    string messageNames[3] = {"NO_MES", "SMALL_BOX_MES", "LARGE_BOX_MES"};
+    string messageNames[3] = {"", "SMALL_BOX", "LARGE_BOX"};
     
     return messageNames[message];
 }
 
-int BOXPUSHING::MessageToInt(const string& message) const
+int BOXPUSHING::StringToMessage(const string& str) const
 {
-    if (message == "NO_MES")
-	return 0;
-    else if (message == "SMALL_BOX_MES")
-	return 1;
-    else if (message == "LARGE_BOX_MES")
-	return 2;
+    if (str == "SMALL_BOX")
+	return SMALL_BOX_MES;
+    else if (str == "LARGE_BOX")
+	return LARGE_BOX_MES;
     else
-	return 0;
+	return NO_MES;
 }
-
-
-

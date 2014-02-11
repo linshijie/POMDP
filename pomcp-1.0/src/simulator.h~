@@ -30,6 +30,8 @@ public:
     double RewardValue;
 };
 
+enum MessageTypes {NO_MES = 0, SMALL_BOX_MES = 1, LARGE_BOX_MES = 2, SEE_TRAY_MES = 3};
+
 class SIMULATOR
 {
 public:
@@ -120,9 +122,12 @@ public:
 	int PlanSequenceLength;
 	
 	int JointGoalCount;
+	
 	bool UseCommunication;
+	std::vector<std::string> MessagesToBeSent;
+	std::vector<std::string> MessagesReceived;
+	std::string LastMessageReceived;
     };
-    
     
     /*struct INITIAL_REWARD_PARAMS
     {
@@ -202,14 +207,14 @@ public:
     virtual void DisplayState(const STATE& state, std::ostream& ostr) const;
     virtual void DisplayAction(int action, std::ostream& ostr) const;
     virtual void DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const;
-    virtual void DisplayMessage(int message, std::ostream& ostr) const;
     virtual void DisplayReward(double reward, std::ostream& ostr) const;
     
     virtual void DisplayAgentAction(int action, std::ostream& ostr) const;
     virtual void DisplayAgentObservation(int observation, std::ostream& ostr) const;
-    virtual void DisplayAgentMessage(int message, std::ostream& ostr) const;
     
-    virtual bool IsActionMultiagent(const int& action, const HISTORY& history, const bool& comm) const;
+    virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
+    virtual std::string SelectMessage(const STATUS& status, const HISTORY& history) const;
+    virtual std::string SelectRandomMessage() const;
 
     // Accessors
     void SetKnowledge(const KNOWLEDGE& knowledge) { Knowledge = knowledge; }
@@ -222,19 +227,10 @@ public:
     int GetNumAgents() const { return NumAgents; }
     int GetNumAgentActions() const { return NumAgentActions; }
     int GetNumAgentObservations() const { return NumAgentObservations; }
-    int GetNumMessages() const { return NumMessages; }
-    int GetNumAgentMessages() const { return NumAgentMessages; }
-    int GetAgentAction(const int& action, const int& index, int commFactor) const { return index > 1 ? action/(NumAgentActions*commFactor) : 
-									    action%(NumAgentActions*commFactor);}
-    int GetAgentObservation(const int& observation, const int& index, int commFactor) const { return index > 1 ? 
-						    observation/(NumAgentObservations*commFactor) : observation%(NumAgentObservations*commFactor);}
-						   
-    int GetActionComponentFromAction(const int& action) const { return action%NumAgentActions; }
-    int GetMessageComponentFromAction(const int& action) const { return action/NumAgentActions; }
-    int GetObservationComponentFromObservation(const int& observation) const { return observation%NumAgentObservations; }
-    int GetMessageComponentFromObservation(const int& observation) const { return observation/NumAgentObservations; }
-    
-						   
+    int GetAgentAction(const int& action, const int& index) const { return index > 1 ? action/NumAgentActions : 
+									    action%NumAgentActions;}
+    int GetAgentObservation(const int& observation, const int& index) const { return index > 1 ? 
+						    observation/NumAgentObservations : observation%NumAgentObservations;}
     bool IsEpisodic() const { return false; }
     double GetDiscount() const { return Discount; }
     double GetRewardRange() const { return RewardRange; }
@@ -242,7 +238,7 @@ public:
     
 protected:
 
-    int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations, NumMessages, NumAgentMessages;
+    int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations;
     double Discount, RewardRange;
     double ProbMessageLoss, ProbMessageDelay, ProbMessageMisinterp;
     KNOWLEDGE Knowledge;

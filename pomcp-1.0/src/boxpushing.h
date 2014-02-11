@@ -20,8 +20,6 @@ enum ActionTypes {STAY = 0, TURN_CW = 1, TURN_CCW = 2, MOVE = 3};
 
 enum ObservationTypes {EMPTY_OBS = 0, WALL_OBS = 1, AGENT_OBS = 2, SMALL_BOX_OBS = 3, LARGE_BOX_OBS = 4, LARGE_BOX_AGENT_OBS = 5};
 
-enum MessageTypes {NO_MES = 0, SMALL_BOX_MES = 1, LARGE_BOX_MES = 2};
-
 class BOXPUSHING_STATE : public STATE
 {
 public:
@@ -68,13 +66,14 @@ public:
     virtual void DisplayState(const STATE& state, std::ostream& ostr) const;
     virtual void DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const;
     virtual void DisplayAction(int action, std::ostream& ostr) const;
-    virtual void DisplayMessage(int message, std::ostream& ostr) const;
     
-    virtual bool IsActionMultiagent(const int& action, const HISTORY& history, const bool& comm) const;
+    virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
+    virtual std::string SelectMessage(const STATUS& status, const HISTORY& history) const;
+    virtual std::string SelectRandomMessage() const;
 
 protected:
 
-    int MakeAgentObservation(const BOXPUSHING_STATE& bpstate, const int& agentindex) const;
+    int GetAgentObservation(const BOXPUSHING_STATE& bpstate, const int& agentindex) const;
     double StepAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agentaction) const;
     bool Collision(const BOXPUSHING_STATE& bpstate, const PUSH_ENTITY& pushentity) const;
     void MarkCell(BOXPUSHING_STATE& bpstate, const COORD& coord, const CellContent& content) const;
@@ -94,8 +93,8 @@ protected:
     double ProbLargeAgentBox;
     double ProbObservation;
     
-    int MessageToInt(const std::string& message) const;
     std::string MessageToString(const int& message) const;
+    int StringToMessage(const std::string& str) const;
     
     std::vector< std::vector< std::vector<bool> > > MultiAgentLabels;
     std::vector<double> quantiles;

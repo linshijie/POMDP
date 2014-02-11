@@ -200,6 +200,10 @@ int main(int argc, char* argv[])
     simulator->SetProbMessageMisinterp(probMessageMisinterp);
     
     simulator->SetKnowledge(knowledge);
+    
+    if (!comm1 && !comm2)
+	expParams.RealSimCommunication = false;
+    
     EXPERIMENT experiment(*real, *simulator, outputfile, expParams, searchParams);
     experiment.DiscountedReturn();
 

@@ -67,6 +67,8 @@ public:
 
     static void UnitTest(const int& index);
     static void InitFastUCB(double exploration);
+    
+    void SetLastMessageReceived(const int& index, const std::string& message) { Statuses[index > 0 ? index-1 : index].LastMessageReceived = message; }
 
 private:
 

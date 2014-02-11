@@ -68,12 +68,14 @@ public:
     virtual void DisplayState(const STATE& state, std::ostream& ostr) const;
     virtual void DisplayObservation(const STATE& state, int observation, std::ostream& ostr) const;
     virtual void DisplayAction(int action, std::ostream& ostr) const;
-    virtual void DisplayMessage(int message, std::ostream& ostr) const;
     
-    virtual bool IsActionMultiagent(const int& action, const HISTORY& history, const bool& comm) const;
+    virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
+    virtual std::string SelectMessage(const STATUS& status, const HISTORY& history) const;
+    virtual std::string SelectRandomMessage() const;
 
 protected:
 
+    int GetAgentObservation(const BOXPUSHING_STATE& bpstate, const int& agentindex) const;
     double StepAgent(BOXPUSHING_STATE& bpstate, int agentindex, int agentaction) const;
     bool Collision(const BOXPUSHING_STATE& bpstate, const PUSH_ENTITY& pushentity) const;
     void MarkCell(BOXPUSHING_STATE& bpstate, const COORD& coord, const CellContent& content) const;
@@ -93,8 +95,8 @@ protected:
     double ProbLargeAgentBox;
     double ProbObservation;
     
-    int MessageToInt(const std::string& message) const;
     std::string MessageToString(const int& message) const;
+    int StringToMessage(const std::string& str) const;
     
     std::vector< std::vector< std::vector<bool> > > MultiAgentLabels;
     std::vector<double> quantiles;

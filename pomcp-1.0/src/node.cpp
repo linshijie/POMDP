@@ -6,16 +6,15 @@ using namespace std;
 
 //-----------------------------------------------------------------------------
 
-//int QNODE::NumChildren = 0;
+int QNODE::NumChildren = 0;
 
 int QNODE::NumOtherAgentValues = 0;
 
-void QNODE::Initialise(const int& qChildren)
+void QNODE::Initialise()
 {
-    NumChildren = qChildren;
     assert(NumChildren);
     Children.resize(NumChildren);
-    for (int observation = 0; observation < NumChildren; observation++)
+    for (int observation = 0; observation < QNODE::NumChildren; observation++)
         Children[observation] = 0;
     AlphaData.AlphaSum.clear();
     assert(NumOtherAgentValues);
@@ -62,30 +61,31 @@ void QNODE::DisplayPolicy(HISTORY& history, int maxDepth, ostream& ostr) const
 
 MEMORY_POOL<VNODE> VNODE::VNodePool;
 
-//int VNODE::NumChildren = 0;
+int VNODE::NumChildren = 0;
 
-void VNODE::Initialise(const int& qChildren)
+void VNODE::Initialise()
 {
     assert(NumChildren);
-    Children.resize(NumChildren);
-    for (int action = 0; action < NumChildren; action++)
-        Children[action].Initialise(qChildren);
+    Children.resize(VNODE::NumChildren);
+    for (int action = 0; action < VNODE::NumChildren; action++)
+        Children[action].Initialise();
 }
 
-VNODE* VNODE::Create(const int& vChildren, const int& qChildren)
+VNODE* VNODE::Create()
 {
     VNODE* vnode = VNodePool.Allocate();
-    vnode->NumChildren = vChildren;
-    vnode->Initialise(qChildren);
+    vnode->Initialise();
     return vnode;
 }
 
 void VNODE::Free(VNODE* vnode, const SIMULATOR& simulator)
 {
+    //std::cout << "before free\n";
     vnode->BeliefState.Free(simulator);
     VNodePool.Free(vnode);
-    for (int action = 0; action < vnode->NumChildren; action++)
-        for (int observation = 0; observation < vnode->Child(action).NumChildren; observation++)
+    //std::cout << "after free\n";
+    for (int action = 0; action < VNODE::NumChildren; action++)
+        for (int observation = 0; observation < QNODE::NumChildren; observation++)
             if (vnode->Child(action).Child(observation))
                 Free(vnode->Child(action).Child(observation), simulator);
 }

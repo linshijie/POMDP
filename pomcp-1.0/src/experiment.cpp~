@@ -8,8 +8,8 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(20),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(9),
-    MaxDoubles(9),
+    MinDoubles(10),
+    MaxDoubles(10),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(false),
@@ -19,7 +19,7 @@ EXPERIMENT::PARAMS::PARAMS()
     UndiscountedHorizon(20),
     AutoExploration(true),
     BreakOnTerminate(true),
-    RealSimCommunication(true)
+    RealSimCommunication(false)
 {
     RandomActions.clear();
     
@@ -64,14 +64,6 @@ void EXPERIMENT::Run()
     boost::timer timer;
     
     MCTS mcts(Simulator, SearchParams);
-    
-    int commFactor0 = mcts.GetStatus(0).UseCommunication ? Simulator.GetNumAgentMessages() : 1;
-    int commFactor1 = 1, commFactor2 = 1;
-    if (SearchParams.MultiAgent)
-    {
-	commFactor1 = mcts.GetStatus(1).UseCommunication ? Simulator.GetNumAgentMessages() : 1;
-	commFactor2 = mcts.GetStatus(2).UseCommunication ? Simulator.GetNumAgentMessages() : 1;
-    }
     
     double undiscountedReturn = 0.0;
     double discountedReturn = 0.0;
@@ -123,9 +115,21 @@ void EXPERIMENT::Run()
 	SIMULATOR::STATUS status = mcts.GetStatus(0);
 	status.JointGoalCount = 0;
 	bool statusComm = status.UseCommunication;
+	if (statusComm)
+	{
+	    status.MessagesToBeSent.clear();
+	    status.MessagesReceived.clear();
+	    status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(1), mcts.GetHistory(1)));
+	    status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(2), mcts.GetHistory(2)));
+	}
 	status.UseCommunication = ExpParams.RealSimCommunication;
 	terminal = Real.Step(*state, action, observation, reward, status);
 	status.UseCommunication = statusComm;
+	if (statusComm)
+	{
+	    for (int i = 0; i < (int) status.MessagesReceived.size(); i++)
+		mcts.SetLastMessageReceived(i+1, status.MessagesReceived[i]);
+	}
 
 	Results.Reward.Add(reward);
 	undiscountedReturn += reward;
@@ -196,8 +200,8 @@ void EXPERIMENT::Run()
 	    outOfParticles = !mcts.Update(action, observation, reward, 0);
 	else
 	{
-	    outOfParticles = !mcts.Update(action0, Simulator.GetAgentObservation(observation,1,commFactor1), reward, 1);
-	    outOfParticles2 = !mcts.Update(action1, Simulator.GetAgentObservation(observation,2,commFactor2), reward, 2);
+	    outOfParticles = !mcts.Update(action0, Simulator.GetAgentObservation(observation,1), reward, 1);
+	    outOfParticles2 = !mcts.Update(action1, Simulator.GetAgentObservation(observation,2), reward, 2);
 	}
 	    
 	if (outOfParticles || outOfParticles2)
@@ -265,11 +269,22 @@ void EXPERIMENT::Run()
 	    }
 	    SIMULATOR::STATUS status = mcts.GetStatus(0);
 	    status.JointGoalCount = 0;
-	    
-	    bool statusComm = status.UseCommunication;
+            bool statusComm = status.UseCommunication;
+	    if (statusComm)
+	    {
+		status.MessagesToBeSent.clear();
+		status.MessagesReceived.clear();
+		status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(1), mcts.GetHistory(1)));
+		status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(2), mcts.GetHistory(2)));
+	    }
 	    status.UseCommunication = ExpParams.RealSimCommunication;
             terminal = Real.Step(*state, action, observation, reward, status);
 	    status.UseCommunication = statusComm;
+	    if (statusComm)
+	    {
+		for (int i = 0; i < (int) status.MessagesReceived.size(); i++)
+		    mcts.SetLastMessageReceived(i+1, status.MessagesReceived[i]);
+	    }
 
             Results.Reward.Add(reward);
             undiscountedReturn += reward;
@@ -305,7 +320,7 @@ void EXPERIMENT::Run()
 
             if (SearchParams.Verbose >= 1)
             {
-		Real.DisplayAction(action, cout);
+                Real.DisplayAction(action, cout);
                 Real.DisplayState(*state, cout);
                 Real.DisplayObservation(*state, observation, cout);
                 Real.DisplayReward(reward, cout);
@@ -338,21 +353,21 @@ void EXPERIMENT::Run()
 		if (outOfParticles)
 		{
 		    if (SearchParams.JointQActions[0])
-			history.Add(Simulator.GetAgentAction(action,1,commFactor1), Simulator.GetAgentObservation(observation,1,commFactor1));
+			history.Add(Simulator.GetAgentAction(action,1), Simulator.GetAgentObservation(observation,1));
 		    else
-			history.Add(action0, Simulator.GetAgentObservation(observation,1,commFactor1));
+			history.Add(action0, Simulator.GetAgentObservation(observation,1));
 		}
 		else
-		    outOfParticles = !mcts.Update(action0, Simulator.GetAgentObservation(observation,1,commFactor1), reward, 1);
+		    outOfParticles = !mcts.Update(action0, Simulator.GetAgentObservation(observation,1), reward, 1);
 		if (outOfParticles2)
 		{
 		    if (SearchParams.JointQActions[1])
-			history2.Add(Simulator.GetAgentAction(action,2,commFactor2), Simulator.GetAgentObservation(observation,2,commFactor2));
+			history2.Add(Simulator.GetAgentAction(action,2), Simulator.GetAgentObservation(observation,2));
 		    else
-			history2.Add(action1, Simulator.GetAgentObservation(observation,2,commFactor2));
+			history2.Add(action1, Simulator.GetAgentObservation(observation,2));
 		}
 		else
-		    outOfParticles2 = !mcts.Update(action1, Simulator.GetAgentObservation(observation,2,commFactor2), reward, 2);
+		    outOfParticles2 = !mcts.Update(action1, Simulator.GetAgentObservation(observation,2), reward, 2);
 	    }
         }
     }
