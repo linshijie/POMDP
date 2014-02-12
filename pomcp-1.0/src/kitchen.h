@@ -13,6 +13,8 @@ enum GripperType {LEFT = 16, RIGHT, NO_GRIPPER};
 
 enum ActionType {CLOSE = 19, GRASP, GRASP_FROM_EDGE, MOVE_ROBOT, NUDGE, OPEN, OPEN_PARTIAL, OPEN_COMPLETE,
     PASS_OBJECT, PLACE_UPRIGHT, PUT_DOWN, PUT_IN, REMOVE_FROM, STAY_PUT, GRASP_JOINT, PUT_DOWN_JOINT, MOVE_ROBOT_JOINT};
+    
+enum KitchenMessageTypes {NO_MES_KITCHEN = 0, GRASP_TRAY_MES = 1, MOVE_TRAY_MES = 2, PUT_DOWN_TRAY_MES = 3};
 
 //typedef std::tr1::unordered_map< ObjectClass, int, std::tr1::hash<int> >  hashmap;
     
@@ -94,6 +96,8 @@ public:
     virtual void DisplayAgentObservation(int observation, std::ostream& ostr) const;
     
     virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
+    virtual std::string SelectMessage(const STATUS& status, const HISTORY& history) const;
+    virtual std::string SelectRandomMessage() const;
     
 protected:
     
@@ -146,6 +150,9 @@ protected:
     bool IsTrayOnStove(const KITCHEN_STATE& state, double& reward) const;
     bool IsCerealAndAppleJuice(const KITCHEN_STATE& state, double& reward) const;
     bool IsTrayAndPlate(const KITCHEN_STATE& state, double& reward) const;
+    
+    std::string MessageToString(const int& message) const;
+    int StringToMessage(const std::string& str) const;
     
     double MinReward, MaxReward;
     

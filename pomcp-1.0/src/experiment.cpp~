@@ -8,8 +8,8 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(20),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(10),
-    MaxDoubles(10),
+    MinDoubles(9),
+    MaxDoubles(9),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(false),
@@ -190,6 +190,8 @@ void EXPERIMENT::Run()
 		    mcts.ClearHistory(2);
 		}
 		state = Real.CreateStartState();
+		outOfParticles = ExpParams.RandomActions[0];
+		outOfParticles2 = ExpParams.RandomActions[1];
 	    }
 	}
 	

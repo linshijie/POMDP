@@ -30,8 +30,6 @@ public:
     double RewardValue;
 };
 
-enum MessageTypes {NO_MES = 0, SMALL_BOX_MES = 1, LARGE_BOX_MES = 2, SEE_TRAY_MES = 3, MOVE_TRAY_MES = 4, PUT_DOWN_TRAY_MES = 5};
-
 class SIMULATOR
 {
 public:
