@@ -24,6 +24,7 @@ BOXPUSHING::BOXPUSHING(int numsmallboxes, double probLargeAgentBox)
     NumAgentObservations = 6;
     
     NumAgents = 2;
+    NumAgentMessages = 3;
     
     NumActions = pow(NumAgentActions, NumAgents);
     NumObservations = pow(NumAgentObservations, NumAgents);
@@ -278,14 +279,14 @@ bool BOXPUSHING::Step(STATE& state, int action,
     {
 	for (int i = 0; i < NumAgents; i++)
 	{
-	    string m = "";
+	    int m = 0;
 	    for (int j = 0; j < (int) bpstate.MessageQueue.size(); j++)
 		if (bpstate.MessageQueue.at(j).AgentID != i)
 		{
 		    if (RandomDouble(0.0,1.0) > ProbMessageMisinterp)
-			m = bpstate.MessageQueue.at(j).Message;
-		    //else
-			//m = SelectRandomMessage();
+			m = StringToMessage(bpstate.MessageQueue.at(j).Message);
+		    else
+			m = Random(NumAgentMessages);
 		    bpstate.MessageQueue.erase(bpstate.MessageQueue.begin()+j);
 		    break;
 		}
@@ -576,14 +577,14 @@ void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history,
 	else
 	    actions.push_back(TURN_CW);
     }
-    else if (!status.UseCommunication || history.Size() == 0)
+    else// if (!status.UseCommunication || history.Size() == 0)
     {
 	for (int a = 0; a < NumAgentActions; a++)
 	    actions.push_back(a);
     }
-    else
+    /*else
     {
-	int lastMessage = StringToMessage(status.LastMessageReceived);
+	int lastMessage = status.LastMessageReceived;
 	int lastObs = history.Back().Observation;
 	if ((lastObs == LARGE_BOX_OBS || lastObs == LARGE_BOX_AGENT_OBS))
 	{
@@ -602,7 +603,7 @@ void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history,
 	    for (int a = 0; a < NumAgentActions; a++)
 		actions.push_back(a);
 	}
-    }
+    }*/
 }
 
 void BOXPUSHING::GeneratePreferredAgentAction(const BOXPUSHING_STATE& bpstate, const int& lastObs, 

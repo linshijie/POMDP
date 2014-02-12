@@ -104,7 +104,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	if (Params.RewardAdaptive[i])
 	{
 	    //if (Params.JointQActions[i])
-		QNODE::NumOtherAgentValues = 1;
+		QNODE::NumOtherAgentValues = Simulator.GetNumAgentMessages();//1;
 	    //else
 		//QNODE::NumOtherAgentValues = Simulator.GetNumAgentActions();
 	}
@@ -992,7 +992,7 @@ double MCTS::Rollout(STATE& state, const int& index, double otherReward)
 
         int action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 0);
 	
-	/*if (Statuses[index == 0 ? index : index-1].UseCommunication)
+	if (Statuses[index == 0 ? index : index-1].UseCommunication)
 	{
 	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.clear();
 	    Statuses[index == 0 ? index : index-1].MessagesReceived.clear();
@@ -1005,10 +1005,10 @@ double MCTS::Rollout(STATE& state, const int& index, double otherReward)
 	    else
 		Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.SelectRandomMessage());
 		
-	}*/
+	}
         terminal = Simulator.Step(state, action, observation, reward, Statuses[index == 0 ? index : index-1]);
-	//if (Statuses[index == 0 ? index : index-1].UseCommunication)
-	   // Statuses[index > 0 ? index-1 : index].LastMessageReceived = Statuses[index > 0 ? index-1 : index].MessagesReceived[index-1]; 
+	if (Statuses[index == 0 ? index : index-1].UseCommunication)
+	   Statuses[index > 0 ? index-1 : index].LastMessageReceived = Statuses[index > 0 ? index-1 : index].MessagesReceived[index-1]; 
 	
 	Statuses[index == 0 ? index : index-1].TerminalReached = terminal;
 	    

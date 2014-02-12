@@ -123,8 +123,8 @@ public:
 	
 	bool UseCommunication;
 	std::vector<std::string> MessagesToBeSent;
-	std::vector<std::string> MessagesReceived;
-	std::string LastMessageReceived;
+	std::vector<int> MessagesReceived;
+	int LastMessageReceived;
     };
     
     /*struct INITIAL_REWARD_PARAMS
@@ -225,6 +225,7 @@ public:
     int GetNumAgents() const { return NumAgents; }
     int GetNumAgentActions() const { return NumAgentActions; }
     int GetNumAgentObservations() const { return NumAgentObservations; }
+    int GetNumAgentMessages() const { return NumAgentMessages; }
     int GetAgentAction(const int& action, const int& index) const { return index > 1 ? action/NumAgentActions : 
 									    action%NumAgentActions;}
     int GetAgentObservation(const int& observation, const int& index) const { return index > 1 ? 
@@ -236,7 +237,7 @@ public:
     
 protected:
 
-    int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations;
+    int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations, NumAgentMessages;
     double Discount, RewardRange;
     double ProbMessageLoss, ProbMessageDelay, ProbMessageMisinterp;
     KNOWLEDGE Knowledge;

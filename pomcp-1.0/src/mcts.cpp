@@ -101,10 +101,10 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	VNODE* root; 
 	root->NumChildren = Params.MultiAgent && !Params.JointQActions[i] ? Simulator.GetNumAgentActions() : 
 			Simulator.GetNumActions();
-	if (Params.RewardAdaptive[i])
+	//if (Params.RewardAdaptive[i])
 	{
 	    //if (Params.JointQActions[i])
-		QNODE::NumOtherAgentValues = 1;
+		QNODE::NumOtherAgentValues = Simulator.GetNumAgentMessages();//1;
 	    //else
 		//QNODE::NumOtherAgentValues = Simulator.GetNumAgentActions();
 	}

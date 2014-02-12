@@ -30,8 +30,6 @@ public:
     double RewardValue;
 };
 
-enum MessageTypes {NO_MES = 0, SMALL_BOX_MES = 1, LARGE_BOX_MES = 2, SEE_TRAY_MES = 3, MOVE_TRAY_MES = 4, PUT_DOWN_TRAY_MES = 5};
-
 class SIMULATOR
 {
 public:
@@ -227,6 +225,7 @@ public:
     int GetNumAgents() const { return NumAgents; }
     int GetNumAgentActions() const { return NumAgentActions; }
     int GetNumAgentObservations() const { return NumAgentObservations; }
+    int GetNumAgentMessages() const { return NumAgentMessages; }
     int GetAgentAction(const int& action, const int& index) const { return index > 1 ? action/NumAgentActions : 
 									    action%NumAgentActions;}
     int GetAgentObservation(const int& observation, const int& index) const { return index > 1 ? 
@@ -238,7 +237,7 @@ public:
     
 protected:
 
-    int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations;
+    int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations, NumAgentMessages;
     double Discount, RewardRange;
     double ProbMessageLoss, ProbMessageDelay, ProbMessageMisinterp;
     KNOWLEDGE Knowledge;

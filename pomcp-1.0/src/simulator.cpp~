@@ -228,7 +228,7 @@ string SIMULATOR::SelectMessage(const STATUS& status, const HISTORY& history) co
     return "";
 }
 
-string SIMULATOR::SelectRandomMessage(const SIMULATOR::STATUS& status, const HISTORY& history) const
+string SIMULATOR::SelectRandomMessage() const
 {
     return "";
 }

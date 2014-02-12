@@ -99,6 +99,8 @@ KITCHEN::KITCHEN(bool testTrayOnStove, bool testCerealInCupboard):
     NumActions = pow(NumAgentActions, NumAgents);
     NumObservations = pow(NumAgentObservations, NumAgents);
     
+    NumAgentMessages = 4;
+    
     for (int i=0; i<NumPlates; i++)
     {
 	ObjectTypes.push_back(PLATE);
@@ -467,14 +469,14 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
     {
 	for (int i = 0; i < NumAgents; i++)
 	{
-	    string m = "";
+	    int m = 0;
 	    for (int j = 0; j < (int) kitchenstate.MessageQueue.size(); j++)
 		if (kitchenstate.MessageQueue.at(j).AgentID != i)
 		{
 		    if (UTILS::RandomDouble(0.0,1.0) > ProbMessageMisinterp)
-			m = kitchenstate.MessageQueue.at(j).Message;
+			m = StringToMessage(kitchenstate.MessageQueue.at(j).Message);
 		    else
-			m = SelectRandomMessage();
+			m = Random(NumAgentMessages);
 		    kitchenstate.MessageQueue.erase(kitchenstate.MessageQueue.begin()+j);
 		    break;
 		}
@@ -1400,7 +1402,7 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
     
     if (status.UseCommunication && history.Size() > 0)
     {
-	int lastMessage = StringToMessage(status.LastMessageReceived);
+	int lastMessage = status.LastMessageReceived;
 	
 	if (NumAgents > 1 && (location == SIDEBOARD || location == STOVE))
 	    for (int i = 0; i < NumAgents; i++)
