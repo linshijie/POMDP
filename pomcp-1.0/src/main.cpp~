@@ -182,6 +182,7 @@ int main(int argc, char* argv[])
     {
 	searchParams.UseTransforms = false;
 	searchParams.MultiAgentPriorCount = 1;
+	searchParams.DoFastUCB = false;
 	real = new KITCHEN(testTrayOnStove, testCerealInCupboard);
 	simulator = new KITCHEN(testTrayOnStove, testCerealInCupboard);
 	searchParams.MultiAgentPriorValue = real->GetRewardRange();
