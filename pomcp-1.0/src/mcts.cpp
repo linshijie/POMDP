@@ -16,7 +16,7 @@ MCTS::PARAMS::PARAMS()
     NumLearnSimulations(1),
     NumStartStates(20),
     NumStartRewards(1),
-    UseTransforms(false),
+    UseTransforms(true),
     NumTransforms(0),
     MaxAttempts(0),
     ExpandCount(1),
@@ -24,7 +24,7 @@ MCTS::PARAMS::PARAMS()
     UseRave(false),
     RaveDiscount(1.0), 
     RaveConstant(0.01),
-    DoFastUCB(true),
+    DoFastUCB(false),
     DisableTree(false),
     MultiAgent(true),
     RewardOffset(100.0),
@@ -945,9 +945,9 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 	    if (Statuses[index == 0 ? index : index-1].UseCommunication)
 	    {
 		//if (qnode.MaxMessageValue > -1000)
-		    q += qnode.MaxMessageValue;
+		   // q += qnode.MaxMessageValue;
 		//else
-		/*{
+		{
 		    double maxMesQ = qnode.MessageValues[0].GetValue();
 		    n2 = qnode.MessageValues[0].GetCount();
 		    for (int j = 1; j < Simulator.GetNumAgentMessages(); j++)
@@ -961,7 +961,7 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 		    }
 		    //std::cout << maxMesQ << " " << qnode.MaxMessageValue << "\n";
 		    q += maxMesQ;
-		}*/
+		}
 		    
 	    }
 	    

@@ -16,7 +16,7 @@ MCTS::PARAMS::PARAMS()
     NumLearnSimulations(1),
     NumStartStates(20),
     NumStartRewards(1),
-    UseTransforms(false),
+    UseTransforms(true),
     NumTransforms(0),
     MaxAttempts(0),
     ExpandCount(1),
@@ -24,7 +24,7 @@ MCTS::PARAMS::PARAMS()
     UseRave(false),
     RaveDiscount(1.0), 
     RaveConstant(0.01),
-    DoFastUCB(true),
+    DoFastUCB(false),
     DisableTree(false),
     MultiAgent(true),
     RewardOffset(100.0),
@@ -62,8 +62,8 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	//		Simulator.GetNumActions();
     QNODE::NumChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
     
-    if (Params.UsesComm[0] || Params.UsesComm[1])
-	QNODE::NumChildren *= Simulator.GetNumAgentMessages();
+    //if (Params.UsesComm[0] || Params.UsesComm[1])
+	//QNODE::NumChildren *= Simulator.GetNumAgentMessages();
     
     Statuses.clear();
     Roots.clear();
@@ -152,8 +152,8 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
 	
     QNODE& qnode = Roots[index == 0 ? index : index-1]->Child(action);
     
-    if (Statuses[index == 0 ? index : index-1].UseCommunication)
-	observation += Simulator.GetNumAgentObservations()*Statuses[index > 0 ? index-1 : index].LastMessageReceived;
+    //if (Statuses[index == 0 ? index : index-1].UseCommunication)
+	//observation += Simulator.GetNumAgentObservations()*Statuses[index > 0 ? index-1 : index].LastMessageReceived;
     
     VNODE* vnode = qnode.Child(observation);
     if (vnode)
@@ -675,10 +675,10 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     int childIndex = observation;
     if (index > 0)
     {
-	if (!Statuses[index == 0 ? index : index-1].UseCommunication)
+	//if (!Statuses[index == 0 ? index : index-1].UseCommunication)
 	    childIndex = Simulator.GetAgentObservation(observation, index);
-	else
-	    childIndex = Simulator.GetAgentObservation(observation, index) + Simulator.GetNumAgentObservations()*Statuses[index > 0 ? index-1 : index].LastMessageReceived;
+	//else
+	    //childIndex = Simulator.GetAgentObservation(observation, index) + Simulator.GetNumAgentObservations()*Statuses[index > 0 ? index-1 : index].LastMessageReceived;
     }
     
     
@@ -945,9 +945,9 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 	    if (Statuses[index == 0 ? index : index-1].UseCommunication)
 	    {
 		//if (qnode.MaxMessageValue > -1000)
-		    //q += qnode.MaxMessageValue;
+		   // q += qnode.MaxMessageValue;
 		//else
-		/*{
+		{
 		    double maxMesQ = qnode.MessageValues[0].GetValue();
 		    n2 = qnode.MessageValues[0].GetCount();
 		    for (int j = 1; j < Simulator.GetNumAgentMessages(); j++)
@@ -960,8 +960,8 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 			}
 		    }
 		    //std::cout << maxMesQ << " " << qnode.MaxMessageValue << "\n";
-		    q += maxMesQ;
-		}*/
+		    q = maxMesQ;
+		}
 		    
 	    }
 	    
