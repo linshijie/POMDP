@@ -123,8 +123,8 @@ public:
 	
 	bool UseCommunication;
 	std::vector<std::string> MessagesToBeSent;
-	std::vector<std::string> MessagesReceived;
-	std::string LastMessageReceived;
+	std::vector<int> MessagesReceived;
+	int LastMessageReceived;
     };
     
     /*struct INITIAL_REWARD_PARAMS

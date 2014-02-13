@@ -290,3 +290,9 @@ double SIMULATOR::GetHorizon(double accuracy, int undiscountedHorizon) const
         return undiscountedHorizon;
     return log(accuracy) / log(Discount);
 }
+
+int SIMULATOR::StringToMessage(const string& str) const
+{
+    return 0;
+}
+

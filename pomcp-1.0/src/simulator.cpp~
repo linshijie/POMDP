@@ -45,6 +45,7 @@ SIMULATOR::SIMULATOR(int numActions, int numObservations, double discount)
     NumAgents(1),
     NumAgentActions(numActions),
     NumAgentObservations(numObservations),
+    NumAgentMessages(1),
     Discount(discount),
     ProbMessageLoss(0.0),
     ProbMessageDelay(0.0),

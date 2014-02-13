@@ -76,6 +76,7 @@ public:
     VALUE<double> AMAF;
     
     std::vector<VALUE<int> > OtherAgentValues;
+    std::vector<VALUE<int> > MessageValues;
 
     void Initialise();
 
@@ -90,6 +91,9 @@ public:
     static int NumChildren;
     
     static int NumOtherAgentValues;
+    static int NumMessageValues;
+    //double MaxMessageValue;
+    //bool MaxMessageSet;
 
 private:
 

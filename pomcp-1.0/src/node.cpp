@@ -10,6 +10,8 @@ int QNODE::NumChildren = 0;
 
 int QNODE::NumOtherAgentValues = 0;
 
+int QNODE::NumMessageValues = 0;
+
 void QNODE::Initialise()
 {
     assert(NumChildren);
@@ -21,6 +23,12 @@ void QNODE::Initialise()
     OtherAgentValues.resize(NumOtherAgentValues);
     for (int i = 0; i < QNODE::NumOtherAgentValues; i++)
 	OtherAgentValues[i].Set(0, 0);
+    assert(NumMessageValues);
+    MessageValues.resize(NumMessageValues);
+    for (int i = 0; i < QNODE::NumMessageValues; i++)
+	MessageValues[i].Set(0,0);
+    MaxMessageValue = -Infinity;
+    MaxMessageSet = false;
 }
 
 void QNODE::DisplayValue(HISTORY& history, int maxDepth, ostream& ostr) const

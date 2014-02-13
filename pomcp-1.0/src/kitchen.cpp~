@@ -1400,9 +1400,9 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
 	    AgentHere.push_back(UTILS::RandomDouble(0.0,1.0) < 0.5 ? true : false);
     }
     
-    if (status.UseCommunication && history.Size() > 0)
+    /**if (status.UseCommunication && history.Size() > 0)
     {
-	int lastMessage = StringToMessage(status.LastMessageReceived);
+	int lastMessage = status.LastMessageReceived;
 	
 	if (NumAgents > 1 && (location == SIDEBOARD || location == STOVE))
 	    for (int i = 0; i < NumAgents; i++)
@@ -1423,13 +1423,6 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
 					actions.push_back(ActionToInt(ka));
 					return;
 				    }
-				    /*else
-				    {
-					KitchenAction stay;
-					stay.type = STAY_PUT;
-					actions.push_back(ActionToInt(stay));
-					return;
-				    }*/
 				}
 	
 	
@@ -1475,15 +1468,8 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
 				    return;
 				}
 			    }
-	    /*else
-	    {
-		KitchenAction stay;
-		stay.type = STAY_PUT;
-		actions.push_back(ActionToInt(stay));
-		return
-	    }*/
 	    
-    }
+    }*/
     
     
     if (humanDefined && TestTrayOnStove && status.perspindex == index)

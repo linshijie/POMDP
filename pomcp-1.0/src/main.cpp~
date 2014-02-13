@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
     else if (problem == "boxpushing")
     {
 	expParams.BreakOnTerminate = false;
-	searchParams.UseTransforms = true;
+	//searchParams.UseTransforms = true;
         real = new BOXPUSHING(numSmallBoxes, probLargeBoxAgent);
         simulator = new BOXPUSHING(numSmallBoxes, probLargeBoxAgent);
     }

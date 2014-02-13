@@ -8,8 +8,8 @@ EXPERIMENT::PARAMS::PARAMS()
     NumSteps(20),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(9),
-    MaxDoubles(9),
+    MinDoubles(10),
+    MaxDoubles(10),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(false),
@@ -119,8 +119,8 @@ void EXPERIMENT::Run()
 	{
 	    status.MessagesToBeSent.clear();
 	    status.MessagesReceived.clear();
-	    status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(1), mcts.GetHistory(1)));
-	    status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(2), mcts.GetHistory(2)));
+	    status.MessagesToBeSent.push_back(0);//Real.SelectMessage(mcts.GetStatus(1), mcts.GetHistory(1)));
+	    status.MessagesToBeSent.push_back(0);//Real.SelectMessage(mcts.GetStatus(2), mcts.GetHistory(2)));
 	}
 	status.UseCommunication = ExpParams.RealSimCommunication;
 	terminal = Real.Step(*state, action, observation, reward, status);
@@ -276,8 +276,8 @@ void EXPERIMENT::Run()
 	    {
 		status.MessagesToBeSent.clear();
 		status.MessagesReceived.clear();
-		status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(1), mcts.GetHistory(1)));
-		status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(2), mcts.GetHistory(2)));
+		status.MessagesToBeSent.push_back(0);//Real.SelectMessage(mcts.GetStatus(1), mcts.GetHistory(1)));
+		status.MessagesToBeSent.push_back(0);//Real.SelectMessage(mcts.GetStatus(2), mcts.GetHistory(2)));
 	    }
 	    status.UseCommunication = ExpParams.RealSimCommunication;
             terminal = Real.Step(*state, action, observation, reward, status);

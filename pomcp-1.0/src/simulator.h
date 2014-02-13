@@ -235,6 +235,8 @@ public:
     double GetRewardRange() const { return RewardRange; }
     double GetHorizon(double accuracy, int undiscountedHorizon = 100) const;
     
+    virtual int StringToMessage(const std::string& str) const;
+    
 protected:
 
     int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations, NumAgentMessages;

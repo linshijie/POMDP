@@ -269,7 +269,7 @@ string KITCHEN::SelectMessage(const STATUS& status, const HISTORY& history) cons
 
 string KITCHEN::SelectRandomMessage() const
 {
-    return MessageToString(Random(4));
+    return MessageToString(Random(NumAgentMessages));
 }
 
 
@@ -1400,7 +1400,7 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
 	    AgentHere.push_back(UTILS::RandomDouble(0.0,1.0) < 0.5 ? true : false);
     }
     
-    if (status.UseCommunication && history.Size() > 0)
+    /**if (status.UseCommunication && history.Size() > 0)
     {
 	int lastMessage = status.LastMessageReceived;
 	
@@ -1423,13 +1423,6 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
 					actions.push_back(ActionToInt(ka));
 					return;
 				    }
-				    /*else
-				    {
-					KitchenAction stay;
-					stay.type = STAY_PUT;
-					actions.push_back(ActionToInt(stay));
-					return;
-				    }*/
 				}
 	
 	
@@ -1475,15 +1468,8 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
 				    return;
 				}
 			    }
-	    /*else
-	    {
-		KitchenAction stay;
-		stay.type = STAY_PUT;
-		actions.push_back(ActionToInt(stay));
-		return
-	    }*/
 	    
-    }
+    }*/
     
     
     if (humanDefined && TestTrayOnStove && status.perspindex == index)
