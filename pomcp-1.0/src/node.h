@@ -77,6 +77,7 @@ public:
     
     std::vector<VALUE<int> > OtherAgentValues;
     std::vector<VALUE<int> > MessageValues;
+    std::vector<int> MessageActions;
 
     void Initialise();
 
@@ -87,6 +88,8 @@ public:
 
     void DisplayValue(HISTORY& history, int maxDepth, std::ostream& ostr) const;
     void DisplayPolicy(HISTORY& history, int maxDepth, std::ostream& ostr) const;
+    
+    int SelectRandomMessageAction() const;
 
     static int NumChildren;
     
@@ -94,6 +97,8 @@ public:
     static int NumMessageValues;
     double MaxMessageValue;
     bool MaxMessageSet;
+    
+    static int MaxMessageActions;
 
 private:
 

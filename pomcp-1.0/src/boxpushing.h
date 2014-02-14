@@ -70,8 +70,6 @@ public:
     virtual void DisplayAction(int action, std::ostream& ostr) const;
     
     virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
-    virtual std::string SelectMessage(const STATUS& status, const HISTORY& history) const;
-    virtual std::string SelectRandomMessage() const;
     
     virtual int StringToMessage(const std::string& str) const;
 

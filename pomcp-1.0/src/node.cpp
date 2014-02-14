@@ -12,6 +12,8 @@ int QNODE::NumOtherAgentValues = 0;
 
 int QNODE::NumMessageValues = 0;
 
+int QNODE::MaxMessageActions = 0;
+
 void QNODE::Initialise()
 {
     assert(NumChildren);
@@ -29,7 +31,16 @@ void QNODE::Initialise()
 	MessageValues[i].Set(0,0);
     MaxMessageValue = -Infinity;
     MaxMessageSet = false;
+    MessageActions.clear();
 }
+
+int QNODE::SelectRandomMessageAction() const
+{
+    if (MessageActions.empty())
+	return -1;
+    return MessageActions[UTILS::Random((int)MessageActions.size())];
+}
+
 
 void QNODE::DisplayValue(HISTORY& history, int maxDepth, ostream& ostr) const
 {

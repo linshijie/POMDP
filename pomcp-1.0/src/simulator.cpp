@@ -224,14 +224,16 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
     }
 }
 
-string SIMULATOR::SelectMessage(const STATUS& status, const HISTORY& history) const
+int SIMULATOR::SelectMessage(const STATUS& status, const HISTORY& history, const int& action) const
 {
-    return "";
+    if (history.Size() == 0)
+	return 0;
+    return action;// + NumAgentActions*history.Back().Observation;
 }
 
-string SIMULATOR::SelectRandomMessage() const
+int SIMULATOR::SelectRandomMessage() const
 {
-    return "";
+    return Random(NumAgentMessages);
 }
 
 

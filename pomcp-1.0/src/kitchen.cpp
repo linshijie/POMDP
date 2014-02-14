@@ -247,7 +247,7 @@ bool KITCHEN::IsActionMultiagent(const int& action, const HISTORY& history) cons
     return MultiAgentLabels[action];
 }
 
-string KITCHEN::SelectMessage(const STATUS& status, const HISTORY& history) const
+/*string KITCHEN::SelectMessage(const STATUS& status, const HISTORY& history) const
 {
     if (history.Size() == 0 || !status.UseCommunication)
 	return "";
@@ -270,7 +270,7 @@ string KITCHEN::SelectMessage(const STATUS& status, const HISTORY& history) cons
 string KITCHEN::SelectRandomMessage() const
 {
     return MessageToString(Random(NumAgentMessages));
-}
+}*/
 
 
 bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, STATUS& status) const
@@ -288,7 +288,7 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
 	for (int i = 0; i < NumAgents; i++)
 	    if (UTILS::RandomDouble(0.0,1.0) > ProbMessageLoss)
 	    {
-		std::string mess = status.MessagesToBeSent[i];
+		int mess = status.MessagesToBeSent[i];
 		STATE::MESSAGE message;
 		message.Message = mess;
 		message.AgentID = i;
@@ -474,7 +474,7 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
 		if (kitchenstate.MessageQueue.at(j).AgentID != i)
 		{
 		    if (UTILS::RandomDouble(0.0,1.0) > ProbMessageMisinterp)
-			m = StringToMessage(kitchenstate.MessageQueue.at(j).Message);
+			m = kitchenstate.MessageQueue.at(j).Message;
 		    else
 			m = Random(NumAgentMessages);
 		    kitchenstate.MessageQueue.erase(kitchenstate.MessageQueue.begin()+j);

@@ -99,6 +99,8 @@ protected:
     
     std::string MessageToString(const int& message) const;
     
+    int HistoryToInt(const HISTORY& history) const;
+    
     std::vector< std::vector< std::vector<bool> > > MultiAgentLabels;
     std::vector<double> quantiles;
     

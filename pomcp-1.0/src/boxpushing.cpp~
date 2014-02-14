@@ -24,7 +24,7 @@ BOXPUSHING::BOXPUSHING(int numsmallboxes, double probLargeAgentBox)
     NumAgentObservations = 6;
     
     NumAgents = 2;
-    NumAgentMessages = 5;
+    NumAgentMessages = 4;
     
     NumActions = pow(NumAgentActions, NumAgents);
     NumObservations = pow(NumAgentObservations, NumAgents);
@@ -170,7 +170,7 @@ bool BOXPUSHING::Step(STATE& state, int action,
 	for (int i = 0; i < NumAgents; i++)
 	    if (RandomDouble(0.0,1.0) > ProbMessageLoss)
 	    {
-		std::string mess = status.MessagesToBeSent[i];
+		int mess = status.MessagesToBeSent[i];
 		STATE::MESSAGE message;
 		message.Message = mess;
 		message.AgentID = i;
@@ -284,7 +284,7 @@ bool BOXPUSHING::Step(STATE& state, int action,
 		if (bpstate.MessageQueue.at(j).AgentID != i)
 		{
 		    if (RandomDouble(0.0,1.0) > ProbMessageMisinterp)
-			m = StringToMessage(bpstate.MessageQueue.at(j).Message);
+			m = bpstate.MessageQueue.at(j).Message;
 		    else
 			m = Random(NumAgentMessages);
 		    bpstate.MessageQueue.erase(bpstate.MessageQueue.begin()+j);
@@ -493,7 +493,7 @@ bool BOXPUSHING::IsActionMultiagent(const int& action, const HISTORY& history) c
     //return MultiAgentLabels[action][observation1][observation2];
 }
 
-string BOXPUSHING::SelectMessage(const STATUS& status, const HISTORY& history) const
+/*string BOXPUSHING::SelectMessage(const STATUS& status, const HISTORY& history) const
 {
     if (history.Size() == 0 || !status.UseCommunication)
 	return "";
@@ -516,7 +516,7 @@ string BOXPUSHING::SelectMessage(const STATUS& status, const HISTORY& history) c
 string BOXPUSHING::SelectRandomMessage() const
 {
     return MessageToString(UTILS::Random(NumAgentMessages));
-}
+}*/
 
 
 
@@ -565,7 +565,7 @@ void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history,
     std::vector<int>& actions, const STATUS& status, const int& index) const
 {
     //GeneratePreferredAgent(state, history, actions, status, index);
-    /**if (history.Size() == 0)// && ProbLargeAgentBox > 0.5)
+    if (history.Size() == 0)// && ProbLargeAgentBox > 0.5)
     {
 	actions.push_back(MOVE);
         return;
@@ -578,7 +578,7 @@ void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history,
 	    actions.push_back(TURN_CW);
 	return;
     }
-    else// if (!status.UseCommunication || history.Size() == 0)*/
+    //if (!status.UseCommunication || history.Size() == 0)
     {
 	for (int a = 0; a < NumAgentActions; a++)
 	    actions.push_back(a);
@@ -594,10 +594,20 @@ void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history,
 	    else
 		actions.push_back(STAY);
 	}
-	/*else if (lastObs == SMALL_BOX_OBS && lastMessage == LARGE_BOX_MES)
+	else if (lastObs == SMALL_BOX_OBS && lastMessage == LARGE_BOX_MES)
 	{
 	    actions.push_back(TURN_CW);
 	    actions.push_back(TURN_CCW);
+	}
+	else if (lastObs == EMPTY_OBS)
+	    actions.push_back(MOVE);
+	else if (lastObs == AGENT_OBS)
+	{
+	    if (index == 1)
+		actions.push_back(TURN_CCW);
+	    else
+		actions.push_back(TURN_CW);
+	    return;
 	}
 	else
 	{
@@ -813,7 +823,7 @@ int BOXPUSHING::StringToMessage(const string& str) const
 int BOXPUSHING::HistoryToInt(const HISTORY& history) const
 {
     int h = 0;
-    for (int i = min(1, history.Size()-1); i >= 0; i--)
+    for (int i = history.Size()-1; i >= 0; i--)
 	h += pow(NumAgentMessages, history.Size()-1-i)*history[i].Observation;
     return h;
 }

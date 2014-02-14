@@ -92,7 +92,7 @@ private:
     VNODE* ExpandNode(const STATE* state, const int& perspindex, const int& agentindex);
     void AddSample(VNODE* node, const STATE& state);
     void AddTransforms(VNODE* root, BELIEF_STATE& beliefs, const int& index);
-    STATE* CreateTransform(const int& index) const;
+    STATE* CreateTransform(const int& index);
     void Resample(BELIEF_STATE& beliefs);
 
     // Fast lookup table for UCB

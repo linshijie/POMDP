@@ -16,7 +16,7 @@ public:
     struct MESSAGE
     {
 	int AgentID;
-	std::string Message;
+	int Message;
     };
     
     std::deque<MESSAGE> MessageQueue;
@@ -98,10 +98,11 @@ public:
 	std::vector<double> MainQValueSequence;
 	std::vector<double> MainVValueSequence;
 	std::vector<double> MainOtherQValueSequence;
+	std::vector<std::pair<int,double> > MainMessageValueSequence;
 	
 	std::vector<int> LearnSequence;
 	std::vector<int> LearnFullSequence;
-	std::vector<double> LearnRewardValueSequence;
+	std::vector<std::pair<int,double> > LearnMessageValueSequence;
 	std::vector<double> LearnQValueSequence;
 	std::vector<double> LearnVValueSequence;
 	std::vector<double> LearnOtherQValueSequence;
@@ -122,7 +123,7 @@ public:
 	int JointGoalCount;
 	
 	bool UseCommunication;
-	std::vector<std::string> MessagesToBeSent;
+	std::vector<int> MessagesToBeSent;
 	std::vector<int> MessagesReceived;
 	int LastMessageReceived;
     };
@@ -211,8 +212,8 @@ public:
     virtual void DisplayAgentObservation(int observation, std::ostream& ostr) const;
     
     virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
-    virtual std::string SelectMessage(const STATUS& status, const HISTORY& history) const;
-    virtual std::string SelectRandomMessage() const;
+    virtual int SelectMessage(const STATUS& status, const HISTORY& history, const int& currAction) const;
+    virtual int SelectRandomMessage() const;
 
     // Accessors
     void SetKnowledge(const KNOWLEDGE& knowledge) { Knowledge = knowledge; }
