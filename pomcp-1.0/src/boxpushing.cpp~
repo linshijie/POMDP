@@ -565,29 +565,29 @@ void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history,
     std::vector<int>& actions, const STATUS& status, const int& index) const
 {
     //GeneratePreferredAgent(state, history, actions, status, index);
-    if (history.Size() == 0)// && ProbLargeAgentBox > 0.5)
+    /*if (history.Size() == 0)// && ProbLargeAgentBox > 0.5)
     {
 	actions.push_back(MOVE);
         return;
-    }
-    else if (history.Size() == 1)
+    }*/
+    /*else if (history.Size() == 1)
     {
 	if (index == 1)
 	    actions.push_back(TURN_CCW);
 	else
 	    actions.push_back(TURN_CW);
 	return;
-    }
-    //if (!status.UseCommunication || history.Size() == 0)
+    }*/
+    if (!status.UseCommunication || history.Size() == 0)
     {
 	for (int a = 0; a < NumAgentActions; a++)
 	    actions.push_back(a);
     }
-    /*else
+    else
     {
-	int lastMessage = status.LastMessageReceived;
+	//int lastMessage = status.LastMessageReceived/NumAgentActions;
 	int lastObs = history.Back().Observation;
-	if ((lastObs == LARGE_BOX_OBS || lastObs == LARGE_BOX_AGENT_OBS))
+	/*if ((lastObs == LARGE_BOX_OBS || lastObs == LARGE_BOX_AGENT_OBS))
 	{
 	    if (lastMessage == LARGE_BOX_MES)
 		actions.push_back(MOVE);
@@ -608,13 +608,21 @@ void BOXPUSHING::GenerateLegalAgent(const STATE& state, const HISTORY& history,
 	    else
 		actions.push_back(TURN_CW);
 	    return;
+	}*/
+	//int lastObs = history.Back().Observation;
+	if (lastObs == LARGE_BOX_OBS)
+	{
+	    if (lastMessage == LARGE_BOX_OBS)
+		actions.push_back(MOVE);
+	    else
+		actions.push_back(STAY);
 	}
 	else
 	{
 	    for (int a = 0; a < NumAgentActions; a++)
 		actions.push_back(a);
 	}
-    }*/
+    }
 }
 
 void BOXPUSHING::GeneratePreferredAgentAction(const BOXPUSHING_STATE& bpstate, const int& lastObs, 

@@ -93,6 +93,8 @@ void EXPERIMENT::Run()
 	    planLengths.push_back(s2);
 	}
     }
+    
+    ExpParams.NumSteps *= 10;
 
     for (t = 0; t < ExpParams.NumSteps; t++)
     {
@@ -276,8 +278,8 @@ void EXPERIMENT::Run()
 	    {
 		status.MessagesToBeSent.clear();
 		status.MessagesReceived.clear();
-		status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(1), mcts.GetHistory(1)));
-		status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(2), mcts.GetHistory(2)));
+		status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(1), mcts.GetHistory(1), action0));
+		status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(2), mcts.GetHistory(2), action1));
 	    }
 	    status.UseCommunication = ExpParams.RealSimCommunication;
             terminal = Real.Step(*state, action, observation, reward, status);

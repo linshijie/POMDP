@@ -5,7 +5,7 @@ using namespace UTILS;
 
 SIMULATOR::KNOWLEDGE::KNOWLEDGE()
 :   TreeLevel(LEGAL),
-    RolloutLevel(LEGAL),
+    RolloutLevel(SMART),
     SmartTreeCount(20),
     SmartTreeValue(100.0)
 {
@@ -227,8 +227,8 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
 int SIMULATOR::SelectMessage(const STATUS& status, const HISTORY& history, const int& action) const
 {
     if (history.Size() == 0)
-	return 0;
-    return action + NumAgentActions*history.Back().Observation;
+	return action;
+    return action;// + NumAgentActions*history.Back().Observation;
 }
 
 int SIMULATOR::SelectRandomMessage() const

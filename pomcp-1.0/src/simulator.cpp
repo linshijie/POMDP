@@ -227,7 +227,7 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
 int SIMULATOR::SelectMessage(const STATUS& status, const HISTORY& history, const int& action) const
 {
     if (history.Size() == 0)
-	return 0;
+	return action;
     return action;// + NumAgentActions*history.Back().Observation;
 }
 
