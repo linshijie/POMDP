@@ -165,6 +165,9 @@ bool BOXPUSHING::Step(STATE& state, int action,
     
     reward = 0.0;
     
+    bool isMessageDelayed = false;
+    STATE::MESSAGE delayedMessage;
+    
     if (status.UseCommunication && !status.MessagesToBeSent.empty())
     {
 	for (int i = 0; i < NumAgents; i++)
@@ -177,7 +180,10 @@ bool BOXPUSHING::Step(STATE& state, int action,
 		if (UTILS::RandomDouble(0.0,1.0) > ProbMessageDelay)
 		    bpstate.MessageQueue.push_front(message);
 		else
-		    bpstate.MessageQueue.push_back(message);
+		{
+		    delayedMessage = message;
+		    isMessageDelayed = true;
+		}
 		//if (mess.length() > 0)
 		    //reward -= 0.1;
 		//reward -= 0.1*mess.length();
@@ -292,6 +298,8 @@ bool BOXPUSHING::Step(STATE& state, int action,
 		}
 	    status.MessagesReceived.push_back(m);
 	}
+	if (isMessageDelayed)
+	    bpstate.MessageQueue.push_front(delayedMessage);
     }
     
     observation = obs0 + NumAgentObservations*obs1;

@@ -24,7 +24,7 @@ MCTS::PARAMS::PARAMS()
     UseRave(false),
     RaveDiscount(1.0), 
     RaveConstant(0.01),
-    DoFastUCB(false),
+    DoFastUCB(true),
     DisableTree(false),
     MultiAgent(true),
     RewardOffset(100.0),
@@ -62,7 +62,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 			Simulator.GetNumActions();
     QNODE::NumChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
     
-    QNODE::MaxMessageActions = Simulator.GetNumAgentActions();
+    QNODE::MaxMessageActions = Simulator.GetNumActions();
     
     //if (Params.UsesComm[0] || Params.UsesComm[1])
 	//QNODE::NumChildren *= Simulator.GetNumAgentMessages();
@@ -159,7 +159,7 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
 	Statuses[index > 0 ? index-1 : index].LastMessageReceived = Statuses[index > 0 ? index-1 : index].MessagesReceived[index-1]; 
 	if ((int) qnode.MessageActions.size() == QNODE::MaxMessageActions)
 	    qnode.MessageActions.erase(qnode.MessageActions.begin());
-	qnode.MessageActions.push_back(Statuses[index > 0 ? index-1 : index].LastMessageReceived%Simulator.GetNumAgentActions());
+	qnode.MessageActions.push_back(Statuses[index > 0 ? index-1 : index].LastMessageReceived);
     }
     
     //if (Statuses[index == 0 ? index : index-1].UseCommunication)
@@ -693,9 +693,12 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     if (Statuses[index == 0 ? index : index-1].UseCommunication)
     {
 	Statuses[index > 0 ? index-1 : index].LastMessageReceived = Statuses[index > 0 ? index-1 : index].MessagesReceived[index-1]; 
+	//if (RandomDouble(0.0,1.0) > 0.5)
+	{
 	if ((int) qnode.MessageActions.size() == QNODE::MaxMessageActions)
 	    qnode.MessageActions.erase(qnode.MessageActions.begin());
-	qnode.MessageActions.push_back(Statuses[index > 0 ? index-1 : index].LastMessageReceived%Simulator.GetNumAgentActions());
+	qnode.MessageActions.push_back(Statuses[index > 0 ? index-1 : index].LastMessageReceived);
+	}
     }
     
     
@@ -1001,7 +1004,7 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 			}
 		    }
 		    //std::cout << maxMesQ << " " << qnode.MaxMessageValue << "\n";
-		    //q += maxMesQ;
+		    q += maxMesQ;
 		}
 		    
 	    }

@@ -98,6 +98,7 @@ public:
 	std::vector<double> MainQValueSequence;
 	std::vector<double> MainVValueSequence;
 	std::vector<double> MainOtherQValueSequence;
+	std::vector<std::pair<int,double> > MainMessageValueSequence;
 	
 	std::vector<int> LearnSequence;
 	std::vector<int> LearnFullSequence;
@@ -216,7 +217,7 @@ public:
 
     // Accessors
     void SetKnowledge(const KNOWLEDGE& knowledge) { Knowledge = knowledge; }
-    void SetProbMessageLoss(const double& prob) { ProbMessageLoss = prob; }
+    void SetProbMessageLoss(const double& prob) const { ProbMessageLoss = prob; }
     void SetProbMessageDelay(const double& prob) { ProbMessageDelay = prob; }
     void SetProbMessageMisinterp(const double& prob) { ProbMessageMisinterp = prob; }
     int GetRolloutLevel() const { return Knowledge.RolloutLevel; }

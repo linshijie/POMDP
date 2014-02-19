@@ -283,6 +283,9 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
     
     reward = -0.1;
     
+    bool isMessageDelayed = false;
+    STATE::MESSAGE delayedMessage;
+    
     if (status.UseCommunication && !status.MessagesToBeSent.empty())
     {
 	for (int i = 0; i < NumAgents; i++)
@@ -295,7 +298,11 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
 		if (UTILS::RandomDouble(0.0,1.0) > ProbMessageDelay)
 		    kitchenstate.MessageQueue.push_front(message);
 		else
-		    kitchenstate.MessageQueue.push_back(message);
+		{
+		    delayedMessage = message;
+		    isMessageDelayed = true;
+		}
+		    //kitchenstate.MessageQueue.insert(kitchenstate.MessageQueue.begin() + 1, message);
 		//if (mess.length() > 0)
 		    //reward -= 0.1;
 		//reward -= 0.1*mess.length();
@@ -482,6 +489,8 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
 		}
 	    status.MessagesReceived.push_back(m);
 	}
+	if (isMessageDelayed)
+	    kitchenstate.MessageQueue.push_front(delayedMessage);
     }
     
     observation = 0;

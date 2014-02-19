@@ -62,9 +62,10 @@ public:
 	bool BreakOnTerminate;
 	std::vector<bool> RandomActions;
 	bool RealSimCommunication;
+	bool RandomiseCommunication;
     };
 
-    EXPERIMENT(const SIMULATOR& real, const SIMULATOR& simulator, 
+    EXPERIMENT(SIMULATOR& real, SIMULATOR& simulator, 
         const std::string& outputFile, 
         EXPERIMENT::PARAMS& expParams, MCTS::PARAMS& searchParams);
 
@@ -75,8 +76,8 @@ public:
 
 private:
 
-    const SIMULATOR& Real;
-    const SIMULATOR& Simulator;
+    SIMULATOR& Real;
+    SIMULATOR& Simulator;
     EXPERIMENT::PARAMS& ExpParams;
     MCTS::PARAMS& SearchParams;
     RESULTS Results;

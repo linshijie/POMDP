@@ -5,7 +5,7 @@ using namespace UTILS;
 
 SIMULATOR::KNOWLEDGE::KNOWLEDGE()
 :   TreeLevel(LEGAL),
-    RolloutLevel(SMART),
+    RolloutLevel(LEGAL),
     SmartTreeCount(20),
     SmartTreeValue(100.0)
 {

@@ -4,7 +4,7 @@
 using namespace std;
 
 EXPERIMENT::PARAMS::PARAMS()
-:   NumRuns(1000),
+:   NumRuns(100),
     NumSteps(20),
     SimSteps(100),
     TimeOut(3600),
@@ -19,7 +19,8 @@ EXPERIMENT::PARAMS::PARAMS()
     UndiscountedHorizon(20),
     AutoExploration(true),
     BreakOnTerminate(true),
-    RealSimCommunication(false)
+    RealSimCommunication(false),
+    RandomiseCommunication(false)
 {
     RandomActions.clear();
     
@@ -27,8 +28,8 @@ EXPERIMENT::PARAMS::PARAMS()
     RandomActions.push_back(false);
 }
 
-EXPERIMENT::EXPERIMENT(const SIMULATOR& real,
-    const SIMULATOR& simulator, const string& outputFile,
+EXPERIMENT::EXPERIMENT(SIMULATOR& real,
+    SIMULATOR& simulator, const string& outputFile,
     EXPERIMENT::PARAMS& expParams, MCTS::PARAMS& searchParams)
 :   Real(real),
     Simulator(simulator),
@@ -62,9 +63,8 @@ EXPERIMENT::EXPERIMENT(const SIMULATOR& real,
 void EXPERIMENT::Run()
 {
     boost::timer timer;
-    
     MCTS mcts(Simulator, SearchParams);
-    
+        
     double undiscountedReturn = 0.0;
     double discountedReturn = 0.0;
     double discount = 1.0;
@@ -76,8 +76,21 @@ void EXPERIMENT::Run()
     if (SearchParams.Verbose >= 1)
         Real.DisplayState(*state, cout);
     
-    double timeFactor = 1.0/Real.GetNumAgents();
+    if (ExpParams.RandomiseCommunication)
+    {
+	double probLoss = UTILS::RandomDouble(0.0,1.0);
+	double probDelay = UTILS::RandomDouble(0.0,1.0);
+	double probMisinterp = UTILS::RandomDouble(0.0,1.0);
+	Real.SetProbMessageLoss(probLoss);
+	Real.SetProbMessageDelay(probDelay);
+	Real.SetProbMessageMisinterp(probMisinterp);
+	Simulator.SetProbMessageLoss(probLoss);
+	Simulator.SetProbMessageDelay(probDelay);
+	Simulator.SetProbMessageMisinterp(probMisinterp);
+    }
     
+    double timeFactor = 1.0/Real.GetNumAgents();
+        
     std::vector<int> planCounts;
     std::vector<STATISTIC> planRewards;
     std::vector<STATISTIC> planLengths;
@@ -93,8 +106,6 @@ void EXPERIMENT::Run()
 	    planLengths.push_back(s2);
 	}
     }
-    
-    ExpParams.NumSteps *= 10;
 
     for (t = 0; t < ExpParams.NumSteps; t++)
     {

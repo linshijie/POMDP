@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
     bool testCerealInCupboard = false;
     
     //multiagent experiment params
-    bool rewAdaptive1 = true, rewAdaptive2 = true;
+    bool rewAdaptive1 = false, rewAdaptive2 = false;
     bool humanDefined1 = false, humanDefined2 = false;
     bool random1 = false, random2 = false;
     bool comm1 = true, comm2 = true;
@@ -110,6 +110,7 @@ int main(int argc, char* argv[])
 	("messageloss", value<double>(&probMessageLoss), "Probability of message loss")
 	("messagedelay", value<double>(&probMessageDelay), "Probability of message delay")
 	("messagemisinterp", value<double>(&probMessageMisinterp), "Probability of message misinterpretation")
+	("randomcomm", value<bool>(&expParams.RandomiseCommunication), "Random communication probabilities at each run")
         ;
 
     variables_map vm;
