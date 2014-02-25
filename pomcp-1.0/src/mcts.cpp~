@@ -993,14 +993,16 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 		//else
 		{
 		    double maxMesQ = qnode.MessageValues[0].GetValue();
-		    int n2 = qnode.MessageValues[0].GetCount();
+		    //if (ucb)
+			//maxMesQ += FastUCB(N, qnode.MessageValues[0].GetCount(), logN);
 		    for (int j = 1; j < Simulator.GetNumAgentMessages(); j++)
 		    {
 			double mesQ = qnode.MessageValues[j].GetValue();
+			//if (ucb)
+			    //mesQ += FastUCB(N, qnode.MessageValues[j].GetCount(), logN);
 			if (mesQ > maxMesQ)
 			{
 			    maxMesQ = mesQ;
-			    n2 = qnode.MessageValues[j].GetCount();
 			}
 		    }
 		    //std::cout << maxMesQ << " " << qnode.MaxMessageValue << "\n";

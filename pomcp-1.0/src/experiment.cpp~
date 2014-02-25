@@ -5,7 +5,7 @@ using namespace std;
 
 EXPERIMENT::PARAMS::PARAMS()
 :   NumRuns(100),
-    NumSteps(20),
+    NumSteps(100),
     SimSteps(100),
     TimeOut(3600),
     MinDoubles(10),
@@ -78,9 +78,9 @@ void EXPERIMENT::Run()
     
     if (ExpParams.RandomiseCommunication)
     {
-	double probLoss = UTILS::RandomDouble(0.0,1.0);
-	double probDelay = UTILS::RandomDouble(0.0,1.0);
-	double probMisinterp = UTILS::RandomDouble(0.0,1.0);
+	double probLoss = UTILS::RandomDouble(0.0,0.5);
+	double probDelay = UTILS::RandomDouble(0.0,0.5);
+	double probMisinterp = UTILS::RandomDouble(0.0,0.5);
 	Real.SetProbMessageLoss(probLoss);
 	Real.SetProbMessageDelay(probDelay);
 	Real.SetProbMessageMisinterp(probMisinterp);

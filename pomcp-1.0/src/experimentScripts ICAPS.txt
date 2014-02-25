@@ -1,8 +1,60 @@
 #Boxpushing
-#Experiment 1a
+#Common
 ./pomcp --problem boxpushing --comm1 false --comm2 false --outputfile output-box-NN.txt
 ./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.0 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.0-0.0-0.0.txt
+#Experiment 1a - Message loss
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.1 --messagedelay 0.0 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.1-0.0-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.2 --messagedelay 0.0 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.2-0.0-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.3 --messagedelay 0.0 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.3-0.0-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.4 --messagedelay 0.0 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.4-0.0-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.5 --messagedelay 0.0 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.5-0.0-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.6 --messagedelay 0.0 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.6-0.0-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.7 --messagedelay 0.0 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.7-0.0-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.8 --messagedelay 0.0 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.8-0.0-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.9 --messagedelay 0.0 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.9-0.0-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 1.0 --messagedelay 0.0 --messagemisinterp 0.0 --outputfile output-box-CommComm-1.0-0.0-0.0.txt
+#Experiment 1b - Message delay
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.1 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.0-0.1-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.2 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.0-0.2-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.3 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.0-0.3-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.4 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.0-0.4-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.5 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.0-0.5-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.6 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.0-0.6-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.7 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.0-0.7-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.8 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.0-0.8-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.9 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.0-0.9-0.0.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 1.0 --messagemisinterp 0.0 --outputfile output-box-CommComm-0.0-1.0-0.0.txt
+#Experiment 1c - Message misinterpretation
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.0 --messagemisinterp 0.1 --outputfile output-box-CommComm-0.0-0.0-0.1.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.0 --messagemisinterp 0.2 --outputfile output-box-CommComm-0.0-0.0-0.2.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.0 --messagemisinterp 0.3 --outputfile output-box-CommComm-0.0-0.0-0.3.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.0 --messagemisinterp 0.4 --outputfile output-box-CommComm-0.0-0.0-0.4.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.0 --messagemisinterp 0.5 --outputfile output-box-CommComm-0.0-0.0-0.5.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.0 --messagemisinterp 0.6 --outputfile output-box-CommComm-0.0-0.0-0.6.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.0 --messagemisinterp 0.7 --outputfile output-box-CommComm-0.0-0.0-0.7.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.0 --messagemisinterp 0.8 --outputfile output-box-CommComm-0.0-0.0-0.8.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.0 --messagemisinterp 0.9 --outputfile output-box-CommComm-0.0-0.0-0.9.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.0 --messagedelay 0.0 --messagemisinterp 1.0 --outputfile output-box-CommComm-0.0-0.0-1.0.txt
+#Experiment 1d - All types of corruption
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --outputfile output-box-CommComm-0.1-0.1-0.1.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.2 --messagedelay 0.2 --messagemisinterp 0.2 --outputfile output-box-CommComm-0.2-0.2-0.2.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.3 --messagedelay 0.3 --messagemisinterp 0.3 --outputfile output-box-CommComm-0.3-0.3-0.3.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.4 --messagedelay 0.4 --messagemisinterp 0.4 --outputfile output-box-CommComm-0.4-0.4-0.4.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.5 --messagedelay 0.5 --messagemisinterp 0.5 --outputfile output-box-CommComm-0.5-0.5-0.5.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.6 --messagedelay 0.6 --messagemisinterp 0.6 --outputfile output-box-CommComm-0.6-0.6-0.6.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.7 --messagedelay 0.7 --messagemisinterp 0.7 --outputfile output-box-CommComm-0.7-0.7-0.7.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.8 --messagedelay 0.8 --messagemisinterp 0.8 --outputfile output-box-CommComm-0.8-0.8-0.8.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.9 --messagedelay 0.9 --messagemisinterp 0.9 --outputfile output-box-CommComm-0.9-0.9-0.9.txt
 ./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 1.0 --messagedelay 1.0 --messagemisinterp 1.0 --outputfile output-box-CommComm-1.0-1.0-1.0.txt
+#Experiment 1e - Ad-hoc coordination
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --random1 true --random2 true --outputfile output-box-RandRand.txt
+./pomcp --problem boxpushing --comm1 true --comm2 false --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --random1 true --outputfile output-box-RandN.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --random1 true --outputfile output-box-RandComm.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --random1 true --humandefined2 true --outputfile output-box-RandH.txt
+./pomcp --problem boxpushing --comm1 true --comm2 false --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --outputfile output-box-CommN.txt
+./pomcp --problem boxpushing --comm1 false --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --humandefined2 true --outputfile output-box-NH.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --humandefined2 true --outputfile output-box-CommH.txt
+./pomcp --problem boxpushing --comm1 true --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --humandefined1 true --humandefined2 true --outputfile output-box-HH.txt
 
 #Kitchen
 #Common
@@ -53,10 +105,12 @@
 ./pomcp --problem kitchen --comm1 true --comm2 true --messageloss 0.9 --messagedelay 0.9 --messagemisinterp 0.9 --outputfile output-kitchen-CommComm-0.9-0.9-0.9.txt
 ./pomcp --problem kitchen --comm1 true --comm2 true --messageloss 1.0 --messagedelay 1.0 --messagemisinterp 1.0 --outputfile output-kitchen-CommComm-1.0-1.0-1.0.txt
 #Experiment 2e - Ad-hoc coordination
-./pomcp --problem kitchen --comm1 true --comm2 true --randomcomm true --random1 true --random2 true --outputfile output-kitchen-RandRand.txt
-./pomcp --problem kitchen --comm1 true --comm2 false --randomcomm true --random1 true --outputfile output-kitchen-RandN.txt
-./pomcp --problem kitchen --comm1 true --comm2 true --randomcomm true --random1 true --outputfile output-kitchen-RandComm.txt
-./pomcp --problem kitchen --comm1 true --comm2 true --randomcomm true --random1 true --humandefined2 true --outputfile output-kitchen-RandH.txt
-./pomcp --problem kitchen --comm1 true --comm2 true --randomcomm true --outputfile output-kitchen-CommComm.txt
-./pomcp --problem kitchen --comm1 true --comm2 true --randomcomm true --humandefined1 true --humandefined2 true --outputfile output-kitchen-HH.txt
+./pomcp --problem kitchen --comm1 true --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --random1 true --random2 true --outputfile output-kitchen-RandRand.txt
+./pomcp --problem kitchen --comm1 true --comm2 false --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --random1 true --outputfile output-kitchen-RandN.txt
+./pomcp --problem kitchen --comm1 true --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --random1 true --outputfile output-kitchen-RandComm.txt
+./pomcp --problem kitchen --comm1 true --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --random1 true --humandefined2 true --rewadaptive2 true --outputfile output-kitchen-RandH.txt
+./pomcp --problem kitchen --comm1 true --comm2 false --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --outputfile output-kitchen-CommN.txt
+./pomcp --problem kitchen --comm1 false --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --humandefined2 true --rewadaptive2 true --outputfile output-kitchen-NH.txt
+./pomcp --problem kitchen --comm1 true --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --humandefined2 true --rewadaptive2 true --outputfile output-kitchen-CommH.txt
+./pomcp --problem kitchen --comm1 true --comm2 true --messageloss 0.1 --messagedelay 0.1 --messagemisinterp 0.1 --humandefined1 true --humandefined2 true --rewadaptive1 true --rewadaptive2 true --outputfile output-kitchen-HH.txt
 
