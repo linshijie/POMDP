@@ -5,7 +5,7 @@ using namespace std;
 
 EXPERIMENT::PARAMS::PARAMS()
 :   NumRuns(100),
-    NumSteps(20),
+    NumSteps(100),
     SimSteps(100),
     TimeOut(3600),
     MinDoubles(10),
