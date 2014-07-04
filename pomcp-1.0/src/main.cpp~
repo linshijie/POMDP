@@ -52,10 +52,10 @@ int main(int argc, char* argv[])
     bool testCerealInCupboard = false;
     
     //multiagent experiment params
-    bool rewAdaptive1 = false, rewAdaptive2 = false;
+    bool rewAdaptive1 = true, rewAdaptive2 = true;
     bool humanDefined1 = false, humanDefined2 = false;
     bool random1 = false, random2 = false;
-    bool comm1 = true, comm2 = true;
+    bool comm1 = false, comm2 = false;
     
     //communication
     double probMessageLoss = 0.0, probMessageDelay = 0.0, probMessageMisinterp = 0.0;

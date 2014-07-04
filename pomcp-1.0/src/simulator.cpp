@@ -17,8 +17,7 @@ SIMULATOR::STATUS::STATUS()
     UpdateValues(true),
     TerminalReached(false),
     MultiAgentPriorCount(10),
-    MultiAgentPriorValue(100.0),
-    UseCommunication(false)
+    MultiAgentPriorValue(100.0)
 {
 }
 
@@ -45,11 +44,7 @@ SIMULATOR::SIMULATOR(int numActions, int numObservations, double discount)
     NumAgents(1),
     NumAgentActions(numActions),
     NumAgentObservations(numObservations),
-    NumAgentMessages(1),
-    Discount(discount),
-    ProbMessageLoss(0.0),
-    ProbMessageDelay(0.0),
-    ProbMessageMisinterp(0.0)
+    Discount(discount)
 { 
     assert(discount > 0 && discount <= 1);
 }
@@ -224,20 +219,6 @@ void SIMULATOR::Prior(const STATE* state, const HISTORY& history,
     }
 }
 
-int SIMULATOR::SelectMessage(const STATUS& status, const HISTORY& history, const int& action) const
-{
-    //if (history.Size() == 0)
-	//return action;
-    return action;// + NumAgentActions*history.Back().Observation;
-}
-
-int SIMULATOR::SelectRandomMessage() const
-{
-    return Random(NumAgentMessages);
-}
-
-
-
 bool SIMULATOR::HasAlpha() const
 {
     return false;
@@ -292,9 +273,3 @@ double SIMULATOR::GetHorizon(double accuracy, int undiscountedHorizon) const
         return undiscountedHorizon;
     return log(accuracy) / log(Discount);
 }
-
-int SIMULATOR::StringToMessage(const string& str) const
-{
-    return 0;
-}
-

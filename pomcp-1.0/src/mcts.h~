@@ -42,11 +42,13 @@ public:
 	std::vector<bool> UsesComm;
     };
     
-    MCTS(const SIMULATOR& simulator, const PARAMS& params);
+    
+     MCTS(const SIMULATOR& simulator, const PARAMS& params);
     ~MCTS();
 
     int SelectAction(const int& index);
     bool Update(int action, int observation, double reward, const int& index);
+    void ResetRoot(const int& index);
 
     void UCTSearch(const int& index);
     void RolloutSearch(const int& index);
@@ -63,7 +65,12 @@ public:
     void DisplayValue(int depth, const int& index, std::ostream& ostr) const;
     void DisplayPolicy(int depth, const int& index, std::ostream& ostr) const;
     
+    std::vector<VNODE*> GetRoots() const { return Roots; }
+    void SetRoots(const std::vector<VNODE*> roots) { Roots = roots; } 
+    
     void DisplaySequence(std::vector<int> sequence, const int& index) const;
+    
+    void SubtractNonTerminalValues(std::vector<float> realRewards, const int& index) const;
 
     static void UnitTest(const int& index);
     static void InitFastUCB(double exploration);
@@ -76,6 +83,7 @@ private:
     int TreeDepth, PeakTreeDepth;
     PARAMS Params;
     std::vector<VNODE*> Roots;
+    std::vector<VNODE**> OriginalRoots;
     std::vector<HISTORY> Histories;
     HISTORY myhistory;
     std::vector<SIMULATOR::STATUS> Statuses;
@@ -92,7 +100,7 @@ private:
     VNODE* ExpandNode(const STATE* state, const int& perspindex, const int& agentindex);
     void AddSample(VNODE* node, const STATE& state);
     void AddTransforms(VNODE* root, BELIEF_STATE& beliefs, const int& index);
-    STATE* CreateTransform(const int& index) const;
+    STATE* CreateTransform(const int& index);
     void Resample(BELIEF_STATE& beliefs);
 
     // Fast lookup table for UCB

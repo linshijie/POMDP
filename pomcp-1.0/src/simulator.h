@@ -6,20 +6,11 @@
 #include "utils.h"
 #include <iostream>
 #include <math.h>
-#include <deque>
 
 class BELIEF_STATE;
 
 class STATE : public MEMORY_OBJECT
 {
-public:
-    struct MESSAGE
-    {
-	int AgentID;
-	int Message;
-    };
-    
-    std::deque<MESSAGE> MessageQueue;
 };
 
 class REWARD_TEMPLATE : public MEMORY_OBJECT
@@ -98,11 +89,10 @@ public:
 	std::vector<double> MainQValueSequence;
 	std::vector<double> MainVValueSequence;
 	std::vector<double> MainOtherQValueSequence;
-	std::vector<std::pair<int,double> > MainMessageValueSequence;
 	
 	std::vector<int> LearnSequence;
 	std::vector<int> LearnFullSequence;
-	std::vector<std::pair<int,double> > LearnMessageValueSequence;
+	std::vector<double> LearnRewardValueSequence;
 	std::vector<double> LearnQValueSequence;
 	std::vector<double> LearnVValueSequence;
 	std::vector<double> LearnOtherQValueSequence;
@@ -121,11 +111,6 @@ public:
 	int PlanSequenceLength;
 	
 	int JointGoalCount;
-	
-	bool UseCommunication;
-	std::vector<int> MessagesToBeSent;
-	std::vector<int> MessagesReceived;
-	int LastMessageReceived;
     };
     
     /*struct INITIAL_REWARD_PARAMS
@@ -212,21 +197,15 @@ public:
     virtual void DisplayAgentObservation(int observation, std::ostream& ostr) const;
     
     virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
-    virtual int SelectMessage(const STATUS& status, const HISTORY& history, const int& currAction) const;
-    virtual int SelectRandomMessage() const;
 
     // Accessors
     void SetKnowledge(const KNOWLEDGE& knowledge) { Knowledge = knowledge; }
-    void SetProbMessageLoss(const double& prob) { ProbMessageLoss = prob; }
-    void SetProbMessageDelay(const double& prob) { ProbMessageDelay = prob; }
-    void SetProbMessageMisinterp(const double& prob) { ProbMessageMisinterp = prob; }
     int GetRolloutLevel() const { return Knowledge.RolloutLevel; }
     int GetNumActions() const { return NumActions; }
     int GetNumObservations() const { return NumObservations; }
     int GetNumAgents() const { return NumAgents; }
     int GetNumAgentActions() const { return NumAgentActions; }
     int GetNumAgentObservations() const { return NumAgentObservations; }
-    int GetNumAgentMessages() const { return NumAgentMessages; }
     int GetAgentAction(const int& action, const int& index) const { return index > 1 ? action/NumAgentActions : 
 									    action%NumAgentActions;}
     int GetAgentObservation(const int& observation, const int& index) const { return index > 1 ? 
@@ -236,13 +215,10 @@ public:
     double GetRewardRange() const { return RewardRange; }
     double GetHorizon(double accuracy, int undiscountedHorizon = 100) const;
     
-    virtual int StringToMessage(const std::string& str) const;
-    
 protected:
 
-    int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations, NumAgentMessages;
+    int NumActions, NumObservations, NumAgents, NumAgentActions, NumAgentObservations;
     double Discount, RewardRange;
-    double ProbMessageLoss, ProbMessageDelay, ProbMessageMisinterp;
     KNOWLEDGE Knowledge;
     mutable MEMORY_POOL<REWARD_TEMPLATE> RewardMemoryPool;
     //INITIAL_REWARD_PARAMS InitialRewardParams;

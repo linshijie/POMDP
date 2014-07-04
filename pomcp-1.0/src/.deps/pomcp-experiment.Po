@@ -741,9 +741,7 @@ pomcp-experiment.o: experiment.cpp experiment.h mcts.h simulator.h \
  /usr/include/boost/random/poisson_distribution.hpp \
  /usr/include/boost/random/gamma_distribution.hpp \
  /usr/include/boost/random/binomial_distribution.hpp \
- /usr/include/boost/random/uniform_on_sphere.hpp \
- /usr/include/c++/4.6/deque /usr/include/c++/4.6/bits/stl_deque.h \
- /usr/include/c++/4.6/bits/deque.tcc statistic.h \
+ /usr/include/boost/random/uniform_on_sphere.hpp statistic.h \
  /usr/include/c++/4.6/fstream /usr/include/c++/4.6/cstdio \
  /usr/include/libio.h /usr/include/_G_config.h \
  /usr/include/i386-linux-gnu/bits/sys_errlist.h \
@@ -2408,12 +2406,6 @@ memorypool.h:
 /usr/include/boost/random/binomial_distribution.hpp:
 
 /usr/include/boost/random/uniform_on_sphere.hpp:
-
-/usr/include/c++/4.6/deque:
-
-/usr/include/c++/4.6/bits/stl_deque.h:
-
-/usr/include/c++/4.6/bits/deque.tcc:
 
 statistic.h:
 

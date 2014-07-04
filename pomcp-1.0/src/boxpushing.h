@@ -20,8 +20,6 @@ enum ActionTypes {STAY = 0, TURN_CW = 1, TURN_CCW = 2, MOVE = 3};
 
 enum ObservationTypes {EMPTY_OBS = 0, WALL_OBS = 1, AGENT_OBS = 2, SMALL_BOX_OBS = 3, LARGE_BOX_OBS = 4, LARGE_BOX_AGENT_OBS = 5};
 
-enum BoxMessageTypes {NO_MES = 0, SMALL_BOX_MES = 1, LARGE_BOX_MES = 2, AGENT_MES = 3, WALL_MES = 4};
-
 class BOXPUSHING_STATE : public STATE
 {
 public:
@@ -70,8 +68,6 @@ public:
     virtual void DisplayAction(int action, std::ostream& ostr) const;
     
     virtual bool IsActionMultiagent(const int& action, const HISTORY& history) const;
-    
-    virtual int StringToMessage(const std::string& str) const;
 
 protected:
 
@@ -94,10 +90,6 @@ protected:
     bool ResetAtCompletion;
     double ProbLargeAgentBox;
     double ProbObservation;
-    
-    std::string MessageToString(const int& message) const;
-    
-    int HistoryToInt(const HISTORY& history) const;
     
     std::vector< std::vector< std::vector<bool> > > MultiAgentLabels;
     std::vector<double> quantiles;

@@ -38,8 +38,6 @@ public:
 	double InitialRewardWeight;
 	int MultiAgentPriorCount;
 	double MultiAgentPriorValue;
-	
-	std::vector<bool> UsesComm;
     };
     
     MCTS(const SIMULATOR& simulator, const PARAMS& params);
@@ -47,6 +45,7 @@ public:
 
     int SelectAction(const int& index);
     bool Update(int action, int observation, double reward, const int& index);
+    void ResetRoot(const int& index);
 
     void UCTSearch(const int& index);
     void RolloutSearch(const int& index);
@@ -67,8 +66,6 @@ public:
 
     static void UnitTest(const int& index);
     static void InitFastUCB(double exploration);
-    
-    void SetLastMessageReceived(const int& index, const int& message) { Statuses[index > 0 ? index-1 : index].LastMessageReceived = message; }
 
 private:
 
@@ -76,6 +73,7 @@ private:
     int TreeDepth, PeakTreeDepth;
     PARAMS Params;
     std::vector<VNODE*> Roots;
+    std::vector<VNODE*> OriginalRoots;
     std::vector<HISTORY> Histories;
     HISTORY myhistory;
     std::vector<SIMULATOR::STATUS> Statuses;
@@ -92,7 +90,7 @@ private:
     VNODE* ExpandNode(const STATE* state, const int& perspindex, const int& agentindex);
     void AddSample(VNODE* node, const STATE& state);
     void AddTransforms(VNODE* root, BELIEF_STATE& beliefs, const int& index);
-    STATE* CreateTransform(const int& index);
+    STATE* CreateTransform(const int& index) const;
     void Resample(BELIEF_STATE& beliefs);
 
     // Fast lookup table for UCB

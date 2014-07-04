@@ -62,6 +62,8 @@ public:
 	bool BreakOnTerminate;
 	std::vector<bool> RandomActions;
 	bool RealSimCommunication;
+	bool RandomiseCommunication;
+	bool ReuseRoots;
     };
 
     EXPERIMENT(SIMULATOR& real, SIMULATOR& simulator, 
@@ -80,7 +82,10 @@ private:
     EXPERIMENT::PARAMS& ExpParams;
     MCTS::PARAMS& SearchParams;
     RESULTS Results;
-
+    
+    std::vector<VNODE*> lastRoots;
+    std::vector< std::vector<float> > realRewards;
+    
     std::ofstream OutputFile;
     bool UpdatePlanStatistics;
 };

@@ -2,9 +2,6 @@
 #include <iomanip>
 #include <tr1/unordered_set>
 
-using namespace std;
-using namespace UTILS;
-
 boost::math::beta_distribution<> betak(0.9,0.9);
 
 KITCHEN::KITCHEN(bool testTrayOnStove, bool testCerealInCupboard): 
@@ -98,8 +95,6 @@ KITCHEN::KITCHEN(bool testTrayOnStove, bool testCerealInCupboard):
     
     NumActions = pow(NumAgentActions, NumAgents);
     NumObservations = pow(NumAgentObservations, NumAgents);
-    
-    NumAgentMessages = 4;
     
     for (int i=0; i<NumPlates; i++)
     {
@@ -247,31 +242,6 @@ bool KITCHEN::IsActionMultiagent(const int& action, const HISTORY& history) cons
     return MultiAgentLabels[action];
 }
 
-/*string KITCHEN::SelectMessage(const STATUS& status, const HISTORY& history) const
-{
-    if (history.Size() == 0 || !status.UseCommunication)
-	return "";
-    KitchenObservation ko = IntToObservation(history.Back().Observation);
-    if (ko.ObjectVisible[TrayIndex])
-	return "GRASP_TRAY";
-    if (ko.AgentVisible[(status.perspindex+1)%2])
-    {
-	for (int i = 0; i < history.Size(); i++)
-	{
-	    KitchenAction ka = IntToAction(history[i].Action);
-	    if (ka.type == MOVE_ROBOT_JOINT)
-		return "PUT_DOWN_TRAY";
-	}
-	return "MOVE_TRAY";
-    }
-    return "";
-}
-
-string KITCHEN::SelectRandomMessage() const
-{
-    return MessageToString(Random(NumAgentMessages));
-}*/
-
 
 bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, STATUS& status) const
 {
@@ -282,32 +252,6 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
     double additionalRew = 0.0;
     
     reward = -0.1;
-    
-    bool isMessageDelayed = false;
-    STATE::MESSAGE delayedMessage;
-    
-    if (status.UseCommunication && !status.MessagesToBeSent.empty())
-    {
-	for (int i = 0; i < NumAgents; i++)
-	    if (UTILS::RandomDouble(0.0,1.0) > ProbMessageLoss)
-	    {
-		int mess = status.MessagesToBeSent[i];
-		STATE::MESSAGE message;
-		message.Message = mess;
-		message.AgentID = i;
-		if (UTILS::RandomDouble(0.0,1.0) > ProbMessageDelay)
-		    kitchenstate.MessageQueue.push_front(message);
-		else
-		{
-		    delayedMessage = message;
-		    isMessageDelayed = true;
-		}
-		    //kitchenstate.MessageQueue.insert(kitchenstate.MessageQueue.begin() + 1, message);
-		//if (mess.length() > 0)
-		    //reward -= 0.1;
-		//reward -= 0.1*mess.length();
-	    }
-    }
     
     if (NumAgents == 1)
     {
@@ -470,27 +414,6 @@ bool KITCHEN::Step(STATE& state, int action, int& observation, double& reward, S
 	    
 	if (executedjointactions[0] && executedjointactions[1])
 	    additionalRew = 100.0;
-    }
-    
-    if (status.UseCommunication)
-    {
-	for (int i = 0; i < NumAgents; i++)
-	{
-	    int m = 0;
-	    for (int j = 0; j < (int) kitchenstate.MessageQueue.size(); j++)
-		if (kitchenstate.MessageQueue.at(j).AgentID != i)
-		{
-		    if (UTILS::RandomDouble(0.0,1.0) > ProbMessageMisinterp)
-			m = kitchenstate.MessageQueue.at(j).Message;
-		    else
-			m = Random(NumAgentMessages);
-		    kitchenstate.MessageQueue.erase(kitchenstate.MessageQueue.begin()+j);
-		    break;
-		}
-	    status.MessagesReceived.push_back(m);
-	}
-	if (isMessageDelayed)
-	    kitchenstate.MessageQueue.push_front(delayedMessage);
     }
     
     observation = 0;
@@ -1408,77 +1331,6 @@ void KITCHEN::GenerateAgentActions(const KITCHEN_STATE& kitchenstate, const HIST
 	else
 	    AgentHere.push_back(UTILS::RandomDouble(0.0,1.0) < 0.5 ? true : false);
     }
-    
-    /**if (status.UseCommunication && history.Size() > 0)
-    {
-	int lastMessage = status.LastMessageReceived;
-	
-	if (NumAgents > 1 && (location == SIDEBOARD || location == STOVE))
-	    for (int i = 0; i < NumAgents; i++)
-		if (i != index && AgentHere[i]) 
-		    for (int h = 0 ; h < 2 ; h++)
-			if (kitchenstate.GripperEmpty.at(index*2+h))
-			    for (int o = 0 ; o < NumObjects ; o++)
-				if (ObjectTypes.at(o) == TRAY && ObjectHere.at(o) && !kitchenstate.IsToppled.at(o))
-				{
-				    if (lastMessage == GRASP_TRAY_MES)
-				    {
-					KitchenAction ka;
-					ka.type = GRASP_JOINT;
-					ka.location = location;
-					ka.gripper = h == 0 ? LEFT : RIGHT;
-					ka.objectindex = o;
-					ka.objectclass = ObjectTypes[o];
-					actions.push_back(ActionToInt(ka));
-					return;
-				    }
-				}
-	
-	
-	if (NumAgents > 1 && (location == SIDEBOARD || location == STOVE))
-	    for (int h = 0 ; h < 2 ; h++)
-		if ((kitchenstate.InWhichGripper.at(TrayIndex).first  == index && 
-		    kitchenstate.InWhichGripper.at(TrayIndex).second == h+GRIPPER_OFFSET) || 
-		    (kitchenstate.TraySecondGripper.first  == index && 
-		    kitchenstate.TraySecondGripper.second == h+GRIPPER_OFFSET))
-		    for (int location2 = LOCATION_OFFSET ; location2 < LOCATION_OFFSET + NumLocations ; location2++)
-			if (location2 != location && (location2 == SIDEBOARD || location2 == STOVE))
-			{
-			    if (lastMessage == MOVE_TRAY_MES)
-			    {
-				KitchenAction ka;
-				ka.type = MOVE_ROBOT_JOINT;
-				ka.location = location;
-				ka.location2 = static_cast<LocationType>(location2);
-				actions.push_back(ActionToInt(ka));
-				return;
-			    }
-			}
-
-	if (NumAgents > 1 && (location == SIDEBOARD || location == STOVE))
-	    for (int i = 0; i < NumAgents; i++)
-		if (i != index && AgentHere[i]) 
-		    for (int h = 0 ; h < 2 ; h++)
-			for (int o = 0 ; o < NumObjects ; o++)
-			    if (ObjectTypes.at(o) == TRAY && ((kitchenstate.InWhichGripper.at(o).first  == index && 
-				kitchenstate.InWhichGripper.at(o).second == h+GRIPPER_OFFSET) || 
-				(kitchenstate.TraySecondGripper.first  == index && 
-				kitchenstate.TraySecondGripper.second == h+GRIPPER_OFFSET)))
-			    {
-				if (lastMessage == PUT_DOWN_TRAY_MES)
-				{
-				    KitchenAction ka;
-				    ka.type = PUT_DOWN_JOINT;
-				    ka.objectindex = o;
-				    ka.objectclass = ObjectTypes[o];
-				    ka.location = location;
-				    ka.gripper = h == 0 ? LEFT : RIGHT;
-				    actions.push_back(ActionToInt(ka));
-				    return;
-				}
-			    }
-	    
-    }*/
     
     
     if (humanDefined && TestTrayOnStove && status.perspindex == index)
@@ -2459,26 +2311,6 @@ std::string KITCHEN::ObjectToString(const ObjectClass& t) const
 	default:
 	    return "INVALID_OBJECT";
     }
-}
-
-string KITCHEN::MessageToString(const int& message) const
-{
-    assert(message >= 0 && message < NumAgentMessages);
-    string messageNames[4] = {"", "GRASP_TRAY", "MOVE_TRAY", "PUT_DOWN_TRAY"};
-    
-    return messageNames[message];
-}
-
-int KITCHEN::StringToMessage(const string& str) const
-{
-    if (str == "GRASP_TRAY")
-	return GRASP_TRAY_MES;
-    else if (str == "MOVE_TRAY")
-	return MOVE_TRAY_MES;
-    else if (str == "PUT_DOWN_TRAY")
-	return PUT_DOWN_TRAY_MES;
-    else
-	return NO_MES_KITCHEN;
 }
 
 

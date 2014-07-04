@@ -4,8 +4,8 @@
 using namespace std;
 
 EXPERIMENT::PARAMS::PARAMS()
-:   NumRuns(100),
-    NumSteps(100),
+:   NumRuns(1000),
+    NumSteps(20),
     SimSteps(100),
     TimeOut(3600),
     MinDoubles(10),
@@ -18,9 +18,7 @@ EXPERIMENT::PARAMS::PARAMS()
     Accuracy(0.01),
     UndiscountedHorizon(20),
     AutoExploration(true),
-    BreakOnTerminate(true),
-    RealSimCommunication(false),
-    RandomiseCommunication(false)
+    BreakOnTerminate(true)
 {
     RandomActions.clear();
     
@@ -28,8 +26,8 @@ EXPERIMENT::PARAMS::PARAMS()
     RandomActions.push_back(false);
 }
 
-EXPERIMENT::EXPERIMENT(SIMULATOR& real,
-    SIMULATOR& simulator, const string& outputFile,
+EXPERIMENT::EXPERIMENT(const SIMULATOR& real,
+    const SIMULATOR& simulator, const string& outputFile,
     EXPERIMENT::PARAMS& expParams, MCTS::PARAMS& searchParams)
 :   Real(real),
     Simulator(simulator),
@@ -63,8 +61,9 @@ EXPERIMENT::EXPERIMENT(SIMULATOR& real,
 void EXPERIMENT::Run()
 {
     boost::timer timer;
+    
     MCTS mcts(Simulator, SearchParams);
-        
+    
     double undiscountedReturn = 0.0;
     double discountedReturn = 0.0;
     double discount = 1.0;
@@ -76,21 +75,8 @@ void EXPERIMENT::Run()
     if (SearchParams.Verbose >= 1)
         Real.DisplayState(*state, cout);
     
-    if (ExpParams.RandomiseCommunication)
-    {
-	double probLoss = UTILS::RandomDouble(0.0,0.5);
-	double probDelay = UTILS::RandomDouble(0.0,0.5);
-	double probMisinterp = UTILS::RandomDouble(0.0,0.5);
-	Real.SetProbMessageLoss(probLoss);
-	Real.SetProbMessageDelay(probDelay);
-	Real.SetProbMessageMisinterp(probMisinterp);
-	Simulator.SetProbMessageLoss(probLoss);
-	Simulator.SetProbMessageDelay(probDelay);
-	Simulator.SetProbMessageMisinterp(probMisinterp);
-    }
-    
     double timeFactor = 1.0/Real.GetNumAgents();
-        
+    
     std::vector<int> planCounts;
     std::vector<STATISTIC> planRewards;
     std::vector<STATISTIC> planLengths;
@@ -127,22 +113,7 @@ void EXPERIMENT::Run()
 	}
 	SIMULATOR::STATUS status = mcts.GetStatus(0);
 	status.JointGoalCount = 0;
-	bool statusComm = status.UseCommunication;
-	if (statusComm)
-	{
-	    status.MessagesToBeSent.clear();
-	    status.MessagesReceived.clear();
-	    status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(1), mcts.GetHistory(1), action0));
-	    status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(2), mcts.GetHistory(2), action1));
-	}
-	status.UseCommunication = ExpParams.RealSimCommunication;
 	terminal = Real.Step(*state, action, observation, reward, status);
-	status.UseCommunication = statusComm;
-	if (statusComm)
-	{
-	    for (int i = 0; i < (int) status.MessagesReceived.size(); i++)
-		mcts.SetLastMessageReceived(i+1, status.MessagesReceived[i]);
-	}
 
 	Results.Reward.Add(reward);
 	undiscountedReturn += reward;
@@ -195,16 +166,19 @@ void EXPERIMENT::Run()
 		break;
 	    else
 	    {
+		state = Real.CreateStartState();
 		if (!SearchParams.MultiAgent)
+		{
 		    mcts.ClearHistory(0);
+		    mcts.ResetRoot(0);
+		}
 		else
 		{
 		    mcts.ClearHistory(1);
 		    mcts.ClearHistory(2);
+		    mcts.ResetRoot(1);
+		    mcts.ResetRoot(2);
 		}
-		state = Real.CreateStartState();
-		outOfParticles = ExpParams.RandomActions[0];
-		outOfParticles2 = ExpParams.RandomActions[1];
 	    }
 	}
 	
@@ -284,22 +258,7 @@ void EXPERIMENT::Run()
 	    }
 	    SIMULATOR::STATUS status = mcts.GetStatus(0);
 	    status.JointGoalCount = 0;
-            bool statusComm = status.UseCommunication;
-	    if (statusComm)
-	    {
-		status.MessagesToBeSent.clear();
-		status.MessagesReceived.clear();
-		status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(1), mcts.GetHistory(1), action0));
-		status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(2), mcts.GetHistory(2), action1));
-	    }
-	    status.UseCommunication = ExpParams.RealSimCommunication;
             terminal = Real.Step(*state, action, observation, reward, status);
-	    status.UseCommunication = statusComm;
-	    if (statusComm)
-	    {
-		for (int i = 0; i < (int) status.MessagesReceived.size(); i++)
-		    mcts.SetLastMessageReceived(i+1, status.MessagesReceived[i]);
-	    }
 
             Results.Reward.Add(reward);
             undiscountedReturn += reward;
@@ -348,14 +307,19 @@ void EXPERIMENT::Run()
 		    break;
 		else
 		{
+		    state = Real.CreateStartState();
 		    if (!SearchParams.MultiAgent)
+		    {
 			mcts.ClearHistory(0);
+			mcts.ResetRoot(0);
+		    }
 		    else
 		    {
 			mcts.ClearHistory(1);
 			mcts.ClearHistory(2);
+			mcts.ResetRoot(1);
+			mcts.ResetRoot(2);
 		    }
-		    state = Real.CreateStartState();
 		    outOfParticles = ExpParams.RandomActions[0];
 		    outOfParticles2 = ExpParams.RandomActions[1];
 		}

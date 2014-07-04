@@ -55,10 +55,6 @@ int main(int argc, char* argv[])
     bool rewAdaptive1 = true, rewAdaptive2 = true;
     bool humanDefined1 = false, humanDefined2 = false;
     bool random1 = false, random2 = false;
-    bool comm1 = false, comm2 = false;
-    
-    //communication
-    double probMessageLoss = 0.0, probMessageDelay = 0.0, probMessageMisinterp = 0.0;
     
 
     options_description desc("Allowed options");
@@ -92,9 +88,7 @@ int main(int argc, char* argv[])
         ("smarttreevalue", value<double>(&knowledge.SmartTreeValue), "Prior value for preferred actions during smart tree search")
         ("disabletree", value<bool>(&searchParams.DisableTree), "Use 1-ply rollout action selection")
 	("multiagent", value<bool>(&searchParams.MultiAgent), "Distributed decision making")
-	("fastucb", value<bool>(&searchParams.DoFastUCB), "Do Fast UCB")
 	("breakonterminate", value<bool>(&expParams.BreakOnTerminate), "Break the loop when a goal state is reached")
-	("realcommunication", value<bool>(&expParams.RealSimCommunication), "Enable communication in real simulator")
 	("numsmallboxes", value<int>(&numSmallBoxes), "Number of small boxes (boxpushing problem)")
 	("problargeboxagent", value<double>(&probLargeBoxAgent), "Probability of special observation (boxpushing problem)")
 	("testtray", value<bool>(&testTrayOnStove), "Test tray on stove (kitchen problem)")
@@ -105,12 +99,6 @@ int main(int argc, char* argv[])
 	("humandefined2", value<bool>(&humanDefined2), "Second agent human-defined")
 	("random1", value<bool>(&random1), "First agent random")
 	("random2", value<bool>(&random2), "Second agent random")
-	("comm1", value<bool>(&comm1), "First agent communication")
-	("comm2", value<bool>(&comm2), "Second agent communication")
-	("messageloss", value<double>(&probMessageLoss), "Probability of message loss")
-	("messagedelay", value<double>(&probMessageDelay), "Probability of message delay")
-	("messagemisinterp", value<double>(&probMessageMisinterp), "Probability of message misinterpretation")
-	("randomcomm", value<bool>(&expParams.RandomiseCommunication), "Random communication probabilities at each run")
         ;
 
     variables_map vm;
@@ -121,8 +109,6 @@ int main(int argc, char* argv[])
     searchParams.RewardAdaptive[1] = rewAdaptive2;
     searchParams.HumanDefined[0] = humanDefined1;
     searchParams.HumanDefined[1] = humanDefined2;
-    searchParams.UsesComm[0] = comm1;
-    searchParams.UsesComm[1] = comm2;
     expParams.RandomActions[0] = random1;
     expParams.RandomActions[1] = random2;
 
@@ -176,7 +162,7 @@ int main(int argc, char* argv[])
     else if (problem == "boxpushing")
     {
 	expParams.BreakOnTerminate = false;
-	//searchParams.UseTransforms = true;
+	searchParams.UseTransforms = true;
         real = new BOXPUSHING(numSmallBoxes, probLargeBoxAgent);
         simulator = new BOXPUSHING(numSmallBoxes, probLargeBoxAgent);
     }
@@ -184,7 +170,6 @@ int main(int argc, char* argv[])
     {
 	searchParams.UseTransforms = false;
 	searchParams.MultiAgentPriorCount = 1;
-	//searchParams.DoFastUCB = false;
 	real = new KITCHEN(testTrayOnStove, testCerealInCupboard);
 	simulator = new KITCHEN(testTrayOnStove, testCerealInCupboard);
 	searchParams.MultiAgentPriorValue = real->GetRewardRange();
@@ -194,19 +179,9 @@ int main(int argc, char* argv[])
         cout << "Unknown problem" << endl;
         exit(1);
     }
-    
-    real->SetProbMessageLoss(probMessageLoss);
-    simulator->SetProbMessageLoss(probMessageLoss);
-    real->SetProbMessageDelay(probMessageDelay);
-    simulator->SetProbMessageDelay(probMessageDelay);
-    real->SetProbMessageMisinterp(probMessageMisinterp);
-    simulator->SetProbMessageMisinterp(probMessageMisinterp);
-    
+
+
     simulator->SetKnowledge(knowledge);
-    
-    if (!comm1 && !comm2)
-	expParams.RealSimCommunication = false;
-    
     EXPERIMENT experiment(*real, *simulator, outputfile, expParams, searchParams);
     experiment.DiscountedReturn();
 

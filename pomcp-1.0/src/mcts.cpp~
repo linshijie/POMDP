@@ -16,7 +16,7 @@ MCTS::PARAMS::PARAMS()
     NumLearnSimulations(1),
     NumStartStates(20),
     NumStartRewards(1),
-    UseTransforms(true),
+    UseTransforms(false),
     NumTransforms(0),
     MaxAttempts(0),
     ExpandCount(1),
@@ -24,7 +24,7 @@ MCTS::PARAMS::PARAMS()
     UseRave(false),
     RaveDiscount(1.0), 
     RaveConstant(0.01),
-    DoFastUCB(true),
+    DoFastUCB(false),
     DisableTree(false),
     MultiAgent(true),
     RewardOffset(100.0),
@@ -48,9 +48,6 @@ MCTS::PARAMS::PARAMS()
     
     HumanDefined.push_back(false);
     HumanDefined.push_back(false);
-    
-    UsesComm.push_back(true);
-    UsesComm.push_back(true);
 }
 
 MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
@@ -58,14 +55,9 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
     Params(params),
     TreeDepth(0)
 {
-    VNODE::NumChildren = Params.MultiAgent && !Params.JointQActions[0] ? Simulator.GetNumAgentActions() : 
-			Simulator.GetNumActions();
+    //VNODE::NumChildren = Params.MultiAgent && !Params.JointQActions[0] ? Simulator.GetNumAgentActions() : 
+	//		Simulator.GetNumActions();
     QNODE::NumChildren = Params.MultiAgent ? Simulator.GetNumAgentObservations() : Simulator.GetNumObservations();
-    
-    QNODE::MaxMessageActions = Simulator.GetNumAgentActions();
-    
-    //if (Params.UsesComm[0] || Params.UsesComm[1])
-	//QNODE::NumChildren *= Simulator.GetNumAgentMessages();
     
     Statuses.clear();
     Roots.clear();
@@ -73,6 +65,7 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
     StatTreeDepths.clear();
     StatRolloutDepths.clear();
     StatTotalRewards.clear();
+    OriginalRoots.clear();
     
     for (int i = 0 ; i < Simulator.GetNumAgents(); i++)
     {
@@ -89,7 +82,6 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	status.SmartTreeCount = ((int) sqrt(Params.NumSimulations));
 	
 	status.HumanDefined = Params.HumanDefined[i];
-	status.UseCommunication = Params.UsesComm[i];
 	
 	Statuses.push_back(status);
 	//histories
@@ -104,8 +96,8 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	StatTotalRewards.push_back(StatTotalReward);
 	//root
 	VNODE* root; 
-	//root->NumChildren = Params.MultiAgent && !Params.JointQActions[i] ? Simulator.GetNumAgentActions() : 
-	//		Simulator.GetNumActions();
+	root->NumChildren = Params.MultiAgent && !Params.JointQActions[i] ? Simulator.GetNumAgentActions() : 
+			Simulator.GetNumActions();
 	if (Params.RewardAdaptive[i])
 	{
 	    //if (Params.JointQActions[i])
@@ -113,11 +105,10 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 	    //else
 		//QNODE::NumOtherAgentValues = Simulator.GetNumAgentActions();
 	}
-	QNODE::NumMessageValues = Simulator.GetNumAgentMessages();
 	STATE* state = Simulator.CreateStartState();
 	root = ExpandNode(state, Params.MultiAgent ? i+1 : i, Params.MultiAgent ? i+1 : i);
 	Roots.push_back(root);
-	
+	OriginalRoots.push_back(root);
     }
     
 
@@ -129,7 +120,10 @@ MCTS::MCTS(const SIMULATOR& simulator, const PARAMS& params)
 MCTS::~MCTS()
 {
     for (int i = 0; i < Simulator.GetNumAgents() ; i++)
-	VNODE::Free(Roots[i], Simulator);
+    {
+	//VNODE::Free(Roots[i], Simulator);
+	VNODE::Free(OriginalRoots[i], Simulator);
+    }
     VNODE::FreeAll();
 }
 
@@ -139,13 +133,13 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
 	Histories[index == 0 ? index : index-1].Add(action, observation);
     else
     {
-	/*if (index == 1 && Params.JointQActions[index == 0 ? index : index-1])
+	if (index == 1 && Params.JointQActions[index == 0 ? index : index-1])
 	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,1), observation);
 	else if (index == 1)
 	    Histories[index == 0 ? index : index-1].Add(action, observation);
 	else if (index == 2 && Params.JointQActions[index == 0 ? index : index-1])
 	    Histories[index == 0 ? index : index-1].Add(Simulator.GetAgentAction(action,2), observation);
-	else if (index == 2)*/
+	else if (index == 2)
 	    Histories[index == 0 ? index : index-1].Add(action, observation);
     }
     BELIEF_STATE beliefs;
@@ -153,18 +147,6 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
     // Find matching vnode from the rest of the tree
 	
     QNODE& qnode = Roots[index == 0 ? index : index-1]->Child(action);
-    
-    if (Statuses[index == 0 ? index : index-1].UseCommunication)
-    {
-	Statuses[index > 0 ? index-1 : index].LastMessageReceived = Statuses[index > 0 ? index-1 : index].MessagesReceived[index-1]; 
-	if ((int) qnode.MessageActions.size() == QNODE::MaxMessageActions)
-	    qnode.MessageActions.erase(qnode.MessageActions.begin());
-	qnode.MessageActions.push_back(Statuses[index > 0 ? index-1 : index].LastMessageReceived);
-    }
-    
-    //if (Statuses[index == 0 ? index : index-1].UseCommunication)
-	//observation += Simulator.GetNumAgentObservations()*Statuses[index > 0 ? index-1 : index].LastMessageReceived;
-    
     VNODE* vnode = qnode.Child(observation);
     if (vnode)
     {
@@ -197,7 +179,7 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
         state = beliefs.GetSample(0);
 
     // Delete old tree and create new root
-    VNODE::Free(Roots[index == 0 ? index : index-1], Simulator);
+    //VNODE::Free(Roots[index == 0 ? index : index-1], Simulator);
     VNODE* newRoot = ExpandNode(state, index, index);
     newRoot->Beliefs() = beliefs;
     if (!Params.MultiAgent)
@@ -206,6 +188,14 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
 	Roots[index-1] = newRoot;
 
     return true;
+}
+
+void MCTS::ResetRoot(const int& index)
+{
+    if (!Params.MultiAgent)
+	Roots[index] = OriginalRoots.at(index);
+    else
+	Roots[index-1] = OriginalRoots.at(index-1);
 }
 
 int MCTS::SelectAction(const int& index)
@@ -321,7 +311,6 @@ void MCTS::UCTSearch(const int& index)
 	Statuses[index == 0 ? index : index-1].MainQValueSequence.clear();
 	Statuses[index == 0 ? index : index-1].MainVValueSequence.clear();
 	Statuses[index == 0 ? index : index-1].MainOtherQValueSequence.clear();
-	Statuses[index == 0 ? index : index-1].MainMessageValueSequence.clear();
 	
         if (Params.Verbose >= 2)
         {
@@ -386,7 +375,7 @@ void MCTS::UCTSearch(const int& index)
 		
 		Statuses[index == 0 ? index : index-1].LearnSequence.clear();
 		Statuses[index == 0 ? index : index-1].LearnFullSequence.clear();
-		Statuses[index == 0 ? index : index-1].LearnMessageValueSequence.clear();
+		Statuses[index == 0 ? index : index-1].LearnRewardValueSequence.clear();
 		Statuses[index == 0 ? index : index-1].LearnVValueSequence.clear();
 		Statuses[index == 0 ? index : index-1].LearnQValueSequence.clear();
 		Statuses[index == 0 ? index : index-1].LearnOtherQValueSequence.clear();
@@ -450,9 +439,6 @@ void MCTS::UCTSearch(const int& index)
 				qnode.Value.Subtract(Statuses[index == 0 ? index : index-1].MainQValueSequence[indQ]);
 				qnode.OtherAgentValues[0].Subtract(Statuses[index == 0 ? index : 
 				    index-1].MainOtherQValueSequence[indQ]);
-				//std::pair<int,double> mp = Statuses[index == 0 ? index : 
-				    //index-1].MainMessageValueSequence[indQ];
-				//qnode.MessageValues[mp.first].Subtract(mp.second);
 				indQ++;
 			    }
 			    if (j+1 < size)
@@ -512,8 +498,6 @@ void MCTS::UCTSearch(const int& index)
 			    Statuses[index == 0 ? index : index-1].LearnVValueSequence;
 		    Statuses[index == 0 ? index : index-1].MainOtherQValueSequence = 
 			    Statuses[index == 0 ? index : index-1].LearnOtherQValueSequence;
-		    //Statuses[index == 0 ? index : index-1].MainMessageValueSequence = 
-			    //Statuses[index == 0 ? index : index-1].LearnMessageValueSequence;
 		}
 		else
 		{
@@ -536,9 +520,6 @@ void MCTS::UCTSearch(const int& index)
 				qnode.Value.Subtract(Statuses[index == 0 ? index : index-1].LearnQValueSequence[indQ]);
 				qnode.OtherAgentValues[0].Subtract(Statuses[index == 0 ? index : 
 				    index-1].LearnOtherQValueSequence[indQ]);
-				//std::pair<int,double> mp = Statuses[index == 0 ? index : 
-				//    index-1].LearnMessageValueSequence[indQ];
-				//qnode.MessageValues[mp.first].Subtract(mp.second);
 				indQ++;
 			    }
 			    if (j+1 < size)
@@ -630,34 +611,15 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     double immediateReward, delayedReward = 0;
     double otherImmediateReward = 0, otherDelayedReward = 0;
     
-    int origAction = action;
-    
     
     if (Params.MultiAgent && !Params.JointQActions[index == 0 ? index : index-1])
     {
-	int otherAction = index == 1 ? Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 2) : 
-		Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),1);
-	if (Statuses[index == 0 ? index : index-1].UseCommunication && !qnode.MessageActions.empty())
-	{
-	    /*int bestA = 0;
-	    double bestQ = qnode.MessageValues[0].GetCount();
-	    for (int j = 1; j < Simulator.GetNumAgentMessages(); j++)
-	    {
-		double currQ = qnode.MessageValues[j].GetCount();
-		if (currQ > bestQ)
-		{
-		    bestQ = currQ;
-		    bestA = j;
-		}
-	    }*/
-	    otherAction = qnode.SelectRandomMessageAction();
-	}
 	if (index == 1)
 	    action = action + 
-		Simulator.GetNumAgentActions()*otherAction;
+		Simulator.GetNumAgentActions()*Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 2);
 		//action + Simulator.GetNumAgentActions()*Random(Simulator.GetNumAgentActions());
 	else
-	    action = otherAction + 
+	    action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index),1) + 
 		Simulator.GetNumAgentActions()*action;
 		//Random(Simulator.GetNumAgentActions()) + Simulator.GetNumAgentActions()*action;
     }
@@ -665,42 +627,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     if (Simulator.HasAlpha())
         Simulator.UpdateAlpha(qnode, state);
     
-    int lastSent = 0;
-    
-    if (Statuses[index == 0 ? index : index-1].UseCommunication)
-    {
-	Statuses[index == 0 ? index : index-1].MessagesToBeSent.clear();
-	Statuses[index == 0 ? index : index-1].MessagesReceived.clear();
-	if (index == 1)
-	{
-	    int msg = Simulator.SelectMessage(GetStatus(index), GetHistory(index), origAction);
-	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(msg);
-	    lastSent = msg;
-	}
-	else
-	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.GetAgentAction(action,2));
-	if (index == 2)
-	{
-	    int msg = Simulator.SelectMessage(GetStatus(index), GetHistory(index), origAction);
-	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(msg);
-	    lastSent = msg;
-	}
-	else
-	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.GetAgentAction(action,1));
-	    
-    }
     bool terminal = Simulator.Step(state, action, observation, immediateReward, Statuses[index == 0 ? index : index-1]);
-    if (Statuses[index == 0 ? index : index-1].UseCommunication)
-    {
-	Statuses[index > 0 ? index-1 : index].LastMessageReceived = Statuses[index > 0 ? index-1 : index].MessagesReceived[index-1]; 
-	//if (RandomDouble(0.0,1.0) > 0.5)
-	{
-	if ((int) qnode.MessageActions.size() == QNODE::MaxMessageActions)
-	    qnode.MessageActions.erase(qnode.MessageActions.begin());
-	qnode.MessageActions.push_back(Statuses[index > 0 ? index-1 : index].LastMessageReceived);
-	}
-    }
-    
     
     Statuses[index == 0 ? index : index-1].TerminalReached = terminal;
     
@@ -708,7 +635,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
 	otherImmediateReward = Statuses[index == 0 ? index : index-1].CurrOtherReward;
     
     assert(observation >= 0 && observation < Simulator.GetNumObservations());
-    Histories[index == 0 ? index : index-1].Add(index == 0 || Params.JointQActions[index-1] ? action : Simulator.GetAgentAction(action, index), 
+    Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
 			       index == 0 ? observation : Simulator.GetAgentObservation(observation, index));
 
     if (Params.Verbose >= 3)
@@ -719,18 +646,8 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
         Simulator.DisplayState(state, cout);
     }
     
-    int childIndex = observation;
-    if (index > 0)
-    {
-	//if (!Statuses[index == 0 ? index : index-1].UseCommunication)
-	    childIndex = Simulator.GetAgentObservation(observation, index);
-	//else
-	    //childIndex = Simulator.GetAgentObservation(observation, index) + Simulator.GetNumAgentObservations()*Statuses[index > 0 ? index-1 : index].LastMessageReceived;
-    }
-    
-    
-    VNODE*& vnode = qnode.Child(childIndex);//index == 0 ? qnode.Child(observation) : 
-		//qnode.Child(Simulator.GetAgentObservation(observation, index));
+    VNODE*& vnode = index == 0 ? qnode.Child(observation) : 
+		qnode.Child(Simulator.GetAgentObservation(observation, index));
 	
 		
     if (!vnode && !terminal && qnode.Value.GetCount() >= Params.ExpandCount)
@@ -740,13 +657,17 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
     {
 	if (Statuses[index == 0 ? index : index-1].LearningPhase)
 	{
-	    Statuses[index == 0 ? index : index-1].LearnSequence.push_back(childIndex);
-	    Statuses[index == 0 ? index : index-1].LearnFullSequence.push_back(childIndex);
+	    Statuses[index == 0 ? index : index-1].LearnSequence.push_back(index == 0 ? observation : 
+		Simulator.GetAgentObservation(observation, index));
+	    Statuses[index == 0 ? index : index-1].LearnFullSequence.push_back(index == 0 ? observation : 
+		Simulator.GetAgentObservation(observation, index));
 	}
 	else
 	{
-	    Statuses[index == 0 ? index : index-1].MainSequence.push_back(childIndex); 
-	    Statuses[index == 0 ? index : index-1].MainFullSequence.push_back(childIndex); 
+	    Statuses[index == 0 ? index : index-1].MainSequence.push_back(index == 0 ? observation : 
+		Simulator.GetAgentObservation(observation, index)); 
+	    Statuses[index == 0 ? index : index-1].MainFullSequence.push_back(index == 0 ? observation : 
+		Simulator.GetAgentObservation(observation, index)); 
 	}
     }
     
@@ -762,6 +683,10 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
 	}
 	Statuses[index == 0 ? index : index-1].SampledRewardValue = rewardTemplate->RewardValue;*/
 	Statuses[index == 0 ? index : index-1].SampledRewardValue = vnode->Beliefs().GetRewardSample(0)->RewardValue;
+	
+	if (Statuses[index == 0 ? index : index-1].LearningPhase)
+	    Statuses[index == 0 ? index : index-1].LearnRewardValueSequence.push_back(
+		vnode->Beliefs().GetRewardSample(0)->RewardValue);
     }
     else
 	Statuses[index == 0 ? index : index-1].SampledRewardValue = 0.0;
@@ -803,26 +728,6 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
 	    else
 		Statuses[index == 0 ? index : index-1].MainOtherQValueSequence.push_back(otherTotalReward);
 	}
-	if (Statuses[index == 0 ? index : index-1].UseCommunication)
-	{
-	    int lastMessage = Statuses[index > 0 ? index-1 : index].LastMessageReceived;
-	    if (lastMessage < 0 || lastMessage >= Simulator.GetNumAgentMessages())
-		lastMessage = 0;
-	    qnode.MessageValues[lastMessage].Add(totalReward);
-	    double newVal = qnode.MessageValues[lastMessage].GetValue();
-	    if (!qnode.MaxMessageSet)
-	    {
-		qnode.MaxMessageValue = newVal;
-		qnode.MaxMessageSet = true;
-	    }
-	    else if (newVal > qnode.MaxMessageValue)
-		qnode.MaxMessageValue = newVal;
-	    
-	    if (Statuses[index == 0 ? index : index-1].LearningPhase)
-		Statuses[index == 0 ? index : index-1].LearnMessageValueSequence.push_back(std::make_pair(lastMessage,totalReward));
-	    else
-		Statuses[index == 0 ? index : index-1].MainMessageValueSequence.push_back(std::make_pair(lastMessage,totalReward));
-	}
     }
     
     return totalReward;
@@ -830,7 +735,7 @@ double MCTS::SimulateQ(STATE& state, QNODE& qnode, int action, const int& index,
 
 void MCTS::AddRave(VNODE* vnode, double totalReward, const STATE& state, const int& index)
 {
-    /*double totalDiscount = 1.0;
+    double totalDiscount = 1.0;
     int maxIter = GetHistory(index).Size();
     for (int t = TreeDepth; t < maxIter; ++t)
     {
@@ -849,7 +754,7 @@ void MCTS::AddRave(VNODE* vnode, double totalReward, const STATE& state, const i
         QNODE& qnode = vnode->Child(action);
         qnode.AMAF.Add(totalReward, totalDiscount);
         totalDiscount *= Params.RaveDiscount;
-    }*/
+    }
 }
 
 VNODE* MCTS::ExpandNode(const STATE* state, const int& perspindex, const int& agentindex)
@@ -861,9 +766,9 @@ VNODE* MCTS::ExpandNode(const STATE* state, const int& perspindex, const int& ag
 	Simulator.Prior(state, GetHistory(perspindex), vnode, GetStatus(perspindex), 0);
     else
     {
-	//if (Params.JointQActions[perspindex == 0 ? perspindex : perspindex-1])
-	//    Simulator.Prior(state, GetHistory(perspindex), vnode, GetStatus(perspindex), 0);
-	//else
+	if (Params.JointQActions[perspindex == 0 ? perspindex : perspindex-1])
+	    Simulator.Prior(state, GetHistory(perspindex), vnode, GetStatus(perspindex), 0);
+	else
 	    Simulator.Prior(state, GetHistory(perspindex), vnode, GetStatus(perspindex), agentindex);
     }
     
@@ -984,40 +889,8 @@ int MCTS::GreedyUCB(VNODE* vnode, bool ucb, const int& index) const
 		//cout << "Q = " << q << ", alphaQ = " << alphaq << endl;
 	    }
 	    
-	    //int n2 = 0;
-	    
-	    if (Statuses[index == 0 ? index : index-1].UseCommunication)
-	    {
-		//if (qnode.MaxMessageValue > -1000)
-		    //q += qnode.MaxMessageValue;
-		//else
-		{
-		    double maxMesQ = qnode.MessageValues[0].GetValue();
-		    //if (ucb)
-			//maxMesQ += FastUCB(N, qnode.MessageValues[0].GetCount(), logN);
-		    for (int j = 1; j < Simulator.GetNumAgentMessages(); j++)
-		    {
-			double mesQ = qnode.MessageValues[j].GetValue();
-			//if (ucb)
-			    //mesQ += FastUCB(N, qnode.MessageValues[j].GetCount(), logN);
-			if (mesQ > maxMesQ)
-			{
-			    maxMesQ = mesQ;
-			}
-		    }
-		    //std::cout << maxMesQ << " " << qnode.MaxMessageValue << "\n";
-		    q += maxMesQ;
-		}
-		    
-	    }
-	    
 	    if (ucb)
-	    {
-		/*if (Statuses[index == 0 ? index : index-1].UseCommunication)
-		    q += FastUCB(N, n2, logN);
-		else*/
-		    q += FastUCB(N, n, logN);
-	    }
+		q += FastUCB(N, n, logN);
 	    
 	    if (Params.MultiAgent && 
 		Params.RewardAdaptive[index == 0 ? index : index-1] && Statuses[index == 0 ? index : index-1].LearningPhase) 
@@ -1110,41 +983,11 @@ double MCTS::Rollout(STATE& state, const int& index, double otherReward)
         double reward;
 
         int action = Simulator.SelectRandom(state, GetHistory(index), GetStatus(index), 0);
-	
-	int lastSent = 0;
-	
-	/*if (Statuses[index == 0 ? index : index-1].UseCommunication)
-	{
-	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.clear();
-	    Statuses[index == 0 ? index : index-1].MessagesReceived.clear();
-	    if (index == 1)
-	    {
-		int msg = Simulator.SelectMessage(GetStatus(index), GetHistory(index), Simulator.GetAgentAction(action,index));
-		Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(msg);
-		lastSent = msg;
-	    }
-	    else
-		Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.GetAgentAction(action,2));
-	    if (index == 2)
-	    {
-		int msg = Simulator.SelectMessage(GetStatus(index), GetHistory(index), Simulator.GetAgentAction(action,index));
-		Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(msg);
-		lastSent = msg;
-	    }
-	    else
-		Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.GetAgentAction(action,1));
-		
-	}*/
-	bool useComm = Statuses[index == 0 ? index : index-1].UseCommunication;
-	Statuses[index == 0 ? index : index-1].UseCommunication = false;
         terminal = Simulator.Step(state, action, observation, reward, Statuses[index == 0 ? index : index-1]);
-	Statuses[index == 0 ? index : index-1].UseCommunication = useComm;
-	//if (Statuses[index == 0 ? index : index-1].UseCommunication)
-	   // Statuses[index > 0 ? index-1 : index].LastMessageReceived = Statuses[index > 0 ? index-1 : index].MessagesReceived[index-1]; 
 	
 	Statuses[index == 0 ? index : index-1].TerminalReached = terminal;
 	    
-	Histories[index == 0 ? index : index-1].Add(index == 0 || Params.JointQActions[index-1] ? action : Simulator.GetAgentAction(action, index), 
+	Histories[index == 0 ? index : index-1].Add(index == 0 ? action : Simulator.GetAgentAction(action, index), 
 			      index == 0 ? observation : Simulator.GetAgentObservation(observation, index));
 	
 	if (Statuses[index == 0 ? index : index-1].LearningPhase)
@@ -1221,7 +1064,7 @@ void MCTS::AddTransforms(VNODE* root, BELIEF_STATE& beliefs, const int& index)
     }
 }
 
-STATE* MCTS::CreateTransform(const int& index)
+STATE* MCTS::CreateTransform(const int& index) const
 {
     int stepObs;
     double stepReward;
@@ -1240,33 +1083,7 @@ STATE* MCTS::CreateTransform(const int& index)
 		Simulator.GetNumAgentActions()*GetHistory(index).Back().Action;
     }
     SIMULATOR::STATUS status = Statuses[index == 0 ? index : index-1];
-    
-    int lastSent = 0;
-    /*if (Statuses[index == 0 ? index : index-1].UseCommunication)
-    {
-	Statuses[index == 0 ? index : index-1].MessagesToBeSent.clear();
-	Statuses[index == 0 ? index : index-1].MessagesReceived.clear();
-	if (index == 1)
-	{
-	    int msg = Simulator.SelectMessage(GetStatus(index), GetHistory(index), Simulator.GetAgentAction(action,index));
-	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(msg);
-	    lastSent = msg;
-	}
-	else
-	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.GetAgentAction(action,2));
-	if (index == 2)
-	{
-	    int msg = Simulator.SelectMessage(GetStatus(index), GetHistory(index), Simulator.GetAgentAction(action,index));
-	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(msg);
-	    lastSent = msg;
-	}
-	else
-	    Statuses[index == 0 ? index : index-1].MessagesToBeSent.push_back(Simulator.GetAgentAction(action,1));
-	    
-    }*/
     Simulator.Step(*state, action, stepObs, stepReward, status);
-    //if (Statuses[index == 0 ? index : index-1].UseCommunication)
-	//Statuses[index > 0 ? index-1 : index].LastMessageReceived = status.MessagesReceived[index-1]; 
     if (Simulator.LocalMove(*state, GetHistory(index), stepObs, GetStatus(index)))
 	return state;
     Simulator.FreeState(state);
