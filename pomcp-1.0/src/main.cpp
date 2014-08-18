@@ -1,5 +1,6 @@
 #include "battleship.h"
 #include "boxpushing.h"
+#include "cucumber.h"
 #include "mcts.h"
 #include "network.h"
 #include "pocman.h"

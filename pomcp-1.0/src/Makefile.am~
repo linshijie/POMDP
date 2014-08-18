@@ -5,7 +5,9 @@ battleship.cpp \
 beliefstate.cpp \
 boxpushing.cpp \
 coord.cpp \
+cucumber.cpp \
 experiment.cpp \
+kitchen.cpp \
 main.cpp \
 mcts.cpp \
 network.cpp \
@@ -22,9 +24,11 @@ battleship.h \
 beliefstate.h \
 boxpushing.h \
 coord.h \
+cucumber.h \
 experiment.h \
 grid.h \
 history.h \
+kitchen.h \
 mcts.h \
 memorypool.h \
 network.h \

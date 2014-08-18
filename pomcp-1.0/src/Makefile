@@ -50,7 +50,7 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_pomcp_OBJECTS = pomcp-battleship.$(OBJEXT) \
 	pomcp-beliefstate.$(OBJEXT) pomcp-boxpushing.$(OBJEXT) pomcp-coord.$(OBJEXT) \
-	pomcp-experiment.$(OBJEXT) pomcp-kitchen.$(OBJEXT) pomcp-main.$(OBJEXT) \
+	pomcp-cucumber.$(OBJEXT) pomcp-experiment.$(OBJEXT) pomcp-kitchen.$(OBJEXT) pomcp-main.$(OBJEXT) \
 	pomcp-mcts.$(OBJEXT) pomcp-network.$(OBJEXT) \
 	pomcp-node.$(OBJEXT) pomcp-pocman.$(OBJEXT) \
 	pomcp-rocksample.$(OBJEXT) pomcp-simulator.$(OBJEXT) \
@@ -80,7 +80,7 @@ AMTAR = ${SHELL} /home/aris/POMDP/pomcp-1.0/missing --run tar
 AUTOCONF = ${SHELL} /home/aris/POMDP/pomcp-1.0/missing --run autoconf
 AUTOHEADER = ${SHELL} /home/aris/POMDP/pomcp-1.0/missing --run autoheader
 AUTOMAKE = ${SHELL} /home/aris/POMDP/pomcp-1.0/missing --run automake-1.10
-AWK = mawk
+AWK = gawk
 BOOST_CPPFLAGS = -I/usr/include
 BOOST_LDFLAGS = -L/usr/lib
 BOOST_PROGRAM_OPTIONS_LIB = -lboost_program_options-mt
@@ -170,6 +170,7 @@ battleship.cpp \
 beliefstate.cpp \
 boxpushing.cpp \
 coord.cpp \
+cucumber.cpp \
 experiment.cpp \
 kitchen.cpp \
 main.cpp \
@@ -188,6 +189,7 @@ battleship.h \
 beliefstate.h \
 boxpushing.h \
 coord.h \
+cucumber.h \
 experiment.h \
 grid.h \
 history.h \
@@ -282,6 +284,7 @@ include ./$(DEPDIR)/pomcp-battleship.Po
 include ./$(DEPDIR)/pomcp-beliefstate.Po
 include ./$(DEPDIR)/pomcp-boxpushing.Po
 include ./$(DEPDIR)/pomcp-coord.Po
+include ./$(DEPDIR)/pomcp-cucumber.Po
 include ./$(DEPDIR)/pomcp-experiment.Po
 include ./$(DEPDIR)/pomcp-kitchen.Po
 include ./$(DEPDIR)/pomcp-main.Po
@@ -366,6 +369,20 @@ pomcp-coord.obj: coord.cpp
 #	source='coord.cpp' object='pomcp-coord.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
 #	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o pomcp-coord.obj `if test -f 'coord.cpp'; then $(CYGPATH_W) 'coord.cpp'; else $(CYGPATH_W) '$(srcdir)/coord.cpp'; fi`
+
+pomcp-cucumber.o: cucumber.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT pomcp-cucumber.o -MD -MP -MF $(DEPDIR)/pomcp-cucumber.Tpo -c -o pomcp-cucumber.o `test -f 'cucumber.cpp' || echo '$(srcdir)/'`cucumber.cpp
+	mv -f $(DEPDIR)/pomcp-cucumber.Tpo $(DEPDIR)/pomcp-cucumber.Po
+#	source='cucumber.cpp' object='pomcp-cucumber.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o pomcp-cucumber.o `test -f 'cucumber.cpp' || echo '$(srcdir)/'`cucumber.cpp
+
+pomcp-cucumber.obj: cucumber.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT pomcp-cucumber.obj -MD -MP -MF $(DEPDIR)/pomcp-cucumber.Tpo -c -o pomcp-cucumber.obj `if test -f 'cucumber.cpp'; then $(CYGPATH_W) 'cucumber.cpp'; else $(CYGPATH_W) '$(srcdir)/cucumber.cpp'; fi`
+	mv -f $(DEPDIR)/pomcp-cucumber.Tpo $(DEPDIR)/pomcp-cucumber.Po
+#	source='cucumber.cpp' object='pomcp-cucumber.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o pomcp-cucumber.obj `if test -f 'cucumber.cpp'; then $(CYGPATH_W) 'cucumber.cpp'; else $(CYGPATH_W) '$(srcdir)/cucumber.cpp'; fi`
 
 pomcp-experiment.o: experiment.cpp
 	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(pomcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT pomcp-experiment.o -MD -MP -MF $(DEPDIR)/pomcp-experiment.Tpo -c -o pomcp-experiment.o `test -f 'experiment.cpp' || echo '$(srcdir)/'`experiment.cpp

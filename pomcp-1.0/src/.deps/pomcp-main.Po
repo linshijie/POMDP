@@ -742,8 +742,8 @@ pomcp-main.o: main.cpp battleship.h simulator.h history.h \
  /usr/include/boost/random/binomial_distribution.hpp \
  /usr/include/boost/random/uniform_on_sphere.hpp grid.h \
  /usr/include/c++/4.6/list /usr/include/c++/4.6/bits/stl_list.h \
- /usr/include/c++/4.6/bits/list.tcc boxpushing.h mcts.h statistic.h \
- network.h pocman.h rocksample.h tag.h experiment.h \
+ /usr/include/c++/4.6/bits/list.tcc boxpushing.h cucumber.h mcts.h \
+ statistic.h network.h pocman.h rocksample.h tag.h experiment.h \
  /usr/include/c++/4.6/fstream /usr/include/c++/4.6/cstdio \
  /usr/include/libio.h /usr/include/_G_config.h \
  /usr/include/i386-linux-gnu/bits/sys_errlist.h \
@@ -2466,6 +2466,8 @@ grid.h:
 /usr/include/c++/4.6/bits/list.tcc:
 
 boxpushing.h:
+
+cucumber.h:
 
 mcts.h:
 
