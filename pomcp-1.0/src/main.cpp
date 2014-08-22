@@ -1,13 +1,17 @@
 #include "battleship.h"
 #include "boxpushing.h"
-#include "cucumber.h"
 #include "mcts.h"
 #include "network.h"
 #include "pocman.h"
 #include "rocksample.h"
 #include "tag.h"
 #include "experiment.h"
-#include "kitchen.h"
+  #include "kitchen.h"
+
+namespace Cucumber
+{
+    #include "cucumber.h"
+}
 #include <boost/program_options.hpp>
 
 using namespace std;
