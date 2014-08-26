@@ -6,7 +6,7 @@
 #include "rocksample.h"
 #include "tag.h"
 #include "experiment.h"
-  #include "kitchen.h"
+#include "kitchen.h"
 
 namespace Cucumber
 {
@@ -16,6 +16,7 @@ namespace Cucumber
 
 using namespace std;
 using namespace boost::program_options;
+using namespace Cucumber;
 
 void UnitTests(MCTS::PARAMS& searchParams)
 {
@@ -138,6 +139,8 @@ int main(int argc, char* argv[])
 
     SIMULATOR* real = 0;
     SIMULATOR* simulator = 0;
+    
+    CUCUMBER* test = new CUCUMBER();
 
     if (problem == "battleship")
     {
@@ -177,6 +180,14 @@ int main(int argc, char* argv[])
 	searchParams.MultiAgentPriorCount = 1;
 	real = new KITCHEN(testTrayOnStove, testCerealInCupboard);
 	simulator = new KITCHEN(testTrayOnStove, testCerealInCupboard);
+	searchParams.MultiAgentPriorValue = real->GetRewardRange();
+    }
+    else if (problem == "cucumber")
+    {
+	searchParams.UseTransforms = false;
+	searchParams.MultiAgentPriorCount = 1;
+	real = new CUCUMBER();
+	simulator = new CUCUMBER();
 	searchParams.MultiAgentPriorValue = real->GetRewardRange();
     }
     else 
