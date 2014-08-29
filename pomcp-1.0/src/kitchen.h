@@ -4,7 +4,6 @@
 #include <tr1/unordered_map>
 #include <deque>
 
-
 enum ObjectClass {APPLEJUICE = 0, CALGONIT, GRANINI, MEASURINGCUP, RICEBOX, CEREAL, PLATE, CUP, TRAY, NO_OBJECT};
 
 enum LocationType {CUPBOARD = 10, DISHWASHER, FRIDGE, SIDEBOARD, STOVE, NO_LOCATION};

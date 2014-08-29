@@ -3,7 +3,7 @@
 #include "simulator.h"
 #include <tr1/unordered_map>
 #include <deque>
-
+using namespace Kitchen;
 
 enum ObjectClass {APPLEJUICE = 0, CALGONIT, GRANINI, MEASURINGCUP, RICEBOX, CEREAL, PLATE, CUP, TRAY, NO_OBJECT};
 

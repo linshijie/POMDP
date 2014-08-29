@@ -8,15 +8,13 @@
 #include "experiment.h"
 #include "kitchen.h"
 
-namespace Cucumber
-{
-    #include "cucumber.h"
-}
+
+#include "cucumber.h"
+
 #include <boost/program_options.hpp>
 
 using namespace std;
 using namespace boost::program_options;
-using namespace Cucumber;
 
 void UnitTests(MCTS::PARAMS& searchParams)
 {
@@ -186,8 +184,8 @@ int main(int argc, char* argv[])
     {
 	searchParams.UseTransforms = false;
 	searchParams.MultiAgentPriorCount = 1;
-	real = new CUCUMBER();
-	simulator = new CUCUMBER();
+	real = new CUCUMBER;
+	simulator = new CUCUMBER;
 	searchParams.MultiAgentPriorValue = real->GetRewardRange();
     }
     else 
