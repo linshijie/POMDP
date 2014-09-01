@@ -4,12 +4,12 @@
 using namespace std;
 
 EXPERIMENT::PARAMS::PARAMS()
-:   NumRuns(10),
+:   NumRuns(1000),
     NumSteps(20),
     SimSteps(100),
     TimeOut(3600),
-    MinDoubles(10),
-    MaxDoubles(10),
+    MinDoubles(15),
+    MaxDoubles(15),
     MinRewardDoubles(0),
     MaxRewardDoubles(1),
     EnableRewardIterations(false),
@@ -18,10 +18,7 @@ EXPERIMENT::PARAMS::PARAMS()
     Accuracy(0.01),
     UndiscountedHorizon(20),
     AutoExploration(true),
-    BreakOnTerminate(true),
-    RealSimCommunication(false),
-    RandomiseCommunication(false),
-    ReuseRoots(false)
+    BreakOnTerminate(true)
 {
     RandomActions.clear();
     
@@ -29,8 +26,8 @@ EXPERIMENT::PARAMS::PARAMS()
     RandomActions.push_back(false);
 }
 
-EXPERIMENT::EXPERIMENT(SIMULATOR& real,
-    SIMULATOR& simulator, const string& outputFile,
+EXPERIMENT::EXPERIMENT(const SIMULATOR& real,
+    const SIMULATOR& simulator, const string& outputFile,
     EXPERIMENT::PARAMS& expParams, MCTS::PARAMS& searchParams)
 :   Real(real),
     Simulator(simulator),
@@ -42,7 +39,6 @@ EXPERIMENT::EXPERIMENT(SIMULATOR& real,
     Results.SuccessfulPlanCount.clear();
     Results.PlanSequenceReward.clear();
     Results.PlanSequenceLength.clear();
-    lastRoots.clear();
     for (int i = 0; i < real.GetNumAgents(); i++)
     {
 	STATISTIC s1;
@@ -65,10 +61,8 @@ EXPERIMENT::EXPERIMENT(SIMULATOR& real,
 void EXPERIMENT::Run()
 {
     boost::timer timer;
-    MCTS mcts(Simulator, SearchParams);
     
-    //if (!lastRoots.empty() && ExpParams.ReuseRoots)
-	//mcts.SetRoots(lastRoots);
+    MCTS mcts(Simulator, SearchParams);
     
     double undiscountedReturn = 0.0;
     double discountedReturn = 0.0;
@@ -77,27 +71,12 @@ void EXPERIMENT::Run()
     bool outOfParticles = ExpParams.RandomActions[0], outOfParticles2 = ExpParams.RandomActions[1];
     int t;
     
-    realRewards.clear();
-    
     STATE* state = Real.CreateStartState();
     if (SearchParams.Verbose >= 1)
         Real.DisplayState(*state, cout);
     
-    if (ExpParams.RandomiseCommunication)
-    {
-	double probLoss = UTILS::RandomDouble(0.0,0.5);
-	double probDelay = UTILS::RandomDouble(0.0,0.5);
-	double probMisinterp = UTILS::RandomDouble(0.0,0.5);
-	Real.SetProbMessageLoss(probLoss);
-	Real.SetProbMessageDelay(probDelay);
-	Real.SetProbMessageMisinterp(probMisinterp);
-	Simulator.SetProbMessageLoss(probLoss);
-	Simulator.SetProbMessageDelay(probDelay);
-	Simulator.SetProbMessageMisinterp(probMisinterp);
-    }
-    
     double timeFactor = 1.0/Real.GetNumAgents();
-        
+    
     std::vector<int> planCounts;
     std::vector<STATISTIC> planRewards;
     std::vector<STATISTIC> planLengths;
@@ -134,24 +113,7 @@ void EXPERIMENT::Run()
 	}
 	SIMULATOR::STATUS status = mcts.GetStatus(0);
 	status.JointGoalCount = 0;
-	bool statusComm = status.UseCommunication;
-	if (statusComm)
-	{
-	    status.MessagesToBeSent.clear();
-	    status.MessagesReceived.clear();
-	    status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(1), mcts.GetHistory(1), action0));
-	    status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(2), mcts.GetHistory(2), action1));
-	}
-	status.UseCommunication = ExpParams.RealSimCommunication;
 	terminal = Real.Step(*state, action, observation, reward, status);
-	status.UseCommunication = statusComm;
-	if (statusComm)
-	{
-	    for (int i = 0; i < (int) status.MessagesReceived.size(); i++)
-		mcts.SetLastMessageReceived(i+1, status.MessagesReceived[i]);
-	}
-	
-	realRewards.push_back(reward);
 
 	Results.Reward.Add(reward);
 	undiscountedReturn += reward;
@@ -217,8 +179,6 @@ void EXPERIMENT::Run()
 		    mcts.ResetRoot(1);
 		    mcts.ResetRoot(2);
 		}
-		outOfParticles = ExpParams.RandomActions[0];
-		outOfParticles2 = ExpParams.RandomActions[1];
 	    }
 	}
 	
@@ -298,24 +258,8 @@ void EXPERIMENT::Run()
 	    }
 	    SIMULATOR::STATUS status = mcts.GetStatus(0);
 	    status.JointGoalCount = 0;
-            bool statusComm = status.UseCommunication;
-	    if (statusComm)
-	    {
-		status.MessagesToBeSent.clear();
-		status.MessagesReceived.clear();
-		status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(1), mcts.GetHistory(1), action0));
-		status.MessagesToBeSent.push_back(Real.SelectMessage(mcts.GetStatus(2), mcts.GetHistory(2), action1));
-	    }
-	    status.UseCommunication = ExpParams.RealSimCommunication;
             terminal = Real.Step(*state, action, observation, reward, status);
-	    status.UseCommunication = statusComm;
-	    if (statusComm)
-	    {
-		for (int i = 0; i < (int) status.MessagesReceived.size(); i++)
-		    mcts.SetLastMessageReceived(i+1, status.MessagesReceived[i]);
-	    }
 
-	    realRewards.push_back(reward);
             Results.Reward.Add(reward);
             undiscountedReturn += reward;
             discountedReturn += reward * discount;
@@ -434,11 +378,6 @@ void EXPERIMENT::Run()
 		<< ", average = " << Results.PlanSequenceLength[i].GetMean() << endl;
 	}
     }
-    
-    lastRoots.clear();
-    std::vector<VNODE*> mctsRoots = mcts.GetRoots();
-    for (int i = 0; i < mctsRoots.size(); i++)
-	lastRoots.push_back(mctsRoots[i]);
 }
 
 void EXPERIMENT::MultiRun()
