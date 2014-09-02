@@ -24,9 +24,9 @@ MCTS::PARAMS::PARAMS()
     UseRave(false),
     RaveDiscount(1.0), 
     RaveConstant(0.01),
-    DoFastUCB(false),
+    DoFastUCB(true),
     DisableTree(false),
-    MultiAgent(true),
+    MultiAgent(false),
     RewardOffset(100.0),
     InitialRewardWeight(20.0),
     MultiAgentPriorCount(0),
@@ -43,8 +43,8 @@ MCTS::PARAMS::PARAMS()
     MinMax.push_back(false);
     MinMax.push_back(false);
     
-    RewardAdaptive.push_back(true);
-    RewardAdaptive.push_back(true);
+    RewardAdaptive.push_back(false);
+    RewardAdaptive.push_back(false);
     
     HumanDefined.push_back(false);
     HumanDefined.push_back(false);

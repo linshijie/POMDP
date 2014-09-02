@@ -16,7 +16,7 @@ EXPERIMENT::PARAMS::PARAMS()
     TransformDoubles(-4),
     TransformAttempts(1000),
     Accuracy(0.01),
-    UndiscountedHorizon(20),
+    UndiscountedHorizon(50),
     AutoExploration(true),
     BreakOnTerminate(true)
 {
