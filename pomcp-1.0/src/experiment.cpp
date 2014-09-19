@@ -170,14 +170,14 @@ void EXPERIMENT::Run()
 		if (!SearchParams.MultiAgent)
 		{
 		    mcts.ClearHistory(0);
-		    mcts.ResetRoot(0);
+		    //mcts.ResetRoot(0);
 		}
 		else
 		{
 		    mcts.ClearHistory(1);
 		    mcts.ClearHistory(2);
-		    mcts.ResetRoot(1);
-		    mcts.ResetRoot(2);
+		    //mcts.ResetRoot(1);
+		    //mcts.ResetRoot(2);
 		}
 	    }
 	}
@@ -311,14 +311,14 @@ void EXPERIMENT::Run()
 		    if (!SearchParams.MultiAgent)
 		    {
 			mcts.ClearHistory(0);
-			mcts.ResetRoot(0);
+			//mcts.ResetRoot(0);
 		    }
 		    else
 		    {
 			mcts.ClearHistory(1);
 			mcts.ClearHistory(2);
-			mcts.ResetRoot(1);
-			mcts.ResetRoot(2);
+			//mcts.ResetRoot(1);
+			//mcts.ResetRoot(2);
 		    }
 		    outOfParticles = ExpParams.RandomActions[0];
 		    outOfParticles2 = ExpParams.RandomActions[1];

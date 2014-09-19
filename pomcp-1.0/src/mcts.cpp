@@ -179,7 +179,7 @@ bool MCTS::Update(int action, int observation, double reward, const int& index)
         state = beliefs.GetSample(0);
 
     // Delete old tree and create new root
-    //VNODE::Free(Roots[index == 0 ? index : index-1], Simulator);
+    VNODE::Free(Roots[index == 0 ? index : index-1], Simulator);
     VNODE* newRoot = ExpandNode(state, index, index);
     newRoot->Beliefs() = beliefs;
     if (!Params.MultiAgent)
